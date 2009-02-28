@@ -1,0 +1,7 @@
+structure(list(id = "T1", vertices = structure(c(679163.534, 
+679238.561, 4135735.518, 4135730.43), .Dim = c(2L, 2L), .Dimnames = list(
+    c("1", "2"), c("x", "y"))), fix.zero = "R", h.offset = 21, 
+    grid.dx = 0.05, grid.dy = 0.005, asp.ratio = 5, v.origin = 11.379, 
+    v.offset = -0.18, data.file = "confluence-raster-T1.txt"), .Names = c("id", 
+"vertices", "fix.zero", "h.offset", "grid.dx", "grid.dy", "asp.ratio", 
+"v.origin", "v.offset", "data.file"))
