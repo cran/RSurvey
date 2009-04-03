@@ -20,7 +20,7 @@ mergeData(file = NULL)
 The tab delineated temporal file, \file{*.txt}, contains the following variables:
   \tabular{lll}{
     \code{[,1]}  \tab character \tab date/time\cr
-    \code{[,2:]} \tab numeric   \tab state variable(s)
+    \code{[,2:]} \tab numeric   \tab state variables
   }
 The first \code{[1,]} and second \code{[2,]} rows are reserved for column descriptors and units, respectively. 
 Units associated with date/time values are based on format character strings described in \code{\link{strptime}}.
@@ -44,22 +44,16 @@ This function is not currently accessible through a \acronym{GUI}.
 \examples{
 f <- system.file("RSurvey-ex/river.txt", package = "RSurvey")
 con <- file(f, open = "r", encoding = "latin1")
-srvy.import(file = con)
-srvy.dat("cols")
-summary(srvy.dat("data.raw"))
-
-## A sample temporal file including a header and two rows of data.
-
-## Date / Time	Temperature
-## %d/%m/%Y %I:%M:%OS%p	F
-## 07/05/2006 12:32:00.000PM	79.85
-## 07/05/2006 12:32:00.000PM	NA
+d <- readFile(con)
+srvy.dat("cols", d$cols)
+srvy.dat("vars", d$vars)
+srvy.dat("data.raw", d$dat)
 
 f <- system.file("RSurvey-ex/river-temperature.txt", package = "RSurvey")
 con <- file(f, open = "r", encoding = "latin1")
-mergeData(file = con)
+mergeData(con)
 srvy.dat("cols")
-summary(srvy.dat("data.raw"))
+srvy.dat("data.raw")
 }
 
 \keyword{misc}

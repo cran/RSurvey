@@ -3,7 +3,7 @@
     required.packages <- c("tcltk", "rgl", "MBA", "gpclib", "sp", "mgcv", "tripack")
     
 ### PACKAGES THAT MAY BE USEFUL FOR FUTURE WORK: 
-### required.packages <- append(required.packages, c("abind", "pixmap", "rgdal", "udunits", "XML"))
+### required.packages <- append(required.packages, c("udunits", "rgdal"))
     
     i.p <- required.packages[!(required.packages %in% .packages(all.available=TRUE))]
     

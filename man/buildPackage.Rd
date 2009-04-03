@@ -6,8 +6,7 @@
 
 \description{
 This function is for package developers only.  Package builder has been tested on a 
-Windows XP Professional operating system (\acronym{OS}) and within the package source 
-directory and not within the installed library.
+Windows operating system (\acronym{OS}) within the package source directory.
 }
 
 \usage{buildPackage}

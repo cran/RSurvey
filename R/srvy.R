@@ -9,12 +9,12 @@
         if(!is.null(data.raw) && length(data.raw) != 0) {
             dat <- NULL
             vars <- srvy.dat("vars")
-            dat$datetime <- data.raw[[make.names(vars[1])]]
-            dat$x        <- data.raw[[make.names(vars[2])]]
-            dat$y        <- data.raw[[make.names(vars[3])]]
-            dat$z        <- data.raw[[make.names(vars[4])]]
+            dat$dt <- data.raw[[make.names(vars[1])]]
+            dat$x  <- data.raw[[make.names(vars[2])]]
+            dat$y  <- data.raw[[make.names(vars[3])]]
+            dat$z  <- data.raw[[make.names(vars[4])]]
             
-            if(is.null(dat$datetime)) {
+            if(is.null(dat$dt)) {
                 tclvalue(sd.var) <- ""
                 tclvalue(ed.var) <- ""
                 tclvalue(sh.var) <- ""
@@ -25,7 +25,7 @@
                 tclvalue(es.var) <- ""
              }
              else {
-                range.dat <- strptime(dat$datetime[c(1, length(dat$datetime))], "%Y-%m-%d %H:%M:%OS")
+                range.dat <- strptime(dat$dt[c(1, length(dat$dt))], "%Y-%m-%d %H:%M:%OS")
                 
                 if(tclvalue(sd.var) == "") tclvalue(sd.var) <- format(range.dat[1], format="%Y-%m-%d")
                 if(tclvalue(ed.var) == "") tclvalue(ed.var) <- format(range.dat[2], format="%Y-%m-%d")
@@ -36,7 +36,7 @@
                 if(tclvalue(ss.var) == "") tclvalue(ss.var) <- format(range.dat[1], format="%OS3")
                 if(tclvalue(es.var) == "") tclvalue(es.var) <- format(range.dat[2], format="%OS3")
             }
-            if(!is.null(dat$datetime)) {
+            if(!is.null(dat$dt)) {
                 srvy.dat("sd", tclvalue(sd.var))
                 srvy.dat("ed", tclvalue(ed.var))
                 srvy.dat("sh", as.integer(tclvalue(sh.var)))
@@ -71,13 +71,15 @@
   # identify gui icon
     
     getIcon <- function() {
-        path <- ifelse("package:RSurvey" %in% search(), system.file(package="RSurvey"), "./inst")
-        srvy.dat("icon", NULL)
-        if(.Platform$OS.type == "windows") {
-            f <- paste(path, "/RSurvey.ico", sep="")
-            if(file.exists(f)) 
-                srvy.dat("icon", paste(path, "/RSurvey.ico", sep=""))
-        }
+        if("package:RSurvey" %in% search()) 
+            path <- system.file("RSurvey.ico", package="RSurvey")
+        else
+            path <- paste(getwd(), "/inst/RSurvey.ico", sep="")
+        
+        if(.Platform$OS.type != "windows" | !file.exists(path)) 
+            path <- NULL
+        
+        path
     }
     
   # restore entry widgets
@@ -128,14 +130,13 @@
   # open R binary data file
     
     proj.open <- function() {
-        f <- getFile(cmd="open", exts="rda")
+        f <- getFile(cmd="Open", exts="rda")
         if(is.null(f)) return()
         
         ans <- clear.objects("project")
         if(ans != "cancel") {
             load(file=f$path, envir=.GlobalEnv)
             srvy.dat("proj.file", f$path)
-            getIcon()
             gui.restore(vars)
             gui.update()
         }
@@ -145,18 +146,16 @@
   # save R binary data file
     
     proj.save <- function() {
-        if(!is.null(srvy.dat("proj.file"))) {
+        if(!is.null(srvy.dat("proj.file"))) 
             if(file.access(srvy.dat("proj.file"), mode=0) != 0) 
                 srvy.dat("proj.file", NULL)
-        }
         if(is.null(srvy.dat("proj.file"))) {
-            f <- getFile(cmd="save", exts="rda")
+            f <- getFile(cmd="Save As", exts="rda")
             if(!is.null(f)) 
                 srvy.dat("proj.file", f$path)
         }
         if(!is.null(srvy.dat("proj.file"))) {
-            tmp <- unlist(strsplit(srvy.dat("proj.file"), "/"))
-            hld.path <- tmp[1:(length(tmp) - 1)]
+            hld.path <- head(unlist(strsplit(srvy.dat("proj.file"), "/")), -1)
             srvy.dat("default.dir", paste(hld.path, collapse="/"))
             gui.update()
             save.objs <- c("srvy.dat", "tran.dat")
@@ -179,7 +178,7 @@
         
         hld.var <- c("default.dir", "win.loc", "csi", "grad.tol", "time.gap", 
                    "grid.res", "depth", "date.fmt", "yx.ratio", "zx.ratio", 
-                   "n.levels", "win.width", "icon", "ver", "font.gui")
+                   "n.levels", "win.width", "ver", "font.gui")
         
         if(type == "data") {
             ans <- ifelse(is.null(srvy.dat("data.file")), "ok", 
@@ -222,12 +221,27 @@
         ans
     }
     
-  # export polygon data to file
+  # import survey data
+    
+    srvy.import <- function() {
+        
+        f <- getFile(cmd="Open", exts="txt")
+        if(is.null(f)) return()
+        
+        d <- readFile(f$path)
+        
+        srvy.dat("cols", d$cols)
+        srvy.dat("vars", d$vars)
+        srvy.dat("data.raw", d$dat)
+        srvy.dat("data.file", paste(f$name, collapse="; "))
+    }
+    
+  # export polygon
     
     polyExport <- function() {
         if(is.null(srvy.dat("poly"))) return()
         
-        f <- getFile(cmd="save", exts="txt")
+        f <- getFile(cmd="Save As", exts="txt")
         if(is.null(f)) return()
         
         poly <- srvy.dat("poly")
@@ -304,7 +318,7 @@
     device.save.r <- function() {
         if(is.null(dev.list())) return()
         
-        f <- getFile(cmd="save", exts=c("png", "jpg", "ps", "pdf", "bmp"))
+        f <- getFile(cmd="Save As", exts=c("png", "jpg", "ps", "pdf", "bmp"))
         if(is.null(f)) return()
         
         f$path <- substr(f$path, 1, nchar(f$path) - (nchar(f$ext) + 1))
@@ -316,7 +330,7 @@
     device.save.rgl <- function() {
         if(rgl.cur() == 0) return()
         
-        f <- getFile(cmd="save", exts=c("png", "ps", "eps", "tex", "pdf"))
+        f <- getFile(cmd="Save As", exts=c("png", "ps", "eps", "tex", "pdf"))
         if(is.null(f)) return()
         
         if(f$ext == "png") 
@@ -368,10 +382,6 @@
     
     fnt <- srvy.dat("font.gui")
     
-  # determine the loaction of the GUI icon
-    
-    getIcon()
-    
   # assign the variables linked to Tk widgets
     
     vars <- c("sd", "sh", "sm", "ss", "ed", "eh", "em", "es", "max.y", "min.y", 
@@ -400,7 +410,8 @@
     
     f <- ifelse("package:RSurvey" %in% search(), 
          system.file("DESCRIPTION", package="RSurvey"), "DESCRIPTION")
-    srvy.dat("ver", paste("RSurvey", scan(f, what="character", skip=3, nlines=1, quiet=TRUE)[2]))
+    ver <- scan(f, what="character", skip=3, nlines=1, quiet=TRUE)[2]
+    srvy.dat("ver", paste("RSurvey", ver))
     
   # open gui
     
@@ -409,8 +420,9 @@
     tktitle(tt1) <- srvy.dat("ver")
     tkwm.resizable(tt1, 0, 0)
     
-    if(!is.null(srvy.dat("icon")) && file.exists(srvy.dat("icon"))) 
-        tkwm.iconbitmap(tt1, srvy.dat("icon"))
+    icon <- getIcon()
+    if(!is.null(icon) && file.exists(icon)) 
+        tkwm.iconbitmap(tt1, default=icon)
     
   # top menu
     
@@ -515,7 +527,11 @@
     
     tkadd(menu.poly, "command", label="Import", 
         command=function() {
-            srvy.dat("poly", polyImport())
+            f <- getFile(cmd="Open", exts="txt", file=file)
+            if(is.null(f)) return()
+            con <- if("connection" %in% class(file)) file 
+                   else file(f$path, "r", encoding=srvy.dat("encoding"))
+            srvy.dat("poly", read.polyfile(con, nohole=FALSE))
             srvy.dat("data.mod", NULL)
             srvy.dat("data.tin", NULL)
             tkfocus(tt1)
@@ -578,7 +594,8 @@
         tkadd(menu.advanced, "command", label="Restore R Image", 
             command=function() {
                 gui.close()
-                restoreImage(fun.call="srvy", save.objs=c("srvy.dat", "tran.dat"))
+                restoreSession(paste(getwd(), "R", sep="/"), 
+                    save.objs=c("srvy.dat", "tran.dat"), fun.call="srvy")
             }
         )
     }

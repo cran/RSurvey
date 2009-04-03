@@ -160,9 +160,6 @@
     }
     tktitle(tt2) <- "Transect Management"
     
-    if(!is.null(srvy.dat("icon")) && file.exists(srvy.dat("icon"))) 
-        tkwm.iconbitmap(tt2, srvy.dat("icon"))
-    
     tkwm.resizable(tt2, 0, 0) 
     
   # top menu
@@ -325,7 +322,7 @@
     menu.vel <- tkmenu(tt2, tearoff=0, font=fnt)
     tkadd(top.menu, "cascade", label="Velocity", menu=menu.vel, underline=0)
     
-    tkadd(menu.vel, "command", label="Vector Components", 
+    tkadd(menu.vel, "command", label="Components", 
         command=function() {
             if(length(tran.dat()) == 0) 
                 stop(call.=FALSE, "No profiles exist.")

@@ -45,21 +45,22 @@
         ratio <- diff(y.lim) / diff(x.lim) * asp.ratio
         win.height <- ((win.width - mar.width) * ratio) + mar.height
     }
+    
     x11(width=win.width, height=win.height, pointsize=10)
     
   # plot labels
     
     vars <- srvy.dat("vars")
-    x.lab    <- vars[2]
-    y.lab    <- vars[3]
-    state.id <- vars[4]
+    x.lab <- vars[2]
+    y.lab <- vars[3]
+    z.lab <- vars[4]
     
     if(!is.null(srvy.dat("depth")) & !is.null(srvy.dat("wtr.elev"))) {
         if(as.logical(srvy.dat("depth"))) 
-            state.id <- gsub("Depth", "Elevation", state.id, ignore.case=TRUE)
+            z.lab <- gsub("Depth", "Elevation", z.lab, ignore.case=TRUE)
     }
     
-    m.lab <- paste(c("Level Contours", state.id), collapse=" of ")
+    m.lab <- paste(c("Level Contours", z.lab), collapse=" of ")
     
   # filled contour plot
     
@@ -116,7 +117,7 @@
     num <- length(level) - 1
     add.on <- as.integer(num * 0.2)
     
-#   colrs <- rev(gray(1:(num + add.on) / (num + add.on))[(add.on + 1):(num + add.on)]) # gray contours
+### colrs <- rev(gray(1:(num + add.on) / (num + add.on))[(add.on + 1):(num + add.on)]) # gray contours
     
     colrs <- rev(terrain.colors(num)) # color contours
     
@@ -128,6 +129,7 @@
     data.file <- srvy.dat("data.file")
     if(nchar(data.file) > 40) 
         data.file <- paste(substr(data.file, 1, 40), "...", sep="")
+    
     txt <- paste("Raw File(s):", data.file, sep=" ")
     mtext(txt, side=3, line=-0.6, cex=0.7, outer=TRUE, adj=0)
     

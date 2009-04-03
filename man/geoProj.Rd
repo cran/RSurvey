@@ -15,7 +15,7 @@ A description of the geographical projection for the current project.
 }
 
 \value{
-A character string within the \code{projection} component of \code{\link{srvy.dat}}.
+A character string, the \code{projection} component of \code{\link{srvy.dat}}.
 }
 
 \author{Fisher, J. C.}

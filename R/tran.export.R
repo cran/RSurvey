@@ -2,7 +2,7 @@
     
   # determine export file
     
-    f <- getFile(cmd="save", exts="txt", file=file)
+    f <- getFile(cmd="Save As", exts="txt", file=file)
     if(is.null(f)) return()
     
     con <- if("connection" %in% class(file)) file 

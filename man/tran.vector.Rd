@@ -31,7 +31,7 @@ The components associated with \code{vel.vect} are as follows:
 A data frame with rows corresponding to points along a profile.  Components associated with each point include:
   \tabular{llll}{
     \code{[,1]} \tab \code{magn}     \tab numeric \tab the magnitude of the velocity within the principle direction.\cr
-    \code{[,2]} \tab \code{long}     \tab numeric \tab longitudinal velocity component.\cr
+    \code{[,2]} \tab \code{long}     \tab numeric \tab longitudinal velocity component, perpendicular to the local x-direction.\cr
     \code{[,3]} \tab \code{arrow.x}  \tab numeric \tab the velocity component in the local x-direction.\cr
     \code{[,4]} \tab \code{arrow.y}  \tab numeric \tab the velocity component in the local z-direction.
   }

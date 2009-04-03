@@ -115,9 +115,6 @@
     }
     tktitle(tt3) <- "Edit Transect"
     
-    if(!is.null(srvy.dat("icon")) && file.exists(srvy.dat("icon"))) 
-        tkwm.iconbitmap(tt3, srvy.dat("icon"))
-    
     tkwm.resizable(tt3, 0, 0)
     
   # frame 1 contains the profile name and vertices

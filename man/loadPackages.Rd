@@ -6,7 +6,7 @@
 
 \description{
 This function loads \R packages required by \pkg{RSurvey}. 
-If a package is unavailable on the local computer an attempt is made to 
+If a required package is unavailable on the local computer an attempt is made to 
 acquire the package from \acronym{CRAN} using an existing network connection.
 }
 

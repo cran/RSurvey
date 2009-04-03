@@ -46,10 +46,7 @@
         tkwm.geometry(tt2, paste("+", as.integer(tmp[2]) + 25, "+", as.integer(tmp[3]) + 25, sep=""))
     }
     tktitle(tt2) <- "Preferences"
-    
-    if(!is.null(srvy.dat("icon")) && file.exists(srvy.dat("icon"))) 
-        tkwm.iconbitmap(tt2, srvy.dat("icon"))
-    
+        
     tkwm.resizable(tt2, 0, 0)
     
   # frame 1 contains temporal data correction parameteres

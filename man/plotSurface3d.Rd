@@ -27,10 +27,10 @@ the x-axis, and zooms the display, respectively.
 }
 
 \examples{
-data(confluence)
+\donttest{data(confluence)
 plotSurface3d()
 
-rgl.quit()
+rgl.quit()}
 }
 
 \keyword{hplot}

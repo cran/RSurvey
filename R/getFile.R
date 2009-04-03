@@ -1,4 +1,4 @@
-"getFile" <- function(cmd="open", exts=NULL, directory=NULL, file=NULL) {
+"getFile" <- function(cmd="Open", exts=NULL, directory=NULL, file=NULL, titleStr=cmd) {
 
 # additional functions (subroutines)
     
@@ -13,11 +13,11 @@
     if(!is.null(file)) {
         
         filename <- if("connection" %in% class(file)) summary.connection(file)$description else file
-        
         hld <- unlist(strsplit(filename, "/"))
+        
         FILE$path <- filename
-        FILE$dir  <- paste(hld[1:(length(hld) - 1)], collapse="/")
-        FILE$name <- hld[length(hld)]
+        FILE$dir  <- paste(head(hld, -1), collapse="/")
+        FILE$name <- tail(hld, 1)
         FILE$ext  <- fileExt(filename)
         
         srvy.dat("default.dir", FILE$dir)
@@ -30,7 +30,6 @@
     if(!is.null(exts)) {
         for(i in rev(exts)) {
             ext <- tolower(fileExt(i))
-            type <- NULL
             
             if(ext == "txt") {type <- '{{Text Files} {.txt}}'} else
             if(ext == "dat") {type <- '{{Text Files} {.dat}}'} else
@@ -43,7 +42,9 @@
             if(ext == "eps") {type <- '{{Encapsulated PostScript Files} {.eps}}'} else
             if(ext == "tex") {type <- '{{Latex Files} {.tex}}'} else
             if(ext == "pdf") {type <- '{{PDF Files} {.pdf}}'} else
-            if(ext == "bmp") {type <- '{{Bitmap Files} {.bmp}}'}
+            if(ext == "bmp") {type <- '{{Bitmap Files} {.bmp}}'} 
+            else 
+                type <- paste('{{File} {.', ext, '}}', sep="")
             
             types <- c(type, types)
         }
@@ -56,29 +57,26 @@
     if(is.null(directory)) 
         directory <- srvy.dat("default.dir")
     
-    if(cmd == "open") 
-        f <- tclvalue(tkgetOpenFile(filetypes=types, initialdir=directory))
-    if(cmd == "save") { 
+    if(tolower(substr(cmd,1,4)) == "open") 
+        f <- tclvalue(tkgetOpenFile(filetypes=types, initialdir=directory,
+             title=titleStr))
+    if(tolower(substr(cmd,1,4)) == "save") 
         f <- tclvalue(tkgetSaveFile(defaultextension=def.ext, filetypes=types,
-             initialdir=directory, initialfile=ini.file))
-    }
-    
+             initialdir=directory, initialfile=ini.file, title=titleStr))
     if(f == "") return()
     
-    hld <- unlist(strsplit(f[1], "/"))
-    FILE$dir <- paste(hld[1:(length(hld) - 1)], collapse="/")
+    FILE$dir <- paste(head(unlist(strsplit(f[1], "/")), -1), collapse="/")
+    
     srvy.dat("default.dir", FILE$dir)
     
     for(i in 1:length(f)) {
         FILE$path[i] <- f[i]
         
-        hld <- unlist(strsplit(f[i], "/"))
-        FILE$name[i] <- hld[length(hld)]
+        FILE$name[i] <- tail(unlist(strsplit(f[i], "/")), 1)
         
         hld <- unlist(strsplit(f[i], "\\."))
-        FILE$ext[i] <- if(length(hld) == 1) "" else hld[length(hld)]
+        FILE$ext[i] <- if(length(hld) == 1) "" else tail(hld, 1)
     }
     
     FILE
 }
-

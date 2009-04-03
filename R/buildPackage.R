@@ -1,7 +1,7 @@
 "buildPackage" <- function() {
     
     if(.Platform$OS.type != "windows") 
-        stop(call.=FALSE, "Function requires a Windows platform.")
+        stop(call.=FALSE, "This function requires a Windows platform.")
     
 # Software requirements for building R packages in Windows XP Pro.
 
@@ -13,9 +13,6 @@
 #   http://www.miktex.org/setup.html
     
     pkg <- rev(unlist(strsplit(getwd(), "/")))[1]
-    
-    if(pkg %in% .packages()) 
-        stop(call.=FALSE, "This function is for package developers only.")
     
     pkg.path <- shQuote(getwd())
     tmp.path <- shQuote(paste("C:/", pkg, sep=""))
@@ -36,9 +33,7 @@
     
     cmd <- paste(Sys.getenv("COMSPEC"), "/c", cmd, sep=" ")
     
-    for(i in cmd) {
+    for(i in cmd) 
         cat(paste(i, "\n", sep=""))
-###     system(command=i, invisible=FALSE)
-    }
 }
 

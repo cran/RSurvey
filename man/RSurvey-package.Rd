@@ -17,19 +17,19 @@ error corrections and data visualization.  A graphical user interface (\acronym{
   \tabular{ll}{
     Package: \tab RSurvey\cr
     Type: \tab Package\cr
-    Version: \tab 0.4.3\cr
-    Date: \tab 2009-02-28\cr
+    Version: \tab 0.4.5\cr
+    Date: \tab 2009-04-03\cr
     License: \tab GPL version 2 or newer.
   }
 }
 
 \note{
-\R needs to operate as an \acronym{SDI} application with multiple top-level 
+The \pkg{RSurvey} \acronym{GUI} requires that 
+\R operate as an \acronym{SDI} application with multiple top-level 
 windows for the console, graphics and pager. 
-Preservation of unit consistency within \pkg{RSurvey} is tasked to the user. 
-To assist with unit consistency parameter dimensions are included within the 
-\acronym{GUI} entry labels.
-
+Preservation of unit consistency within this package is tasked to the user. 
+Parameter dimensions are included in the \acronym{GUI} entry labels to 
+assist with unit consistency.
 }
 
 \author{

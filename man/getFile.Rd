@@ -5,24 +5,25 @@
 \title{Select a File to Open or Save.}
 
 \description{
-A \acronym{GUI} for file management.
+A pop up a dialog box for the user to select a file to open or save.
 }
 
-\usage{getFile(cmd = "open", exts = NULL, directory = NULL, file = NULL)}
+\usage{getFile(cmd = "Open", exts = NULL, directory = NULL, file = NULL, titleStr = cmd)}
 
 \arguments{
-\item{cmd}{determines if an \code{"open"} or \code{"save"} file management pop up dialog box is implemented.}
-\item{exts}{an array of file extensions}
-\item{directory}{the default directory}
+\item{cmd}{determines if an \code{"Open"} or \code{"Save As"} file management pop up dialog box is implemented.}
+\item{exts}{an array of default file extensions.}
+\item{directory}{specifies that the files in \code{directory} should be displayed when the dialog pops up.}
 \item{file}{either a character string naming a file or a connection.}
+\item{titleStr}{a character string to display as the title of the dialog box.}
 }
 
 \value{
-A list containing 4 values:
+A list containing 4 components:
   \item{dir}{the directory containing the file.}
-  \item{path}{the path associated with the file.}
-  \item{name}{the name of the file.}
-  \item{ext}{the extension associated with the file.}
+  \item{path}{the file path}
+  \item{name}{the file name}
+  \item{ext}{the file extension}
 }
 
 \author{Fisher, J. C.}

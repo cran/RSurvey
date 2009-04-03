@@ -17,7 +17,8 @@
         if(is.na(z.max) && !z.max.auto) z.max.auto <- 1
         if(is.na(z.lev) && !z.lev.auto) z.lev.auto <- 1
         
-        new <- list(z.min=z.min, z.min.auto=z.min.auto, z.max=z.max, z.max.auto=z.max.auto, 
+        new <- list(z.min=z.min, z.min.auto=z.min.auto, 
+                    z.max=z.max, z.max.auto=z.max.auto, 
                     z.lev=z.lev, z.lev.auto=z.lev.auto)
         new
     }
@@ -63,12 +64,9 @@
     }
     tktitle(tt3) <- "Axes Limits"
     
-    if(!is.null(srvy.dat("icon")) && file.exists(srvy.dat("icon"))) 
-        tkwm.iconbitmap(tt3, srvy.dat("icon"))
-    
     tkwm.resizable(tt3, 0, 0)
     
-  # frame 1 contains z-axis paramters
+  # frame 1 contains z-axis limits
     
     frame1 <- ttklabelframe(tt3, relief="flat", padding=3, text="Raster Data")
     
@@ -112,4 +110,3 @@
     
     new
 }
-

@@ -1,9 +1,13 @@
 "tran.dat" <- local({
+    
     dat <- list()
+    
     default <- list("fix.zero" = "L", 
                     "h.offset" = 0, 
+                    "v.offset" = 0,
                     "grid.dx"  = 0.05, 
                     "grid.dy"  = 0.005)
+    
     function(id, option, value, clearId=FALSE, clearAll=FALSE) {
         
       # clear all transects

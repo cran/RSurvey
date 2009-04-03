@@ -10,9 +10,9 @@
   # plot labels
     
     vars <- srvy.dat("vars")
-    x.lab    <- vars[2]
-    y.lab    <- vars[3]
-    state.id <- vars[4]
+    x.lab <- vars[2]
+    y.lab <- vars[3]
+    z.lab <- vars[4]
     
   # limits
     
@@ -49,20 +49,15 @@
     x11(width=win.width, height=win.height, pointsize=10)
     
   # graphics layout
-       
-    mar.orig <- par("mar")
     
-    w <- (3 + mar.orig[2]) * par("csi") * 2.54
-    
+    mar <- par("mar")
+    w <- (3 + mar[2]) * srvy.dat("csi") * 2.54
     layout(matrix(c(2, 1), nc=2), widths=c(1, lcm(w)))
     
   # legend
     
     par(las=1)
-    mar <- mar.orig
-    mar[4] <- mar[2]
-    mar[2] <- 1
-    par(mar=mar)
+    par(mar=c(mar[1], 1, mar[3], mar[2]))
     
     plot.new()
     
@@ -79,9 +74,7 @@
     
   # plot
     
-    mar <- mar.orig
-    mar[4] <- 1
-    par(mar=mar)
+    par(mar=c(mar[1:3], 1))
     
     plot.new()
     plot.window(xlim=x.lim, ylim=y.lim, log="", xaxs="i", yaxs="i", asp=asp.ratio)
@@ -91,7 +84,7 @@
     
     minorTics(1:2)
     
-    m.lab <- paste(c("Point Locations", state.id), collapse=" and Corresponding ")
+    m.lab <- paste(c("Point Locations", z.lab), collapse=" and Corresponding ")
     
     title(main=m.lab, xlab=x.lab, ylab=y.lab, cex.main=0.9)
     
@@ -106,8 +99,8 @@
     if(length(ids) > 0) {
         for(id in ids) {
             vertices <- tran.dat(id, "vertices")
-            lines(vertices, col="black")
-            points(vertices, col="black", pch=19)
+            lines(vertices)
+            points(vertices, pch=19)
             text(vertices, pos=1, cex=0.7, labels=paste(id, c("L", "R"), sep="-"))
         }
     }
@@ -117,7 +110,9 @@
   # margin text
     
     data.file <- srvy.dat("data.file")
-    if(nchar(data.file) > 40) data.file <- paste(substr(data.file, 1, 40), "...", sep="")
+    if(!is.null(data.file) && nchar(data.file) > 40) 
+        data.file <- paste(substr(data.file, 1, 40), "...", sep="")
+    
     txt <- paste("Raw File:", data.file, sep=" ")
     mtext(txt, side=3, line=-0.6, cex=0.7, outer=TRUE, adj=0) 
     
@@ -129,4 +124,3 @@
     txt <- paste(srvy.dat("ver"), date(), sep=", ")
     mtext(txt, side=1, line=-1.1, cex=0.7, outer=TRUE, adj=1)
 }
-

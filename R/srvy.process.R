@@ -22,7 +22,6 @@
       # constrain temporal data
         
         if(!is.null(dat$datetime)) {
-            
             datetime <- strptime(dat$datetime, "%Y-%m-%d %H:%M:%OS")
             
             s.t <- paste(srvy.dat("sd"), " ", srvy.dat("sh"), ":", srvy.dat("sm"), ":", srvy.dat("ss"), sep="")
@@ -90,10 +89,9 @@
         
       # correct for water surface elevation
         
-        if(!is.null(srvy.dat("depth")) && !is.null(srvy.dat("wtr.elev"))) {
+        if(!is.null(srvy.dat("depth")) && !is.null(srvy.dat("wtr.elev"))) 
             if(as.logical(srvy.dat("depth"))) 
                 dat$z <- srvy.dat("wtr.elev") - dat$z
-        }
         
       # incorporate polygon spatial domain
         

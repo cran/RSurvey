@@ -121,9 +121,6 @@
     }
     tktitle(tt2) <- "Autocrop"
     
-    if(!is.null(srvy.dat("icon")) && file.exists(srvy.dat("icon"))) 
-        tkwm.iconbitmap(tt2, srvy.dat("icon"))
-    
     tkwm.resizable(tt2, 0, 0)
     
   # frame 1 contains parameters

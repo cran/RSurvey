@@ -48,7 +48,7 @@ tran.dat(id, option, value, clearId = FALSE, clearAll = FALSE)
 \examples{
 # To set a parameter within a transect
 tran.dat("T1", "h.offset", 10)
-tran.dat("T1", "hrz.dist", 3.14)
+tran.dat("T1", "v.origin", 3.14)
 tran.dat("T2", "h.offset", 9)
 # To get a parameter value
 tran.dat("T1", "h.offset")

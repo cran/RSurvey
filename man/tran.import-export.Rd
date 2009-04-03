@@ -78,10 +78,9 @@ con <- file(f, open = "r", encoding = "latin1")
 tran.import(type = "profile", id = "T1", file = con)
 
 f <- paste(getwd(), "/test.txt", sep="")
-con <- file(f, open = "w", encoding = "latin1")
+con <- file(f, open = "w")
 tran.export(type = "profile", id = "T1", file = con)
 }
-
 ## A sample raster file including a header and two rows of data.
 
 ## motoX	motoY	temp	pH	SpCond
@@ -94,7 +93,7 @@ con <- file(f, open = "r", encoding = "latin1")
 tran.import(type = "raster", id = "T1", file = con)
 \donttest{
 f <- paste(getwd(), "/test.txt", sep="")
-con <- file(f, open = "w", encoding = "latin1")
+con <- file(f, open = "w")
 tran.export("T1", type="raster", file = con)
 }
 }

@@ -39,9 +39,6 @@
     }
     tktitle(tt3) <- "Velocity Vector Components"
     
-    if(!is.null(srvy.dat("icon")) && file.exists(srvy.dat("icon"))) 
-        tkwm.iconbitmap(tt3, srvy.dat("icon"))
-    
     tkwm.resizable(tt3, 0, 0)
     
   # frame 1 contains velocity vector identification

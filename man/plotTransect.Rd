@@ -25,8 +25,7 @@ The horizontal axis is representative of the distance between transect vertices 
 the vertical axis the distance from the vertex origin, \code{v.origin}, positive upward. 
 The profile along a transect is by default based on the interpolated surface, \code{data.tin}. 
 If the \code{data.tin} component of \code{\link{srvy.dat}} is \code{NULL} the function will attempt to 
-access imported profile data in \code{prof}. 
-
+access imported profile data in \code{prof}.
 }
 
 \author{Fisher, J. C.}

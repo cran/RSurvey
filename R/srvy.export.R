@@ -6,11 +6,12 @@
     data.tin <- srvy.dat("data.tin")
     
   # determine file name and save
+    
     ext <- "txt"
     if(!is.null(data.tin)) 
         ext <- append(ext, "tin")
     
-    f <- getFile(cmd="save", exts=ext, file=file)
+    f <- getFile(cmd="Save As", exts=ext, file=file)
     if(is.null(f)) return()
     
     con <- if("connection" %in% class(file)) file 

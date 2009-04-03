@@ -44,8 +44,8 @@ The list \code{data.tin} contains the following components:
 
 \section{Survey Parameters}{
   \tabular{lll}{
-    \code{csi}         \tab numeric   \tab the height of plotted characters (in).\cr
     \code{cols}        \tab character \tab fields within the imported survey data, a concatenation of column type and units.\cr
+    \code{csi}         \tab numeric   \tab the height of plotted characters (in).\cr
     \code{data.file}   \tab character \tab the imported text file containing survey data.\cr
     \code{data.raw}    \tab data.frame\tab raw survey data, see Details section.\cr
     \code{data.mod}    \tab data.frame\tab processed survey data, see Details.\cr
@@ -61,7 +61,6 @@ The list \code{data.tin} contains the following components:
     \code{font.gui}    \tab character \tab the \acronym{GUI} font, family and size.\cr
     \code{grad.tol}    \tab numeric   \tab tolerance value for state variable correction.\cr 
     \code{grid.res}    \tab numeric   \tab the grid resolution for interpolation.\cr
-    \code{icon}        \tab character \tab the file path to the \acronym{GUI} icon.\cr
     \code{max.vect}    \tab numeric   \tab the maximum length for plotting velocity vector arrows.\cr
     \code{max.x}       \tab numeric   \tab maximum x value\cr
     \code{max.y}       \tab numeric   \tab maximum y value\cr 

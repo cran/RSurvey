@@ -17,7 +17,6 @@
         hld <- append(hld, ifelse(tclvalue(n.2) == "", NA, tclvalue(tkget(frame1.lst.2, n.2))))
         hld <- append(hld, ifelse(tclvalue(n.3) == "", NA, tclvalue(tkget(frame1.lst.3, n.3))))
         hld <- append(hld, ifelse(tclvalue(n.4) == "", NA, tclvalue(tkget(frame1.lst.4, n.4))))
-        
         srvy.dat("vars", hld)
         
         tclvalue(tt2.done.var) <- 1
@@ -42,9 +41,6 @@
         tkwm.geometry(tt2, paste("+", as.integer(tmp[2]) + 25, "+", as.integer(tmp[3]) + 25, sep=""))
     }
     tktitle(tt2) <- "Variables"
-    
-    if(!is.null(srvy.dat("icon")) && file.exists(srvy.dat("icon"))) 
-        tkwm.iconbitmap(tt2, srvy.dat("icon"))
     
     tkwm.resizable(tt2, 0, 0)
     
@@ -134,8 +130,10 @@
     for(i in cols) tkinsert(frame1.lst.4, "end", i)
     
     idx <- rep(NA, 4)
-    for(i in 1:4) 
-        if(vars[i] %in% cols) idx[i] <- match(vars[i], cols) - 1
+    for(i in 1:4) {
+        if(vars[i] %in% cols) 
+            idx[i] <- match(vars[i], cols) - 1
+    }
     
     if(!is.na(idx[1])) tkselection.set(frame1.lst.1, idx[1])
     if(!is.na(idx[2])) tkselection.set(frame1.lst.2, idx[2])

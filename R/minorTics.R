@@ -36,7 +36,6 @@
             hld <- range(loc.tics)
             delta <- (hld[2] - hld[1]) / (length(loc.tics) - 1)
             lim <- c(hld[1] - delta, hld[2] + delta)
-            
             low.tics  <- diff(lim) * ((low.tics - y1) / diff(c(y1, y2))) + lim[1]
             mid.tics  <- diff(lim) * ((mid.tics - y1) / diff(c(y1, y2))) + lim[1]
         }

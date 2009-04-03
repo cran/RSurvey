@@ -35,12 +35,12 @@
     pts.in.poly <- function(x, y, poly.domain) {
         idx <- 1:length(x)
         pts <- get.pts(poly.domain)
-        hld <- NULL
+        ans <- NULL
         for(i in 1:length(pts)) {
-            ans <- point.in.polygon(point.x=x, point.y=y, pol.x=pts[[i]]$x, pol.y=pts[[i]]$y)
-            hld <- c(hld, idx[ans != 0])
+            hld <- point.in.polygon(point.x=x, point.y=y, pol.x=pts[[i]]$x, pol.y=pts[[i]]$y)
+            ans <- c(ans, idx[hld != 0])
         }
-        hld
+        ans
     }
     
 # main program
@@ -52,6 +52,9 @@
     
   # simplify data notation
     
+    win.width <- srvy.dat("win.width")
+    n.levels  <- srvy.dat("n.levels")
+    
     vertices  <- tran.dat(id, "vertices")
     fix.zero  <- tran.dat(id, "fix.zero")
     v.origin  <- tran.dat(id, "v.origin")
@@ -61,10 +64,6 @@
     grid.dy   <- tran.dat(id, "grid.dy")
     zero.int  <- tran.dat(id, "zero.int")
     asp.ratio <- tran.dat(id, "asp.ratio")
-    
-    win.width <- srvy.dat("win.width")
-    n.levels  <- srvy.dat("n.levels")
-    csi       <- srvy.dat("csi")
     
   # total distance between vertices
     
@@ -106,7 +105,7 @@
         }
         else {
             mar <- c(5.1, 4.1 / asp.ratio, 4.1, 2.1 / asp.ratio)
-            mar.width <- (mar[2] + mar[4]) * csi
+            mar.width <- (mar[2] + mar[4]) * srvy.dat("csi")
             mar.height <- mar.width * ((mar[1] + mar[3]) / (mar[2] + mar[4]))
             ratio <- diff(lim.y) / diff(lim.x) * asp.ratio
             win.height <- ((win.width - mar.width) * ratio) + mar.height
@@ -153,7 +152,6 @@
     if(is.null(hv.fields)) 
         stop(call.=FALSE, "Spatial fields have not been specified.")
     hv.fields <- make.names(hv.fields)
-    
     dat <- as.data.frame(tran.dat(id, "data.ras")[,hv.fields])
     names(dat) <- c("x", "y")
     
@@ -173,23 +171,30 @@
   # spatial domain
     
     poly.domain <- NULL
-    if(is.null(d)) {
-        hpts <- chull(dat)
-        poly.domain <- as(dat[hpts,], "gpc.poly")
-    }
+    if(is.null(d)) 
+        poly.domain <- as(dat[chull(dat),], "gpc.poly")
     else {
-        tmp <- d[,c("x", "y")]
-        if(v.origin > max(d[1, "y"])) 
-            tmp <- rbind(c(d[1, "x"], v.origin), tmp, c(d[nrow(d), "x"], v.origin))
-        poly.profile <- as(tmp, "gpc.poly")
-        poly.surface <- as(structure(c(range(d[,"x"]), rev(range(d[,"x"])), 0, 0, rep(v.origin, 2)), 
-                        .Dim=c(4, 2)), "gpc.poly")
-        poly.domain <- intersect(poly.profile, poly.surface)
+        xy <- d[,c("x", "y")]
+        
+        if(v.origin <= min(d[,"y"])) 
+            stop(call.=FALSE, "Local z-axis origin less than or equal to minium z value.")
+        else if(v.origin == max(d[,"y"])) 
+            poly.domain <- as(xy, "gpc.poly")
+        else if(v.origin >  max(d[,"y"])) {
+            hld <- rbind(c(d[1, "x"], v.origin), xy, c(d[nrow(d), "x"], v.origin))
+            poly.domain <- as(hld, "gpc.poly")
+        }
+        else {
+            hld <- c(range(d[,"x"]), rev(range(d[,"x"])), rep(min(d[,"y"]) - 1, 2), rep(v.origin, 2))
+            hld <- structure(hld, .Dim=c(4, 2))
+            poly.domain <- intersect(as(xy, "gpc.poly"), as(hld, "gpc.poly"))
+        }
     }
     
   # cross-section
     
     area <- area.poly(poly.domain)
+    
     poly.points <- get.pts(poly.domain)
     hyd.radius <- 0
     for(i in 1:length(poly.points)) 
@@ -397,7 +402,7 @@
     }
     else {
         mar <- c(5.1, 1.1 / asp.ratio, 4.1, 4.1 / asp.ratio)
-        mar.width <- (mar[2] + mar[4]) * csi
+        mar.width <- (mar[2] + mar[4]) * srvy.dat("csi")
         mar.height <- mar.width * ((mar[1] + mar[3]) / (mar[2] + mar[4]))
         ratio <- (diff(range(tin$y)) / diff(range(tin$x))) * asp.ratio
         win.height <- ((win.width - mar.width) * ratio) + mar.height

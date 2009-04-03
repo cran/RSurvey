@@ -10,7 +10,7 @@
   # axis labels
     
     vars <- srvy.dat("vars")
-    state.id <- vars[4]
+    z.lab <- vars[4]
     
   # state variable and time offsets
     
@@ -29,15 +29,16 @@
     x <- as.numeric(difftime(datetime, min(datetime, na.rm=TRUE), units="secs"))
     y <- data.raw[[make.names(vars[4])]]
     
-    plot(NA, xlim=range(x, na.rm=TRUE), ylim=range(y, na.rm=TRUE), type="n", ann=FALSE, cex.axis=0.7, xaxt="n")
+    plot(NA, xlim=range(x, na.rm=TRUE), ylim=range(y, na.rm=TRUE), 
+        type="n", ann=FALSE, cex.axis=0.7, xaxt="n")
     
     lines(x, y, col="red")
     
-    x.tic <- datetime[1] + axTicks(1)
-    xlab <- format(x.tic, format="%H:%M:%OS\n%Y-%m-%d")
+    xtic <- datetime[1] + axTicks(1)
+    xlab <- format(xtic, format="%H:%M:%OS\n%Y-%m-%d")
     axis(side=1, las=1, cex.axis=0.7, labels=xlab, at=axTicks(1))
     
-    y.lab <- ifelse(is.null(state.id), "", state.id)
+    y.lab <- ifelse(is.null(z.lab), "", z.lab)
     
     title(ylab=y.lab, line=2.5)
     minorTics(1:2)
@@ -64,8 +65,8 @@
         }
     }
     
-    x.tic <- datetime[1] + axTicks(1)
-    xlab <- format(x.tic, format="%H:%M:%OS\n%Y-%m-%d")
+    xtic <- datetime[1] + axTicks(1)
+    xlab <- format(xtic, format="%H:%M:%OS\n%Y-%m-%d")
     axis(side=1, las=1, cex.axis=0.7, labels=xlab, at=axTicks(1))
     
     title(ylab=y.lab, line=2.5)

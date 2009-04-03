@@ -23,10 +23,9 @@
     
   # scale z
     
-    if(!is.null(srvy.dat("depth"))) {
+    if(!is.null(srvy.dat("depth"))) 
         if(as.logical(srvy.dat("depth"))) 
             z <- max(z, na.rm=TRUE) - z
-    }
     
     if(!is.null(srvy.dat("zx.ratio"))) 
         z <- z * srvy.dat("zx.ratio")
@@ -47,7 +46,8 @@
     
     ppi <- 96
     winDim <- ppi + srvy.dat("win.width") * ppi
-    par3d(windowRect=c(ppi, ppi, winDim, winDim * 0.75), mouseMode=c("trackball", "zAxis", "zoom"))
+    par3d(windowRect=c(ppi, ppi, winDim, winDim * 0.75), 
+        mouseMode=c("trackball", "zAxis", "zoom"))
     
   # add terrain surface shape (i.e. population density)
     
