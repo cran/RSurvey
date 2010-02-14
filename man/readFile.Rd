@@ -2,41 +2,42 @@
 
 \alias{readFile}
 
-\title{Data Input}
+\title{Read Data File}
 
 \description{
-Reads a file in table format.
+Reads an \acronym{ASCII} file in table format and creates a data frame from it.
 }
 
 \usage{
-readFile(file, fields = TRUE, units = TRUE)
+readFile(file, fields = TRUE, units = TRUE, sep = "\t", 
+encoding = getOption("encoding"))
 }
 
 \arguments{
-\item{file}{either a character string naming a file or a connection.}
-\item{fields}{a logical value indicating whether the file contains the names of the variables as its first line.}
-\item{units}{a logical value indicating whether the file contains the units of the variables as its second line.}
+\item{file}{character; the name of the file which the data will be read from.  Alternatively, \code{file} can be a readable text-mode \code{\link{connection}} (optional).}
+\item{fields}{logical; if \code{TRUE} the \code{file} contains the names of the variables as its first line.}
+\item{units}{logical; if \code{TRUE} the \code{file} contains the units of the variables as its second line.}
+\item{sep}{character; the field separator string. Values on each line of the file are separated by this string.}
+\item{encoding}{character; encoding to be assumed for input strings. If the value is \code{"latin1"} or \code{"UTF-8"} it is used to mark character strings as known to be in Latin-1 or UTF-8: it is not used to re-encode the input.}
 }
 
 \format{
-A tab delineated file, \file{*.txt}, containing the following variables:
-  \tabular{lll}{
-    \code{[,1]}  \tab character \tab date/time (optional)\cr
-    \code{[,2]}  \tab numeric   \tab x values\cr
-    \code{[,3]}  \tab numeric   \tab y values\cr
-    \code{[,4:]} \tab numeric   \tab z values, state variable(s)
+A tab delineated text file containing at least the following variables:
+  \describe{
+    \item{\code{[,1]}}{numeric; a vector of \code{x} coordinates}
+    \item{\code{[,2]}}{numeric; a vector of \code{y} coordinates}
   }
 The first \code{[1,]} and second \code{[2,]} rows are reserved for column descriptors and units, respectively. 
-Units associated with date/time values are based on format character strings described in \code{\link{strptime}}, 
-for example \code{"\%d/\%m/\%Y \%H:\%M:\%OS"}. You can embed comments in the data file by using the 
+Units associated with date-time values are based on format character strings described in \code{\link{strptime}}, 
+for example \code{"\%d/\%m/\%Y \%H:\%M:\%OS"}. You may embed comments in the data file by using the 
 \dQuote{\code{#}} character. Anything after a \dQuote{\code{#}} on a line will be ignored.
 }
 
 \value{
-A list with the following components: \code{cols}, a character array of column names. 
-\code{vars}, a character array of column names associated with the  
-date/time \code{[1]}, x \code{[2]}, y \code{[3]}, and z \code{[4]} variables. 
-\code{data.raw}, a data frame of raw survey data.
+Returns a list with the following components: 
+\item{dat}{data.frame; a table of data}
+\item{cols}{character; a vector of column names}
+\item{vars}{character; a vector giving the initial guesses of column names associated with the date-time, \code{x}, \code{y}, and \code{z} variables.}
 }
 
 \author{Fisher, J. C.}
@@ -46,19 +47,18 @@ date/time \code{[1]}, x \code{[2]}, y \code{[3]}, and z \code{[4]} variables.
 }
 
 \examples{
-## A sample file including a header and two rows of data.
+# A sample of the tab delineated formatting is provided below and includes 
+# a header and two rows of data. Note that the '##' are not include.
 
-## Date / Time	Easting	Northing	Depth
-## \%d/\%m/\%Y \%H:\%M:\%OS	m	m	m
-## 06/01/2001 01:01:59.000	727972.52	4138308.65	3.12
-## 06/01/2001 01:01:59.200	727972.51	4138308.68	3.12
+## Date Time	X	Y	Z
+## %Y-%m-%d %H:%M:%OS	m	m	m
+## 2009-04-24 10:43:38.275	 7.8	-2.3	-0.2650
+## 2009-04-24 11:20:43.757	 5.0	-4.7	-0.3790
 
-f <- system.file("RSurvey-ex/lake.txt", package = "RSurvey")
+f <- system.file("RSurvey-ex/DataExample.dat", package = "RSurvey")
 con <- file(f, open = "r", encoding = "latin1")
 d <- readFile(con)
-srvy.dat("cols", d$cols)
-srvy.dat("vars", d$vars)
-srvy.dat("data.raw", d$dat)
+close(con)
 }
 
 \keyword{file}

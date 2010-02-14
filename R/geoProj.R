@@ -1,68 +1,56 @@
-"geoProj" <- function(tt1=NULL) {
-    
-# additional functions (subroutines)
-    
-    update.par <- function() {
-        if(tclvalue(projection.var) != "") 
-            srvy.dat("projection", tclvalue(projection.var))
-    }
+"geoproj" <- function(parent, old=NULL) {
     
 # main program
-    
-  # GUI font
-    
-    fnt <- srvy.dat("font.gui")
     
   # assign the variables linked to Tk widgets 
     
     projection.var <- tclVar()
     
-    if(!is.null(srvy.dat("projection"))) 
-        tclvalue(projection.var) <- srvy.dat("projection")
+    if(!is.null(old)) 
+        tclvalue(projection.var) <- old
     
-    tclvalue(projection.var) <- ifelse(is.null(srvy.dat("projection")), "", srvy.dat("projection"))
-    
-    tt2.done.var <- tclVar(0)
+    tt.done.var <- tclVar(0)
     
   # open gui
     
-    tt2 <- tktoplevel(padx=5, pady=5)
-    if(!is.null(tt1)) {
-        tkwm.transient(tt2, tt1)
-        tmp <- unlist(strsplit(as.character(tkwm.geometry(tt1)), "\\+"))
-        tkwm.geometry(tt2, paste("+", as.integer(tmp[2]) + 25, "+", as.integer(tmp[3]) + 25, sep=""))
+    tt <- tktoplevel(padx=5, pady=5)
+    if(!missing(parent)) {
+        tkwm.transient(tt, parent)
+        tmp <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
+        tkwm.geometry(tt, paste("+", as.integer(tmp[2]) + 25, "+", as.integer(tmp[3]) + 25, sep=""))
     }
-    tktitle(tt2) <- "Geographical Projection"
+    tktitle(tt) <- "Geographical Projection"
     
-    tkwm.resizable(tt2, 0, 0)
+    tkwm.resizable(tt, 0, 0)
     
-  # frame 1 contains parameters
+  # frame 0 contains parameters
     
-    frame1 <- tkframe(tt2, relief="flat", borderwidth=2)
+    frame0 <- ttkframe(tt, relief="flat", borderwidth=2)
     
-    frame1.lab.1.1 <- tklabel(frame1, font=fnt, text="Projection")
+    frame0.lab.1.1 <- ttklabel(frame0, text="Projection")
     
-    frame1.lab.1.3 <- tklabel(frame1, font=fnt, text="")
+    frame0.lab.1.3 <- ttklabel(frame0, text="")
     
-    frame1.ent.1.2 <- tkentry(frame1, font=fnt, width=30, textvariable=projection.var)
+    frame0.ent.1.2 <- ttkentry(frame0, width=30, textvariable=projection.var)
     
-    tkgrid(frame1.lab.1.1, frame1.ent.1.2, frame1.lab.1.3, padx=1, pady=1)
+    tkgrid(frame0.lab.1.1, frame0.ent.1.2, frame0.lab.1.3, padx=1, pady=1)
     
-    tkgrid.configure(frame1.lab.1.1, sticky="e")
+    tkgrid.configure(frame0.lab.1.1, sticky="e")
     
-    tkgrid.configure(frame1.lab.1.3, sticky="w")
+    tkgrid.configure(frame0.lab.1.3, sticky="w")
     
-    tkpack(frame1, fill="both")
+    tkpack(frame0, fill="both")
     
   # gui control
     
-    tkfocus(tt2)
-    tkgrab(tt2)
-    tkbind(tt2, "<Destroy>", function() tclvalue(tt2.done.var) <- 1)
-    tkwait.variable(tt2.done.var)
+    tkfocus(tt)
+    tkgrab(tt)
+    tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1)
+    tkwait.variable(tt.done.var)
     
-    update.par()
+    tkgrab.release(tt)
+    tkdestroy(tt)
     
-    tkgrab.release(tt2)
-    tkdestroy(tt2)
+    rtn <- as.character(tclvalue(projection.var))
+    if(rtn == "") return(NULL) else return(rtn)
 }

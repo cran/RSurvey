@@ -2,7 +2,7 @@
 
 \alias{restoreSession}
 
-\title{Restore Session from Source Code Files}
+\title{Restore R Session from Source Files}
 
 \description{
 This function restores local objects within the current \R session.
@@ -11,9 +11,9 @@ This function restores local objects within the current \R session.
 \usage{restoreSession(path, save.objs, fun.call)}
 
 \arguments{
-\item{path}{a full path name; if missing a folder browser pop up dialog box is implemented.}
-\item{save.objs}{the name of local objects to preserve during the recompiling process.}
-\item{fun.call}{the name of the function to call after restoring the session (optional).}
+\item{path}{character; directory pathname, if missing a folder browser pop up dialog box is implemented}
+\item{save.objs}{character; a vector of local object names.  These objects will be preserved during the recompiling process.}
+\item{fun.call}{character, the name of the function to call after restoring the session (optional)}
 }
 
 \value{
@@ -22,13 +22,13 @@ its recursive directories.
 }
 
 \note{
-Restoring \code{\link{srvy.dat}} and \code{\link{tran.dat}} clears their components.
+Restoring \code{\link{srvy.dat}} clears its components.
 }
 
 \author{Fisher, J. C.}
 
 \seealso{
-\code{\link{source}}
+\code{\link{list.files}}, \code{\link{source}}
 }
 
 \examples{

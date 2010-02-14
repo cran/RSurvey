@@ -2,7 +2,7 @@
 
 \alias{keyEvent}
 
-\title{Content Control within Tk Entry Widgets}
+\title{Content Control within Tk Entry Widget}
 
 \description{
 Controls the character string content within a Tk entry widget.
@@ -13,15 +13,15 @@ keyEvent(ent.typ, ent.str = "", rm.data = FALSE)
 }
 
 \arguments{
-\item{ent.typ}{the entry type}
-\item{ent.str}{the entry value}
-\item{rm.data}{a logical; if \code{TRUE} the existing processed data is removed.}
+\item{ent.typ}{character; the entry type}
+\item{ent.str}{character; the entry value}
+\item{rm.data}{logical; if \code{TRUE} the existing processed data is removed}
 }
 
 \details{
-The entry types include: \var{real}, \var{second}, \var{integer}, \var{hour}, 
-\var{minute}, and \var{date}.  If \code{rm.data} is \code{TRUE} 
-then both the \code{data.mod} and \code{data.tin} components of \code{\link{srvy.dat}} 
+The entry types include: \var{real}, \var{integer}, \var{hour}, \var{minute}, \var{second}, 
+and \var{date}.  If \code{rm.data} is \code{TRUE} 
+then both the \code{data.pts} and \code{data.grd} components of \code{\link{srvy.dat}} 
 are removed.
 }
 

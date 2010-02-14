@@ -1,68 +1,83 @@
-"readFile" <- function(file, fields=TRUE, units=TRUE) {
+"readFile" <- function(file, fields=TRUE, units=TRUE, sep="\t", encoding=getOption("encoding")) {
     
   # read file
     
-    dat <- read.table(file, header=FALSE, sep=srvy.dat("sep"), na.strings=c("", "NA"),
+    dat <- read.table(file, header=FALSE, sep=sep, na.strings=c("", "NA"),
            row.names=NULL, colClasses="character", fill=TRUE, strip.white=TRUE,
            blank.lines.skip=TRUE, comment.char="#", flush=TRUE, 
-           encoding=srvy.dat("encoding"))
+           encoding=encoding)
     
     n <- ncol(dat)
     
   # header fields
     
-    fld <- NULL
-    fld.str <- rep("", n)
     if(fields) {
         fld <- as.character(dat[1,])
         dat <- dat[-1,]
-        fld.str[!is.na(fld)] <- fld[!is.na(fld)]
     }
+    else 
+        fld <- rep("", n)
     
   # header units
     
-    unt <- NULL
-    unt.str <- rep("", n)
     if(units) {
         unt <- as.character(dat[1,])
         dat <- dat[-1,]
-        unt.str[!is.na(unt)] <- paste(" (", unt[!is.na(unt)], ")", sep="")
     }
+    else 
+        unt <- rep(NA, n)
     
-  # column names
+  # reset row names
     
-    cols <- paste(fld.str, unt.str, sep="")
-    colnames(dat) <- make.names(cols, unique=TRUE)
+    row.names(dat) <- 1:nrow(dat)
+    
+  # initialize lists
+    
+    cols <- list()
+    vars <- list()
     
   # column classes
     
-    vars <- NA
-    for(j in 1:n) {
+    for(i in 1:n) {
         
-        d <- dat[,j]
+        cols[[i]] <- list()
+        cols[[i]]$name <- fld[i]
+        cols[[i]]$unit <- unt[i]
+        
+        d <- na.omit(dat[,i])
         
       # date/time
-        if(!is.null(unt)) {
-            chk <- strptime(d, unt[j])
-            yes <- !is.na(chk)
-            if(any(yes)) {
-                dat[ yes, j] <- format(chk[yes], format="%Y-%m-%d %H:%M:%OS")
-                dat[!yes, j] <- NA
-                if(is.na(vars[1])) 
-                    vars[1] <- cols[j]
+        
+        if(!is.na(unt[i])) {
+            val <- strptime(d, unt[i])
+            if(all(!is.na(val))) {
+                cols[[i]]$class <- "POSIXt"
+                dat[!is.na(dat[,i]), i] <- format(val, format="%Y-%m-%d %H:%M:%OS")
+                if(is.null(vars$t)) 
+                    vars$t <- i
                 next
             }
         }
         
       # numeric
-        chk <- as.numeric(d)
-        if(any(!is.na(chk))) {
-            dat[,j] <- chk
-            vars <- append(vars, cols[j])
+        
+        if(all(!is.na(as.numeric(d)))) {
+            cols[[i]]$class <- "numeric"
+            dat[,i] <- as.numeric(dat[,i])
+            if(is.null(vars$x)) vars$x <- i else
+            if(is.null(vars$y)) vars$y <- i
             next
         }
         
+      # character
+        
+        cols[[i]]$class <- "character"
+        dat[,i] <- as.character(dat[,i])
+        warning(paste("Column", i, "read as a character vector.\n"))
     }
     
-    list(cols=cols, vars=vars[1:4], dat=dat)
+    if(length(c(vars$x, vars$y)) < 2) 
+        stop("Insufficient spatial data provided")
+    
+    list(data=dat, cols=cols, vars=vars)
 }

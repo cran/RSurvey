@@ -1,27 +1,28 @@
-\name{geoProj}
+\name{geoproj}
 
-\alias{geoProj}
+\alias{geoproj}
 
-\title{Geographical Projection}
+\title{Set Geographical Projection}
 
 \description{
-A description of the geographical projection for the current project.
+A \acronym{GUI} for describing the geographical projection for the current project.
 }
 
-\usage{geoProj(tt1 = NULL)}
+\usage{geoproj(parent, old = NULL)}
 
 \arguments{
-\item{tt1}{a Tk toplevel widget.}
+\item{parent}{tkwin; the parent window (optional)}
+\item{old}{character; a sting describing the current geographical projection}
 }
 
 \value{
-A character string, the \code{projection} component of \code{\link{srvy.dat}}.
+Returns a character string describing the geographical projection.
 }
 
 \author{Fisher, J. C.}
 
 \examples{
-\donttest{geoProj()}
+\donttest{geoproj()}
 }
 
 \keyword{misc}

@@ -1,9 +1,9 @@
 "loadPackages" <- function() {
     
-    required.packages <- c("tcltk", "rgl", "MBA", "gpclib", "sp", "mgcv", "tripack")
+    required.packages <- c("tcltk", "rgl", "MBA", "gpclib", "sp", "tripack", "rgdal")
     
 ### PACKAGES THAT MAY BE USEFUL FOR FUTURE WORK: 
-### required.packages <- append(required.packages, c("udunits", "rgdal"))
+### required.packages <- append(required.packages, c("udunits", "mgcv"))
     
     i.p <- required.packages[!(required.packages %in% .packages(all.available=TRUE))]
     

@@ -2,10 +2,10 @@
 
 \alias{autocrop}
 
-\title{Auto Crop Spatial Domain}
+\title{Autocrop Spatial Domain}
 
 \description{
-Eliminate mesh cells with arc lengths greater than a user defined maximum.
+Eliminate mesh cells with arc lengths greater than a user specified maximum.
 }
 
 \usage{
@@ -13,17 +13,17 @@ autocrop(mesh, maxLength, maxItr)
 }
 
 \arguments{
-\item{mesh}{an object of class \code{tri}.}
-\item{maxLength}{the maximum arc length for a cell within the mesh.}
-\item{maxItr}{the maximum number of iterations.}
+\item{mesh}{tri; a Delaunay triangulation}
+\item{maxLength}{numeric; maximum arc length for a cell within the mesh}
+\item{maxItr}{integer; maximum number of iterations}
 }
 
 \value{
-A polygon of class \code{gpc.poly}.
+Returns a polygon object of class \code{gpc.poly}.
 }
 
 \seealso{
-\code{\link{polyAutocrop}}
+\code{\link{polyAutocrop}}, \code{tri.mesh}
 }
 
 \author{Fisher, J. C.}
@@ -31,7 +31,7 @@ A polygon of class \code{gpc.poly}.
 \examples{
 data(tritest)
 mesh <- tri.mesh(tritest$x, tritest$y)
-plot(mesh); axis(1); axis(2); box()
+plot(mesh)
 ply <- autocrop(mesh, maxLength = 0.5, maxItr = 100)
 plot(ply, add = TRUE, poly.args = list(col = 2))
 }

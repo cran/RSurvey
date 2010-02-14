@@ -1,82 +1,122 @@
-"getFile" <- function(cmd="Open", exts=NULL, directory=NULL, file=NULL, titleStr=cmd) {
+"getFile" <- function(parent, cmd="Open", file=NULL, exts=NULL, initialdir=NULL, initialfile=NULL, 
+             defaultextension=NULL, caption=cmd, multi=FALSE) {
 
 # additional functions (subroutines)
     
   # determine file extension
     
-    fileExt <- function(x) sub(".*\\.", "", x)
+    fileExt <- function(x) {
+        brk <- unlist(strsplit(basename(x), "\\."))
+        ext <- if(length(brk) == 1) "" else tail(brk, 1)
+        tolower(ext)
+    }
     
 # main program
     
-    FILE <- list()
+    allFilters <- list(ply  = "Polygon files", 
+                       dat  = "Table data files", 
+                       grd  = "Interpolated grid files", 
+                       rda  = "RSurvey project files", 
+                       r    = "R source files", 
+                       png  = "Png files", 
+                       jpg  = "Jpeg files", 
+                       jpeg = "Jpeg files", 
+                       ps   = "Postscript files", 
+                       eps  = "Encapsulated postscript files", 
+                       pdf  = "PDF files", 
+                       bmp  = "Windows bitmap files", 
+                       shp  = "ESRI shapefiles", 
+                       tif  = "TIFF files", 
+                       tiff = "TIFF files", 
+                       txt  = "Text files"
+                   )
     
     if(!is.null(file)) {
-        
-        filename <- if("connection" %in% class(file)) summary.connection(file)$description else file
-        hld <- unlist(strsplit(filename, "/"))
-        
-        FILE$path <- filename
-        FILE$dir  <- paste(head(hld, -1), collapse="/")
-        FILE$name <- tail(hld, 1)
-        FILE$ext  <- fileExt(filename)
-        
-        srvy.dat("default.dir", FILE$dir)
-        return(FILE)
+        if("connection" %in% class(file)) 
+            file <- summary.connection(file)$description
+        dir <- dirname(file)
+        nam <- basename(file)
+        ext <- fileExt(file)
+        typ <- allFilters[[ext]]
+        f <- list(path=file, dir=dir, name=nam, ext=ext, type=typ)
+        srvy.dat("default.dir", dir)
+        return(f)
     }
     
-    types <- '{{All files} *}'
-    ini.file <- def.ext <- ''
+    if(is.null(initialdir)) 
+        initialdir <- srvy.dat("default.dir")
+    
+    filters <- matrix(nrow=0, ncol=2)
     
     if(!is.null(exts)) {
-        for(i in rev(exts)) {
-            ext <- tolower(fileExt(i))
+        for(ext in tolower(exts)) {
+            typ <- allFilters[[ext]]
             
-            if(ext == "txt") {type <- '{{Text Files} {.txt}}'} else
-            if(ext == "dat") {type <- '{{Text Files} {.dat}}'} else
-            if(ext == "csv") {type <- '{{Text Files} {.csv}}'} else
-            if(ext == "rda") {type <- '{{R Project File} {.rda}}'} else
-            if(ext == "tin") {type <- '{{TIN Files} {.tin}}'} else
-            if(ext == "png") {type <- '{{PNG Files} {.png}}'} else
-            if(ext == "jpg") {type <- '{{JPEG Files} {.jpg .jpeg}}'} else
-            if(ext == "ps" ) {type <- '{{PostScript Files} {.ps}}'} else
-            if(ext == "eps") {type <- '{{Encapsulated PostScript Files} {.eps}}'} else
-            if(ext == "tex") {type <- '{{Latex Files} {.tex}}'} else
-            if(ext == "pdf") {type <- '{{PDF Files} {.pdf}}'} else
-            if(ext == "bmp") {type <- '{{Bitmap Files} {.bmp}}'} 
-            else 
-                type <- paste('{{File} {.', ext, '}}', sep="")
+            if(is.null(typ)) typ <- toupper(ext)
             
-            types <- c(type, types)
+            filters <- rbind(filters, c(typ, paste(".", ext, sep="")))
         }
-        ini.file <- paste('*.', ext, sep="")
-        def.ext <- ext
     }
     
-    types <- paste(types, collapse=" ")
     
-    if(is.null(directory)) 
-        directory <- srvy.dat("default.dir")
     
-    if(tolower(substr(cmd,1,4)) == "open") 
-        f <- tclvalue(tkgetOpenFile(filetypes=types, initialdir=directory,
-             title=titleStr))
-    if(tolower(substr(cmd,1,4)) == "save") 
-        f <- tclvalue(tkgetSaveFile(defaultextension=def.ext, filetypes=types,
-             initialdir=directory, initialfile=ini.file, title=titleStr))
-    if(f == "") return()
     
-    FILE$dir <- paste(head(unlist(strsplit(f[1], "/")), -1), collapse="/")
+    filters   <- rbind(filters, c("All files", "*"))
+    filters[] <- paste("{", filters, "}", sep="")
+    filters   <- apply(filters, 1, paste, collapse=" ")
+    filters   <- paste(paste("{", filters, "}", sep=""), collapse=" ")
     
-    srvy.dat("default.dir", FILE$dir)
+    if(tolower(substr(cmd, 1, 4)) == "open") 
+        args <- list("tk_getOpenFile", title=caption, multiple=multi)
+    else 
+        args <- list("tk_getSaveFile", title=caption)
     
-    for(i in 1:length(f)) {
-        FILE$path[i] <- f[i]
+    if(!missing(parent)) args[["parent"]] <- parent
+    
+    if(!is.null(defaultextension)) 
+        args <- c(args, defaultextension=defaultextension)
+    if(!is.null(initialdir)) 
+        args <- c(args, initialdir=initialdir)
+    if(!is.null(initialfile)) 
+        args <- c(args, initialfile=initialfile)
+    
+    args <- c(args, filetypes=filters)
+    
+    res <- tclvalue(do.call(tcl, args))
+    
+    if(!nzchar(res)) return()
+    
+    if(multi) {
+        ans <- character()
+        pat <- "([^{])*\\{([^}]*)\\}(.*)"
+        while (grepl(pat, res)) {
+            ans <- c(ans, sub(pat, "\\2", res))
+            res <- sub(pat, "\\1\\3", res)
+        }
+        ans <- c(ans, strsplit(res, " ", fixed = TRUE)[[1]])
+        ans <- ans[nzchar(ans)]
+    }
+    else 
+        ans <- res
+    
+    n <- length(ans)
+    if(n > 1) f <- list()
+    for(i in 1:n) {
         
-        FILE$name[i] <- tail(unlist(strsplit(f[i], "/")), 1)
+        pth <- ans[i]
+        dir <- dirname(pth)
+        nam <- basename(pth)
+        ext <- fileExt(pth)
+        typ <- allFilters[[ext]]
         
-        hld <- unlist(strsplit(f[i], "\\."))
-        FILE$ext[i] <- if(length(hld) == 1) "" else tail(hld, 1)
+        val <- list(path=pth, dir=dir, name=nam, ext=ext, type=typ)
+        if(n > 1) f[[i]] <- val else f <- val
     }
     
-    FILE
+    if(is.null(f)) 
+        warning("No file was selected")
+    else 
+        srvy.dat("default.dir", dir)
+    
+    f
 }

@@ -2,36 +2,36 @@
 
 \alias{polyCutout}
 
-\title{Cutout Grid Points within Polygon}
+\title{Determine Grid Points within Polygon}
 
 \description{
 This function excludes data points outside a given polygon.
 }
 
 \usage{
-polyCutout(dat, ply)
+polyCutout(dat, ply = NULL)
 }
 
 \arguments{
-\item{dat}{a list containing \code{x}, \code{y}, and \code{z} components, see Value section.}
-\item{ply}{a polygon of class \code{gpc.poly-class}.}
+\item{dat}{list; with components \code{dat$x}, \code{dat$y}, and \code{dat$z}, see Value section}
+\item{ply}{gpc.poly; a polygon}
 }
 
 \details{
-Returns \code{NA} values for \code{z} when points (\code{x}, \code{y}) are located outside the polygon.
+Values of \code{z} corresponding to nodes (\code{x}, \code{y}) located outside the polygon will be set to \code{NA}.
 }
 
 \value{
-A list containing the following components:
-  \item{x}{grid point locations in the x-direction.}
-  \item{y}{grid point locations in the y-direction.}
-  \item{z}{a matrix of state variable values corresponding to the grid.}
+Returns a list containing the following components:
+  \item{x}{numeric; a vector of grid point locations in the x-direction}
+  \item{y}{numeric; a vector of grid point locations in the y-direction}
+  \item{z}{matrix; state variable values corresponding to nodes in the grid}
 }
 
 \author{Fisher, J. C.}
 
 \seealso{
-\code{point.in.polygon}, \code{filled.contour}
+\code{point.in.polygon}
 }
 
 \examples{
@@ -43,12 +43,11 @@ y <- seq(0, 10, 0.1)
 z <- matrix(runif(length(x) * length(y)), 
      nrow = length(y), ncol = length(x))
 
-dat.old <- list(x = x, y = y, z = z)
-filled.contour(dat.old, 
-    plot.axes = {axis(1); axis(2); plot(ply, add = TRUE)})
+d <- list(x = x, y = y, z = z)
+filled.contour(d, plot.axes = {axis(1); axis(2); plot(ply, add = TRUE)})
 
-dat.new <- polyCutout(dat.old, ply)
-filled.contour(dat.new, color.palette = terrain.colors)
+d <- polyCutout(d, ply)
+filled.contour(d, color.palette = terrain.colors)
 }
 
 \keyword{manip}

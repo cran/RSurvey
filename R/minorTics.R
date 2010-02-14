@@ -33,9 +33,9 @@
             stop(call.=FALSE, "Unexpected tick interval. No minor ticks plotted.")
         
         if(!(is.null(loc.tics))) {
-            hld <- range(loc.tics)
-            delta <- (hld[2] - hld[1]) / (length(loc.tics) - 1)
-            lim <- c(hld[1] - delta, hld[2] + delta)
+            ran <- range(loc.tics)
+            delta <- (ran[2] - ran[1]) / (length(loc.tics) - 1)
+            lim <- c(ran[1] - delta, ran[2] + delta)
             low.tics  <- diff(lim) * ((low.tics - y1) / diff(c(y1, y2))) + lim[1]
             mid.tics  <- diff(lim) * ((mid.tics - y1) / diff(c(y1, y2))) + lim[1]
         }

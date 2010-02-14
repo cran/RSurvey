@@ -2,28 +2,36 @@
 
 \alias{getFile}
 
-\title{Select a File to Open or Save.}
+\title{Select a File to Open or Save As}
 
 \description{
-A pop up a dialog box for the user to select a file to open or save.
+A \acronym{GUI} for selecting a file to open or save.
 }
 
-\usage{getFile(cmd = "Open", exts = NULL, directory = NULL, file = NULL, titleStr = cmd)}
+\usage{getFile(parent, cmd = "Open", file = NULL, exts = NULL, 
+initialdir = NULL, initialfile = NULL, defaultextension = NULL, 
+caption = cmd, multi = FALSE)}
 
 \arguments{
-\item{cmd}{determines if an \code{"Open"} or \code{"Save As"} file management pop up dialog box is implemented.}
-\item{exts}{an array of default file extensions.}
-\item{directory}{specifies that the files in \code{directory} should be displayed when the dialog pops up.}
-\item{file}{either a character string naming a file or a connection.}
-\item{titleStr}{a character string to display as the title of the dialog box.}
+\item{parent}{tkwin; the parent window (optional)}
+\item{cmd}{character; specifies whether an \code{"Open"} or \code{"Save As"} file management pop up dialog box is implemented.}
+\item{file}{character; the name of the file which the data are to be read from.  Alternatively, \code{file} can be a readable text-mode \code{\link{connection}} (optional).}
+\item{exts}{character; a vector of default file extensions}
+\item{initialdir}{character; specifies that the files in this directory should be displayed when the dialog pops up.}
+\item{initialfile}{character; the filename to be displayed in the dialog when it pops up.}
+\item{defaultextension}{character; the string that will be appended to the filename if the user enters a filename without an extension.}
+\item{caption}{character; a string to display as the title of the dialog box.}
+\item{multi}{logical; if \code{TRUE} multiple files may be selected}
 }
 
 \value{
-A list containing 4 components:
-  \item{dir}{the directory containing the file.}
-  \item{path}{the file path}
-  \item{name}{the file name}
-  \item{ext}{the file extension}
+If \code{multi} is \code{FALSE} returns a list containing the following components:
+  \item{path}{character; the \code{file} path}
+  \item{dir}{character; the directory that contains the \code{file}}
+  \item{name}{character; the \code{file} name}
+  \item{ext}{character; the \code{file} extension}
+  \item{type}{character; the \code{file} type}
+Otherwise, a list is returned containing list components for each file.
 }
 
 \author{Fisher, J. C.}

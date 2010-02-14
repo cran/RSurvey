@@ -2,28 +2,24 @@
 
 \alias{srvy.config}
 
-\title{Window and Plotting Parameters}
+\title{Set Window and Plotting Parameters}
 
 \description{
-A \acronym{GUI} used to define window geometry and universal plotting parameters.
+A \acronym{GUI} for specifying window geometry and universal plotting parameters.
 }
 
 \usage{
-srvy.config(tt1 = NULL)
+srvy.config(parent)
 }
 
 \arguments{
-\item{tt1}{a Tk toplevel widget.}
+\item{parent}{tkwin; the parent window (optional)}
 }
 
 \details{
-The output date/time format is based on character representations described in 
-\code{\link{strptime}}, for example \code{"\%d/\%m/\%Y \%H:\%M:\%OS"}.
-}
-
-\value{
-The following components within \code{\link{srvy.dat}} are set: 
-\code{n.levels}, \code{win.windth}, \code{yx.ratio}, \code{zx.ratio}, \code{date.fmt}.
+The output date-time format is based on a character string representation described in 
+\code{\link{strptime}}, for example \code{"02/26/2010 17:05:39.61"} is represented using 
+\code{"\%d/\%m/\%Y \%H:\%M:\%OS"}.
 }
 
 \author{Fisher, J. C.}

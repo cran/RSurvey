@@ -1,7 +1,0 @@
-structure(list(id = "T3", vertices = structure(c(679405.706, 
-679429.701, 4135451.614, 4135461.206), .Dim = c(2L, 2L), .Dimnames = list(
-    c("1", "2"), c("x", "y"))), fix.zero = "L", v.origin = 11.442, 
-    v.offset = -0.18, h.offset = 9.8, grid.dx = 0.05, grid.dy = 0.005, 
-    asp.ratio = 5), .Names = c("id", "vertices", "fix.zero", 
-"v.origin", "v.offset", "h.offset", "grid.dx", "grid.dy", "asp.ratio"
-))

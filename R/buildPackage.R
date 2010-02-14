@@ -26,7 +26,7 @@
     cmd <- append(cmd, paste("CP -r", pkg.path, shQuote("C:/"), sep=" "))
     cmd <- append(cmd, paste("RMDIR /S /Q", chk.path, sep=" "))
     cmd <- append(cmd, paste(cmd.path, "build", tmp.path, sep=" "))
-    cmd <- append(cmd, paste(cmd.path, "install --build", tmp.path, sep=" "))
+    cmd <- append(cmd, paste(cmd.path, "INSTALL --build", tmp.path, sep=" "))
     cmd <- append(cmd, paste(cmd.path, " check --outdir=", pkg.path, " ", tmp.path, sep=""))
     cmd <- append(cmd, paste("RMDIR /S /Q", tmp.path, sep=" "))
     cmd <- append(cmd, paste("MOVE /Y", zip.path, pkg.path, sep=" "))

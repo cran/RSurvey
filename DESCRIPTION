@@ -1,17 +1,18 @@
 Package: RSurvey
 Type: Package
 Title: Analysis of Spatially Distributed Data
-Version: 0.4.5
-Date: 2009-04-03
+Version: 0.4.9
+Date: 2010-02-14
 Author: Jason C. Fisher <jfisher@usgs.gov>
 Maintainer: Jason C. Fisher <jfisher@usgs.gov>
-Depends: R (>= 2.8.0), tcltk, rgl, MBA, gpclib, sp, mgcv, tripack
+Depends: R (>= 2.10.0), tcltk, rgl, MBA, gpclib, sp, mgcv, tripack,
+        rgdal
 Description: This package is a processing program for spatially
-        distributed data. The program is capable of error corrections
-        and data visualization.  A graphical user interface is
-        provided.
+        distributed data. The program is capable of error corrections,
+        polygon manipulation, and data visualization.  A graphical user
+        interface is provided.
 License: GPL (>= 2)
-URL: https://eng.ucmerced.edu/people/jfisher/software/rsurvey
-Packaged: Fri Apr 3 07:37:52 2009; jfisher
+URL: http://rsurvey.org
+Packaged: 2010-02-14 22:29:34 UTC; jfisher
 Repository: CRAN
-Date/Publication: 2009-04-04 20:38:50
+Date/Publication: 2010-02-15 05:58:40

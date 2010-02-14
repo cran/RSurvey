@@ -50,7 +50,6 @@
     }
     
     
-    
 # main program
     
     elemBuild <- matrix(c(2, 3, 3, 1, 1, 2), nrow=3, ncol=2, byrow=TRUE, 
@@ -103,6 +102,9 @@
         hld <- sortNodes[length(sortNodes)]
         logic <- nodes[,1] %in% hld | nodes[,2] %in% hld
         tmp <- nodes[logic,]
+        
+        if(is.na(tmp[1])) return(NULL)
+        
         if(hld != tmp[1]) 
             tmp <- rev(tmp)
         sortNodes <- c(sortNodes, tmp)

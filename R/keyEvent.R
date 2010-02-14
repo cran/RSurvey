@@ -1,5 +1,10 @@
 "keyEvent" <- function (ent.typ, ent.str="", rm.data=FALSE) {
     
+    if(rm.data) {
+        srvy.dat("data.pts", NULL)
+        srvy.dat("data.grd", NULL)
+    }
+    
     if(ent.str == "") return("")
     
     chk <- unlist(strsplit(ent.str, split=""))
@@ -29,11 +34,6 @@
     if(ent.typ == "second" & ans != "") {
         if(as.real(ans) < 0) ans <- "0"
         if(as.real(ans) > 59.999) ans <- "59.999"
-    }
-    
-    if(rm.data) {
-        srvy.dat("data.mod", NULL)
-        srvy.dat("data.tin", NULL)
     }
     
     ans

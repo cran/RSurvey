@@ -2,21 +2,16 @@
 
 \alias{srvy.pref}
 
-\title{Error Correction, Interpolation, and Water Surface Parameters}
+\title{Set Data Preferences}
 
 \description{
-A \acronym{GUI} defining error correction, interpolation, and water surface parameters and flags.
+A \acronym{GUI} for specifying error correction, interpolation, and water surface parameters and flags.
 }
 
-\usage{srvy.pref(tt1 = NULL)}
+\usage{srvy.pref(parent)}
 
 \arguments{
-\item{tt1}{a Tk toplevel widget.}
-}
-
-\value{
-The following components within \code{\link{srvy.dat}} are set: 
-\code{grad.tol}, \code{time.gap}, \code{grid.res}, \code{wtr.elev}, \code{depth}.
+\item{parent}{tkwin; the parent window (optional)}
 }
 
 \author{Fisher, J. C.}

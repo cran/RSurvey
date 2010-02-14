@@ -2,41 +2,46 @@
 
 \alias{polyAutocrop}
 
-\title{Auto Crop Parameters}
+\title{Set Autocrop Parameters for Polygon Limits}
 
 \description{
-Control parameters associated with the autocrop algorithm.
+A \acronym{GUI} for the \code{autocrop} function; specify input parameters, execute, and save results.
 }
 
 \usage{
-polyAutocrop(tt1 = NULL)
+polyAutocrop(dat, xlab = NULL, ylab = NULL, zlab = NULL, parent)
 }
 
 \arguments{
-\item{tt1}{a Tk toplevel widget.}
+\item{dat}{list; its components \code{x$x} and \code{x$y} are used to specify \code{x} and \code{y} coordinates, respectively.}
+\item{xlab}{character; the label for the \code{x} axis}
+\item{ylab}{character; the label for the \code{y} axis}
+\item{zlab}{character; the label for the \code{z} legend}
+\item{parent}{tkwin; the parent window (optional)}
 }
 
 \details{
-Requires access to the following components within \code{\link{srvy.dat}}: \code{data.raw}, \code{win.width}, \code{csi}, and \code{vars[2:3]}. 
-The default maximum arc length for a cell is determined from the maximum length within the Delaunay triangulation mesh 
-and an interation limit for the algorithm.  Entering arc lengths less than the default value 
-will reduce the polygons size.
+The maximum outer arc length for a cell and the maximum number of iterations are stopping criteria for the 
+\code{autocrop} algorithm. The default maximum arc length is 
+determined by the maximum outer length within the Delaunay triangulation mesh. 
+Entering arc lengths less than the default will reduce the area of the polygon.
 }
 
 \value{
-A polygon of class \code{gpc.poly}.
+Returns a polygon object of class \code{gpc.poly}.
 }
 
 \author{Fisher, J. C.}
 
 \seealso{
-\code{\link{autocrop}}, \code{tri.mesh}, \code{get.pts}
+\code{\link{autocrop}}, \code{tri.mesh}
 }
 
 \examples{
 \donttest{
-data(confluence)
-polyAutocrop()
+data(project)
+d <- srvy.dat("data.grd")
+polyAutocrop(d)
 }
 }
 

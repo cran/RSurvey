@@ -2,34 +2,38 @@
 
 \alias{srvy.vars}
 
-\title{Data Variables}
+\title{Set Data Variables}
 
 \description{
-A \acronym{GUI} for identifying temporal and spatial variables associated with survey data.
+A \acronym{GUI} for specifying the data's temporal and spatial variables.
 }
 
 \usage{
-srvy.vars(cols, vars, tt1 = NULL)
+srvy.vars(cols.name, cols.class, vars.old, parent)
 }
 
 \arguments{
-\item{cols}{those components within \code{\link{srvy.dat}} corresponding to temporal and spatial data, a concatenation of column type and units.}
-\item{vars}{the components corresponding to data/time, x, y, and z data.}
-\item{tt1}{a Tk toplevel widget.}
+\item{cols.name}{character; a vector of column names}
+\item{cols.class}{character; a vector of column units}
+\item{vars.old}{list; see the \code{vars} parameter in \code{\link{srvy.dat}}}
+\item{parent}{tkwin; the parent window (optional)}
 }
 
-\details{
-The \code{vars} component is updated in \code{\link{srvy.dat}}.
+\value{
+Returns an updated \code{vars} list; see \code{\link{srvy.dat}}
 }
 
 \author{Fisher, J. C.}
 
 \examples{
 \donttest{
-data(confluence)
-srvy.vars(srvy.dat("cols"), srvy.dat("vars"))
+data(project)
+cols <- srvy.dat("cols")
+cols.name  <- unlist(lapply(1:length(cols), function(i) cols[[i]]$name))
+cols.class <- unlist(lapply(1:length(cols), function(i) cols[[i]]$class))
+vars.old <- srvy.dat("vars")
+srvy.vars(cols.name, cols.class, vars.old)
 }
-
 }
 
 \keyword{misc}

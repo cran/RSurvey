@@ -1,102 +1,99 @@
-"srvy.process" <- function(const.tin=FALSE) {
+"srvy.process" <- function(const.3d=FALSE) {
     
   # simplify data
     
     data.raw <- srvy.dat("data.raw")
-    data.mod <- srvy.dat("data.mod")
-    data.tin <- srvy.dat("data.tin")
+    data.pts <- srvy.dat("data.pts")
+    data.grd <- srvy.dat("data.grd")
     
   # process data
     
-    if(is.null(data.mod)) {
-        dat <- NULL
+    if(is.null(data.pts)) {
         
         vars <- srvy.dat("vars")
-        vars[!is.na(vars)] <- make.names(vars[!is.na(vars)])
         
-        dat$datetime <- data.raw[[vars[1]]]
-        dat$x        <- data.raw[[vars[2]]]
-        dat$y        <- data.raw[[vars[3]]]
-        dat$z        <- data.raw[[vars[4]]]
+        dat <- NULL
         
-      # constrain temporal data
+        dat$x <- data.raw[[vars$x]]
+        dat$y <- data.raw[[vars$y]]
         
-        if(!is.null(dat$datetime)) {
-            datetime <- strptime(dat$datetime, "%Y-%m-%d %H:%M:%OS")
-            
-            s.t <- paste(srvy.dat("sd"), " ", srvy.dat("sh"), ":", srvy.dat("sm"), ":", srvy.dat("ss"), sep="")
-            s.t <- strptime(s.t, "%Y-%m-%d %H:%M:%OS")
-            
-            e.t <- paste(srvy.dat("ed"), " ", srvy.dat("eh"), ":", srvy.dat("em"), ":", srvy.dat("es"), sep="")
-            e.t <- strptime(e.t, "%Y-%m-%d %H:%M:%OS")
-            
-            dat <- as.data.frame(dat)[!is.na(datetime) & datetime >= s.t & datetime <= e.t,]
-        }
+        dat$z <- if(is.null(vars$z)) NULL else data.raw[[vars$z]]
+        dat$t <- if(is.null(vars$t)) NULL else data.raw[[vars$t]]
         
-      # remove NA values from dataframe
+        dat$vx <- if(is.null(vars$vx)) NULL else data.raw[[vars$vx]]
+        dat$vy <- if(is.null(vars$vy)) NULL else data.raw[[vars$vy]]
         
-        dat <- as.data.frame(dat)
-        dat <- dat[!is.na(dat$x) & !is.na(dat$y) & !is.na(dat$z),]
+      # constrain spatial data
         
-      # constrain spatial data and the state variable
-        
+        dat <- as.data.frame(dat)[!is.na(dat$x) & !is.na(dat$y),]
         dat <- dat[dat$x >= srvy.dat("min.x") & dat$x <= srvy.dat("max.x"),]
         dat <- dat[dat$y >= srvy.dat("min.y") & dat$y <= srvy.dat("max.y"),]
         
-        if(!is.null(srvy.dat("min.z"))) 
-            dat <- dat[dat$z >= srvy.dat("min.z"),]
-        if(!is.null(srvy.dat("max.z"))) 
-            dat <- dat[dat$z <= srvy.dat("max.z"),]
+      # constrain state variable
         
-      # remove data spikes with gradient correction ([change in state]/[change in time] < grad.tol)
+        if(!is.null(vars$z)) {
+            dat <- as.data.frame(dat)[!is.na(dat$z),]
+            dat <- dat[dat$z >= srvy.dat("min.z") & dat$z <= srvy.dat("max.z"),]
+            
+          # offset
+            
+            if(!is.null(srvy.dat("off.z"))) 
+                dat$z <- dat$z + srvy.dat("off.z")
+            
+          # correct for water surface elevation
+            
+            if(!is.null(srvy.dat("depth")) && !is.null(srvy.dat("wtr.elev"))) 
+                if(as.logical(srvy.dat("depth"))) 
+                    dat$z <- srvy.dat("wtr.elev") - dat$z
+        }
         
-        if(!is.null(dat$datetime) & !is.null(srvy.dat("grad.tol"))) {
-            datetime <- strptime(dat$datetime, "%Y-%m-%d %H:%M:%OS")
+      # constrain temporal data
+        
+        if(!is.null(vars$t)) {
+            datetime <- strptime(dat$t, "%Y-%m-%d %H:%M:%OS")
+            dat <- as.data.frame(dat)[!is.na(datetime) & datetime >= srvy.dat("min.t") & datetime <= srvy.dat("max.t"),]
             
-            s.1 <- s.0 <- as.numeric(difftime(datetime, min(datetime), units="secs"))
-            z.1 <- dat$z
+          # remove data spikes, gradient correction ([change in state]/[change in time] < grad.tol)
             
-            while(TRUE) {
-                grad <- abs(diff(z.1) / diff(s.1))
+            if(!is.null(srvy.dat("grad.tol"))) {
+                datetime <- strptime(dat$t, "%Y-%m-%d %H:%M:%OS")
                 
-                if(!is.null(srvy.dat("time.gap")))
-                    grad[diff(s.1) > srvy.dat("time.gap")] <- 0
+                s.1 <- s.0 <- as.numeric(difftime(datetime, min(datetime), units="secs"))
+                z.1 <- dat$z
                 
-                grad <- c(0, grad)
-                
-                if(all(grad < srvy.dat("grad.tol"), na.rm=TRUE)) break
-                
-                logic <- grad < srvy.dat("grad.tol")
-                logic[is.na(grad)] <- FALSE
-                
-                s.1 <- s.1[logic]
-                z.1 <- z.1[logic]
+                while(TRUE) {
+                    grad <- abs(diff(z.1) / diff(s.1))
+                    
+                    if(!is.null(srvy.dat("time.gap")))
+                        grad[diff(s.1) > srvy.dat("time.gap")] <- 0
+                    
+                    grad <- c(0, grad)
+                    
+                    if(all(grad < srvy.dat("grad.tol"), na.rm=TRUE)) break
+                    
+                    logic <- grad < srvy.dat("grad.tol")
+                    logic[is.na(grad)] <- FALSE
+                    
+                    s.1 <- s.1[logic]
+                    z.1 <- z.1[logic]
+                }
+                dat <- dat[(s.0 %in% s.1),]
             }
-            dat <- dat[(s.0 %in% s.1),]
+            
+          # offset
+            
+            if(!is.null(srvy.dat("off.t"))) {
+                tmp <- strptime(dat$t, "%Y-%m-%d %H:%M:%OS") + srvy.dat("off.t")
+                dat$t <- format(tmp, format="%Y-%m-%d %H:%M:%OS")
+            }
         }
-        
-      # state variable offset
-        
-        if(!is.null(srvy.dat("off.z"))) 
-            dat$z <- dat$z + srvy.dat("off.z")
-        
-      # time offset
-        
-        if(!is.null(srvy.dat("off.t"))) {
-            tmp <- strptime(dat$datetime, "%Y-%m-%d %H:%M:%OS") + srvy.dat("off.t")
-            dat$datetime <- format(tmp, format="%Y-%m-%d %H:%M:%OS")
-        }
-        
-      # correct for water surface elevation
-        
-        if(!is.null(srvy.dat("depth")) && !is.null(srvy.dat("wtr.elev"))) 
-            if(as.logical(srvy.dat("depth"))) 
-                dat$z <- srvy.dat("wtr.elev") - dat$z
         
       # incorporate polygon spatial domain
         
-        if(!is.null(srvy.dat("poly"))) {
-            d <- get.pts(srvy.dat("poly"))
+        ply <- if(is.null(srvy.dat("polyRange"))) NULL else srvy.dat("poly")[[srvy.dat("polyRange")]]
+        
+        if(class(ply) == "gpc.poly") {
+            d <- get.pts(ply)
             for(i in 1:length(d)) {
                 pts <- d[[i]]
                 hld <- point.in.polygon(point.x=dat$x, point.y=dat$y, pol.x=pts$x, pol.y=pts$y)
@@ -107,44 +104,83 @@
         
       # save modified data
         
-        srvy.dat("data.mod", dat)
+        srvy.dat("data.pts", dat)
     }
     
-  # TIN construction
+  # construct 3-D surface
     
-    if(is.null(data.tin) & const.tin) {
+    if(is.null(data.grd) & const.3d) {
         
-        data.mod <- srvy.dat("data.mod")
+        data.pts <- srvy.dat("data.pts")
         
       # simplify data notation
         
-        x <- data.mod$x
-        y <- data.mod$y
-        z <- data.mod$z
+        x <- data.pts$x
+        y <- data.pts$y
+        z <- data.pts$z
+        
+        vx <- data.pts$vx
+        vy <- data.pts$vy
+        
+        if(is.null(z)) return()
+        
+      # limit polygon
+        
+        ply <- if(is.null(srvy.dat("polyLimit"))) NULL else srvy.dat("poly")[[srvy.dat("polyLimit")]]
         
       # define the grid and characteristics for the interpolated values
         
-        lim.x <- range(x)
-        lim.y <- range(y)
-        no.x <- as.integer(diff(lim.x) / srvy.dat("grid.res")) + 1
-        no.y <- as.integer((diff(lim.x) / srvy.dat("grid.res")) * (diff(lim.y) / diff(lim.x))) + 1
+        if(is.null(ply)) {
+            xlim <- range(x, na.rm=TRUE)
+            ylim <- range(y, na.rm=TRUE)
+        }
+        else {
+            bb <- get.bbox(ply)
+            xlim <- bb$x
+            ylim <- bb$y
+        }
         
-        no <- max(c(no.x, no.y))
+        xnum <- 100
+        ynum <- 100
+        
+        if(!is.null(srvy.dat("grid.dx"))) 
+            xnum <- as.integer(diff(xlim) / srvy.dat("grid.dx")) + 1
+        
+        if(!is.null(srvy.dat("grid.dy"))) 
+            ynum <- as.integer(diff(ylim) / srvy.dat("grid.dy")) + 1
+        
+        if(xnum < 1 | ynum < 1) stop("grid resolution equal to zero")
         
       # bivariate interpolation onto grid for irregularly spaced data
         
-        m <- n <- 1
-        k <- diff(lim.y) / diff(lim.x)
-        if(k < 1) 
-            m <- as.integer(1 / k)
-        else 
-            n <- as.integer(k)
+        xo <- seq(xlim[1], xlim[2], length=xnum)
+        yo <- seq(ylim[1], ylim[2], length=ynum)
         
-        dat <- suppressWarnings(mba.surf(xyz=matrix(data=c(x, y, z), ncol=3), 
-               no.X=no, no.Y=no, n=n, m=m, h=11, extend=FALSE)$xyz.est)
+        pts <- as.data.frame(cbind(
+               x=as.vector(matrix(rep(xo, ynum), nrow=xnum, ncol=ynum, byrow=FALSE)),
+               y=as.vector(matrix(rep(yo, xnum), nrow=xnum, ncol=ynum, byrow=TRUE)))
+        )
+        
+        m <- n <- 1
+        k <- diff(range(y)) / diff(range(x))
+        if(k < 1) m <- 2 else n <- 2
+        
+        surf <- function(x, y, z, pts, n, m) {
+            xyz <- matrix(data=c(x, y, z), ncol=3)
+            ans <- mba.points(xyz=xyz, xy.est=pts, n=n, m=m, h=11, extend=TRUE, verbose=FALSE)$xyz.est
+            xy <- cbind(x,y)
+            domain <- if(is.null(ply)) as(xy[chull(xy),], "gpc.poly") else ply
+            polyCutout(ans, domain)
+        }
+        
+        dat <- surf(x, y, z, pts, n, m)
+        
+        if(!is.null(vx)) dat$vx <- surf(x, y, vx, pts, n, m)$z
+        if(!is.null(vy)) dat$vy <- surf(x, y, vy, pts, n, m)$z
         
       # save surface data
         
-        srvy.dat("data.tin", dat)
+        srvy.dat("data.grd", dat)
     }
+    
 }

@@ -1,103 +1,117 @@
-"plotTime" <- function() {
+"plotTime" <- function(x, y=NULL, xlim=NULL, ylim=NULL, ylab=NULL, gap=NULL, 
+              width=7, pointsize=10, fmt="%H:%M:%OS\n%Y-%m-%d") {
+    
+# additional functions (subroutines)
+    
+  # modify x- and y-axis limits
+    
+    xylim <- function(x, y, xlim, ylim, ext=0.02) {
+        i <- rep(TRUE, length(x))
+        
+        if(!is.na(xlim[1])) i <- i & x >= xlim[1]
+        if(!is.na(xlim[2])) i <- i & x <= xlim[2]
+        if(!is.na(ylim[1])) i <- i & y >= ylim[1]
+        if(!is.na(ylim[2])) i <- i & y <= ylim[2]
+        
+        xlim.new <- range(x[i], na.rm=TRUE)
+        ylim.new <- range(y[i], na.rm=TRUE)
+        
+        xminf <- xmaxf <- ext
+        yminf <- ymaxf <- ext * 2
+        
+        if(!is.na(xlim[1])) {xlim.new[1] <- xlim[1]; xminf <- 0}
+        if(!is.na(xlim[2])) {xlim.new[2] <- xlim[2]; xmaxf <- 0}
+        if(!is.na(ylim[1])) {ylim.new[1] <- ylim[1]; yminf <- 0}
+        if(!is.na(ylim[2])) {ylim.new[2] <- ylim[2]; ymaxf <- 0}
+        
+        xran <- diff(xlim.new)
+        yran <- diff(ylim.new)
+        
+        xlim.new[1] <- xlim.new[1] - xran * xminf
+        xlim.new[2] <- xlim.new[2] + xran * xmaxf
+        
+        ylim.new[1] <- ylim.new[1] - yran * yminf
+        ylim.new[2] <- ylim.new[2] + yran * ymaxf
+        
+        list(x=xlim.new, y=ylim.new)
+    }
+    
+  # plot line segments seperated by gap
+    
+    lineseg <- function(x, y, gap, col="black") {
+        if(!is.null(gap)) {
+            idxs <- (1:(length(x) - 1))[diff(x) > gap]
+            for(i in idxs) {
+                x <- append(x, (x[i+1] + x[i]) / 2)
+                y <- append(y, NA)
+            }
+            idxs <- order(x)
+            x <- x[idxs]
+            y <- y[idxs]
+        }
+        lines(x, y, col=col)
+        points(x, y, pch=21, cex=0.75, col=col, bg="white")
+    }
+    
+    
+    
+# main program
+    
+  # account for missing arguments
+    
+    if(is.list(x)) {
+        y <- x$y
+        x <- x$x
+    }
     
   # window setup
     
-    win.width <- win.height <- srvy.dat("win.width")
-    x11(width=win.width, height=win.height, pointsize=10)
+    x11(width=width, height=width / 2, pointsize=pointsize)
     
-    op <- par(mfrow=c(2, 1), bg="white", mar=c(3, 4, 1, 1) + 0.1)
+    op <- par(mfrow=c(1, 1), bg="white", mar=c(3, 4, 1, 3) + 0.1)
+    on.exit(par(op))
     
-  # axis labels
+  # remove NA values
     
-    vars <- srvy.dat("vars")
-    z.lab <- vars[4]
+    logic <- !is.na(x)
+    x <- x[logic]
+    y <- y[logic]
     
-  # state variable and time offsets
+  # sort on datetime
     
-    off.z <- ifelse(is.null(srvy.dat("off.z")), 0, srvy.dat("off.z"))
-    off.t <- ifelse(is.null(srvy.dat("off.t")), 0, srvy.dat("off.t"))
+    idxs <- order(x)
+    x <- x[idxs]
+    y <- y[idxs]
     
-  # simplify data
+  # transfrom x-values from datetime to seconds
     
-    data.raw <- srvy.dat("data.raw")
-    data.mod <- srvy.dat("data.mod")
+    origin <- strptime("1970-01-01 00:00:00.0", "%Y-%m-%d %H:%M:%OS")
     
-  # upper plot
+    datetime <- as.POSIXct(x, origin=origin)
     
-    datetime <- strptime(data.raw[[make.names(vars[1])]], "%Y-%m-%d %H:%M:%OS")
+    x <- unclass(datetime)
     
-    x <- as.numeric(difftime(datetime, min(datetime, na.rm=TRUE), units="secs"))
-    y <- data.raw[[make.names(vars[4])]]
+  # initialize axes limits
     
-    plot(NA, xlim=range(x, na.rm=TRUE), ylim=range(y, na.rm=TRUE), 
-        type="n", ann=FALSE, cex.axis=0.7, xaxt="n")
+    if(is.null(xlim)) xlim <- c(NA, NA)
+    if(is.null(ylim)) ylim <- c(NA, NA)
     
-    lines(x, y, col="red")
+    xmin <- if(is.na(xlim[1])) NA else unclass(as.POSIXct(xlim[1], origin=origin))
+    xmax <- if(is.na(xlim[2])) NA else unclass(as.POSIXct(xlim[2], origin=origin))
     
-    xtic <- datetime[1] + axTicks(1)
-    xlab <- format(xtic, format="%H:%M:%OS\n%Y-%m-%d")
-    axis(side=1, las=1, cex.axis=0.7, labels=xlab, at=axTicks(1))
+    xlim <- c(xmin, xmax)
     
-    y.lab <- ifelse(is.null(z.lab), "", z.lab)
+    lim <- xylim(x, y, xlim, ylim)
     
-    title(ylab=y.lab, line=2.5)
-    minorTics(1:2)
+  # plot
     
-    legend(x="topright", legend=c("raw", "processed"), 
-        col=c("red", "dark green"), lty=c(1, 1), pch=c(-1, -1), cex=0.7)
+    plot(NA, xlim=lim$x, ylim=lim$y, type="n", xaxs="i", yaxs="i", ann=FALSE, cex.axis=0.7, xaxt="n")
     
-  # lower plot
+    lineseg(x, y, gap)
     
-    datetime <- strptime(data.mod$datetime, "%Y-%m-%d %H:%M:%OS")
-    x <- as.numeric(difftime(datetime, min(datetime), units="secs"))
-    y <- data.mod$z
+    loc.tics <- unclass(axis.POSIXct(side=1, datetime, format=fmt, labels=TRUE, cex.axis=0.7))
     
-    plot(NA, xlim=range(x), ylim=range(y), type="n", ann=FALSE, cex.axis=0.7, xaxt="n")
-    
-    if(is.null(srvy.dat("time.gap"))) 
-        lines(x, y, col="dark green")
-    else {
-        seg <- c(0, x[c(diff(x) > srvy.dat("time.gap"), TRUE)])
-        for(i in 2:length(seg)) {
-            x.seg <- x[x > seg[i - 1] & x <= seg[i]]
-            y.seg <- y[x > seg[i - 1] & x <= seg[i]]
-            lines(x.seg, y.seg, col="dark green")
-        }
-    }
-    
-    xtic <- datetime[1] + axTicks(1)
-    xlab <- format(xtic, format="%H:%M:%OS\n%Y-%m-%d")
-    axis(side=1, las=1, cex.axis=0.7, labels=xlab, at=axTicks(1))
-    
-    title(ylab=y.lab, line=2.5)
-    minorTics(1:2)
-    
-  # add file name, correction info, and signature to plot
-    
-    txt <- NULL
-    if(!is.null(srvy.dat("grad.tol"))) 
-        txt <- append(txt, paste("Gradient Tolerance:", srvy.dat("grad.tol")))
-    if(!is.null(srvy.dat("time.gap"))) 
-        txt <- append(txt, paste("Time Gap:", srvy.dat("time.gap")))
-    txt <- append(txt, paste("Num. Raw Points:", nrow(data.raw)))
-    txt <- append(txt, paste("Num. Discarded Points:", nrow(data.raw) - nrow(data.mod)))
-    title(main=paste(txt, collapse="; "), cex.main=0.7, font.main=1)
-    
-    txt <- NULL
-    if(!is.null(srvy.dat("off.z"))) 
-        txt <- append(txt, paste("State Offset: ", srvy.dat("off.z"), "m", sep=""))
-    if(!is.null(srvy.dat("off.t"))) 
-        txt <- append(txt, paste("Time Offset: ", srvy.dat("off.t"), "s", sep=""))
-    mtext(paste(na.omit(txt), collapse="; "), side=1, line=-1.1, cex=0.7, outer=TRUE, adj=0)
-    
-    data.file <- srvy.dat("data.file")
-    if(nchar(data.file) > 40) 
-        data.file <- paste(substr(data.file, 1, 40), "...", sep="")
-    txt <- paste("Raw File(s):", data.file, sep=" ")
-    mtext(txt, side=3, line=-0.6, cex=0.7, outer=TRUE, adj=0)
-    
-    txt <- paste(srvy.dat("ver"), date(), sep=", ")
-    mtext(txt, side=1, line=-1.1, cex=0.7, outer=TRUE, adj=1)
-    
-    par(op)
+    if(!is.null(ylab)) title(ylab=ylab, line=2.5)
+    minorTics(2)
+    minorTics(1, loc.tics)
 }
