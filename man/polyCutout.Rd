@@ -5,7 +5,7 @@
 \title{Determine Grid Points within Polygon}
 
 \description{
-This function excludes data points outside a given polygon.
+This function excludes gridded data lying outside of a given polygon.
 }
 
 \usage{
@@ -14,18 +14,18 @@ polyCutout(dat, ply = NULL)
 
 \arguments{
 \item{dat}{list; with components \code{dat$x}, \code{dat$y}, and \code{dat$z}, see Value section}
-\item{ply}{gpc.poly; a polygon}
+\item{ply}{gpc.poly; the limit polygon}
 }
 
 \details{
-Values of \code{z} corresponding to nodes (\code{x}, \code{y}) located outside the polygon will be set to \code{NA}.
+Values of \code{z} corresponding to coordinates (\code{x}, \code{y}) located outside the polygon will be set to \code{NA}.
 }
 
 \value{
 Returns a list containing the following components:
-  \item{x}{numeric; a vector of grid point locations in the x-direction}
-  \item{y}{numeric; a vector of grid point locations in the y-direction}
-  \item{z}{matrix; state variable values corresponding to nodes in the grid}
+  \item{x}{numeric; a vector of \code{x} coordinates}
+  \item{y}{numeric; a vector of \code{x} coordinates}
+  \item{z}{matrix; the state variable corresponding to coordinates in the grid}
 }
 
 \author{Fisher, J. C.}

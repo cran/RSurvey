@@ -425,7 +425,9 @@
         ylab <- axis.label(cols, vars$y)
         zlab <- axis.label(cols, vars$z)
         
+        tkconfigure(tt0, cursor="watch")
         plyNew <- polyAutocrop(dat, xlab, ylab, zlab, tt0)
+        tkconfigure(tt0, cursor="arrow")
         
         if(class(plyNew) == "gpc.poly") {
             
@@ -589,7 +591,7 @@
         
         
         if(showlines) {
-            contourLines(dat, nlevels=srvy.dat("nlevels"))
+            dat <- srvy.dat("data.grd")
             contour(dat, col="black", lty="solid", add=TRUE, nlevels=srvy.dat("nlevels"), 
                 vfont = c("sans serif", "plain"))
         }
@@ -987,8 +989,8 @@
     frame1.lab.3.1 <- ttklabel(frame1, text="Max")
     
     frame1.lab.4.1 <- ttklabel(frame1, text=" ")
-    frame1.lab.4.2 <- ttklabel(frame1, text="Minimum Range [L]")
-    frame1.lab.4.4 <- ttklabel(frame1, text="Maximum Range [L]")
+    frame1.lab.4.2 <- ttklabel(frame1, text="Minimum Range")
+    frame1.lab.4.4 <- ttklabel(frame1, text="Maximum Range")
     
     frame1.lab.5.1 <- ttklabel(frame1, text="x")
     frame1.lab.6.1 <- ttklabel(frame1, text="y")

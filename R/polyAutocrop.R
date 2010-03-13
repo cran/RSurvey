@@ -4,6 +4,8 @@
     
     polymesh <- function() {
         
+        tkconfigure(tt, cursor="watch")
+        
         maxLen <- as.numeric(tclvalue(maxLen.var))
         maxItr <- as.integer(tclvalue(maxItr.var))
         
@@ -24,6 +26,7 @@
         }
         
         tkfocus(tt)
+        tkconfigure(tt, cursor="arrow")
     }
     
   # initialize plot

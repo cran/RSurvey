@@ -5,7 +5,7 @@
 \title{Set Data Preferences}
 
 \description{
-A \acronym{GUI} for specifying error correction, interpolation, and water surface parameters and flags.
+A \acronym{GUI} for specifying the parameters and flags assoicated with error correction, offsets, bathymetry, and interpolation.
 }
 
 \usage{srvy.pref(parent)}

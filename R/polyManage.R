@@ -214,15 +214,15 @@
         for(i in 1:length(oldNames)) 
             tclvalue(list.var) <- tcl("lreplace", tclvalue(list.var), i-1, i-1, oldNames[i])
         
-        idx1 <- as.integer(tcl(frame2a.box.1.2, "current"))
-        idx2 <- as.integer(tcl(frame2a.box.2.2, "current"))
+        idx1 <- as.integer(tcl(frame2c.box.1.2, "current"))
+        idx2 <- as.integer(tcl(frame2c.box.2.2, "current"))
         
         vals <- c("", names(ply))
-        tkconfigure(frame2a.box.1.2, "-values", vals)
-        tkconfigure(frame2a.box.2.2, "-values", vals)
+        tkconfigure(frame2c.box.1.2, "-values", vals)
+        tkconfigure(frame2c.box.2.2, "-values", vals)
         
-        if(idx1 >= 0) tcl(frame2a.box.1.2, "current", idx1)
-        if(idx2 >= 0) tcl(frame2a.box.2.2, "current", idx2)
+        if(idx1 >= 0) tcl(frame2c.box.1.2, "current", idx1)
+        if(idx2 >= 0) tcl(frame2c.box.2.2, "current", idx2)
     }
     
   # save new polygon
@@ -237,8 +237,8 @@
         tcl("lappend", list.var, nam)
         
         vals <- c("", names(ply))
-        tkconfigure(frame2a.box.1.2, "-values", vals)
-        tkconfigure(frame2a.box.2.2, "-values", vals)
+        tkconfigure(frame2c.box.1.2, "-values", vals)
+        tkconfigure(frame2c.box.2.2, "-values", vals)
         
         
         idx <- length(ply) - 1
@@ -281,8 +281,8 @@
         idxs <- as.integer(tkcurselection(frame1.lst)) + 1
         if(length(idxs) == 0) return()
         
-        box1.idx <- as.integer(tcl(frame2a.box.1.2, "current"))
-        box2.idx <- as.integer(tcl(frame2a.box.2.2, "current"))
+        box1.idx <- as.integer(tcl(frame2c.box.1.2, "current"))
+        box2.idx <- as.integer(tcl(frame2c.box.2.2, "current"))
         box1.val <- if(box1.idx == 0) "" else names(ply)[box1.idx]
         box2.val <- if(box2.idx == 0) "" else names(ply)[box2.idx]
         
@@ -333,11 +333,11 @@
         idx1 <- (1:length(vals))[vals %in% box1.val] - 1
         idx2 <- (1:length(vals))[vals %in% box2.val] - 1
         
-        tkconfigure(frame2a.box.1.2, "-values", vals)
-        tkconfigure(frame2a.box.2.2, "-values", vals)
+        tkconfigure(frame2c.box.1.2, "-values", vals)
+        tkconfigure(frame2c.box.2.2, "-values", vals)
         
-        if(idx1 >= 0) tcl(frame2a.box.1.2, "current", idx1)
-        if(idx2 >= 0) tcl(frame2a.box.2.2, "current", idx2)
+        if(idx1 >= 0) tcl(frame2c.box.1.2, "current", idx1)
+        if(idx2 >= 0) tcl(frame2c.box.2.2, "current", idx2)
         
         plotPolygon()
     }
@@ -360,8 +360,8 @@
         tkselection.clear(frame1.lst, 0, length(ply) - 1)
         
         vals <- c("", names(ply))
-        tkconfigure(frame2a.box.1.2, "-values", vals)
-        tkconfigure(frame2a.box.2.2, "-values", vals)
+        tkconfigure(frame2c.box.1.2, "-values", vals)
+        tkconfigure(frame2c.box.2.2, "-values", vals)
         
         if(!tclvalue(cbox1.var) %in% names(ply)) tclvalue(cbox1.var) <- ""
         if(!tclvalue(cbox2.var) %in% names(ply)) tclvalue(cbox2.var) <- ""
@@ -392,8 +392,8 @@
             tcl("lappend", list.var, nam)
             
             vals <- c("", names(ply))
-            tkconfigure(frame2a.box.1.2, "-values", vals)
-            tkconfigure(frame2a.box.2.2, "-values", vals)
+            tkconfigure(frame2c.box.1.2, "-values", vals)
+            tkconfigure(frame2c.box.2.2, "-values", vals)
         }
     }
     
@@ -520,83 +520,89 @@
                   confine=TRUE, borderwidth=0, closeenough=0, cursor="crosshair")
     
     frame1 <- ttkframe(pw, relief="flat", borderwidth=0, padding=0)
-    frame1.lst <- tklistbox(frame1, selectmode="extended", width=15, exportselection=FALSE, listvariable=list.var)
+    frame1.lst <- tklistbox(frame1, selectmode="extended", activestyle="underline", relief="flat", 
+                  borderwidth=5, width=15, exportselection=FALSE, listvariable=list.var)
     frame1.ysc <- ttkscrollbar(frame1, orient="vertical")
     tkconfigure(frame1.lst, background="white", yscrollcommand=paste(.Tk.ID(frame1.ysc), "set"))
     tkconfigure(frame1.ysc, command=paste(.Tk.ID(frame1.lst), "yview"))
-    tkpack(frame1.lst, side="left",  fill="both", expand=TRUE)
-    tkpack(frame1.ysc, side="right", fill="y", anchor="w", padx=0)
+    tkpack(frame1.lst, side="left",  fill="both", expand=TRUE, pady=1)
+    tkpack(frame1.ysc, side="right", fill="y", anchor="w", padx=0, pady=2)
     
     tkbind(frame1.lst, "<ButtonRelease-1>", plotPolygon)
     
     frame2 <- tkframe(pw, relief="flat")
-    frame2a <- ttklabelframe(frame2, relief="flat", borderwidth=3, padding=3, text="Data (x,y)")
     
-    frame2a.lab.1.1 <- tklabel(frame2a, text="Range")
-    frame2a.lab.2.1 <- tklabel(frame2a, text="Limits")
     
-    vals <- c("", names(ply))
-    frame2a.box.1.2 <- ttkcombobox(frame2a, state="readonly", values=vals, textvariable=cbox1.var, width=15)
-    frame2a.box.2.2 <- ttkcombobox(frame2a, state="readonly", values=vals, textvariable=cbox2.var, width=15)
+    frame2a <- ttklabelframe(frame2, relief="flat", borderwidth=3, padding=3, text="Shape modes")
     
-    tkgrid(frame2a.lab.1.1, frame2a.box.1.2, pady=3)
-    tkgrid(frame2a.lab.2.1, frame2a.box.2.2, pady=3)
+    frame2a.rb.1 <- ttkradiobutton(frame2a, variable=rb.var, command=plotPolygon, value="add", text="Unite")
+    frame2a.rb.2 <- ttkradiobutton(frame2a, variable=rb.var, command=plotPolygon, value="sub", text="Minus front")
+    frame2a.rb.3 <- ttkradiobutton(frame2a, variable=rb.var, command=plotPolygon, value="int", text="Intersect")
+    frame2a.rb.4 <- ttkradiobutton(frame2a, variable=rb.var, command=plotPolygon, value="exc", text="Exclude overlapping")
     
-    tkgrid.configure(frame2a.lab.1.1, sticky="e")
-    tkgrid.configure(frame2a.lab.2.1, sticky="e")
+    frame2a.but <- ttkbutton(frame2a, width=12, text="BUILD", command=saveNewPolygon)
+    
+    tkgrid(frame2a.rb.1, sticky="w")
+    tkgrid(frame2a.rb.2, sticky="w")
+    tkgrid(frame2a.rb.3, sticky="w")
+    tkgrid(frame2a.rb.4, sticky="w")
+    tkgrid(frame2a.but, pady=2)
     
     tcl("grid", "anchor", frame2a, "center")
     
-    frame2b <- ttklabelframe(frame2, relief="flat", borderwidth=3, padding=3, text="Shape modes")
     
-    frame2b.rb.1 <- ttkradiobutton(frame2b, variable=rb.var, command=plotPolygon, value="add", text="Unite")
-    frame2b.rb.2 <- ttkradiobutton(frame2b, variable=rb.var, command=plotPolygon, value="sub", text="Minus front")
-    frame2b.rb.3 <- ttkradiobutton(frame2b, variable=rb.var, command=plotPolygon, value="int", text="Intersect")
-    frame2b.rb.4 <- ttkradiobutton(frame2b, variable=rb.var, command=plotPolygon, value="exc", text="Exclude overlapping")
+    frame2b <- ttklabelframe(frame2, relief="flat", borderwidth=3, padding=3, text="Attributes")
     
-    frame2b.but <- ttkbutton(frame2b, width=12, text="BUILD", command=saveNewPolygon)
+    frame2b.lab.1.1 <- tklabel(frame2b, text="Area =")
+    frame2b.lab.2.1 <- tklabel(frame2b, text="Polygons =")
+    frame2b.lab.3.1 <- tklabel(frame2b, text="Holes =")
+    frame2b.lab.4.1 <- tklabel(frame2b, text="Vertices =")
     
-    tkgrid(frame2b.rb.1, sticky="w")
-    tkgrid(frame2b.rb.2, sticky="w")
-    tkgrid(frame2b.rb.3, sticky="w")
-    tkgrid(frame2b.rb.4, sticky="w")
-    tkgrid(frame2b.but, pady=2)
+    frame2b.lab.1.2 <- tklabel(frame2b, text=tclvalue(area.var))
+    frame2b.lab.2.2 <- tklabel(frame2b, text=tclvalue(poly.var))
+    frame2b.lab.3.2 <- tklabel(frame2b, text=tclvalue(hole.var))
+    frame2b.lab.4.2 <- tklabel(frame2b, text=tclvalue(vert.var))
     
-    tcl("grid", "anchor", frame2b, "center")
+    tkconfigure(frame2b.lab.1.2, textvariable=area.var)
+    tkconfigure(frame2b.lab.2.2, textvariable=poly.var)
+    tkconfigure(frame2b.lab.3.2, textvariable=hole.var)
+    tkconfigure(frame2b.lab.4.2, textvariable=vert.var)
     
-    frame2c <- ttklabelframe(frame2, relief="flat", borderwidth=3, padding=3, text="Attributes")
+    tkgrid(frame2b.lab.1.1, frame2b.lab.1.2)
+    tkgrid(frame2b.lab.2.1, frame2b.lab.2.2)
+    tkgrid(frame2b.lab.3.1, frame2b.lab.3.2)
+    tkgrid(frame2b.lab.4.1, frame2b.lab.4.2)
     
-    frame2c.lab.1.1 <- tklabel(frame2c, text="Area =")
-    frame2c.lab.2.1 <- tklabel(frame2c, text="Polygons =")
-    frame2c.lab.3.1 <- tklabel(frame2c, text="Holes =")
-    frame2c.lab.4.1 <- tklabel(frame2c, text="Vertices =")
+    tkgrid.configure(frame2b.lab.1.1, sticky="e")
+    tkgrid.configure(frame2b.lab.2.1, sticky="e")
+    tkgrid.configure(frame2b.lab.3.1, sticky="e")
+    tkgrid.configure(frame2b.lab.4.1, sticky="e")
     
-    frame2c.lab.1.2 <- tklabel(frame2c, text=tclvalue(area.var))
-    frame2c.lab.2.2 <- tklabel(frame2c, text=tclvalue(poly.var))
-    frame2c.lab.3.2 <- tklabel(frame2c, text=tclvalue(hole.var))
-    frame2c.lab.4.2 <- tklabel(frame2c, text=tclvalue(vert.var))
+    tkgrid.configure(frame2b.lab.1.2, sticky="w")
+    tkgrid.configure(frame2b.lab.2.2, sticky="w")
+    tkgrid.configure(frame2b.lab.3.2, sticky="w")
+    tkgrid.configure(frame2b.lab.4.2, sticky="w")
     
-    tkconfigure(frame2c.lab.1.2, textvariable=area.var)
-    tkconfigure(frame2c.lab.2.2, textvariable=poly.var)
-    tkconfigure(frame2c.lab.3.2, textvariable=hole.var)
-    tkconfigure(frame2c.lab.4.2, textvariable=vert.var)
+    tcl("grid", "anchor", frame2b, "w")
     
-    tkgrid(frame2c.lab.1.1, frame2c.lab.1.2)
-    tkgrid(frame2c.lab.2.1, frame2c.lab.2.2)
-    tkgrid(frame2c.lab.3.1, frame2c.lab.3.2)
-    tkgrid(frame2c.lab.4.1, frame2c.lab.4.2)
+    
+    frame2c <- ttklabelframe(frame2, relief="flat", borderwidth=3, padding=3, text="Data (x,y)")
+    
+    frame2c.lab.1.1 <- tklabel(frame2c, text="Range")
+    frame2c.lab.2.1 <- tklabel(frame2c, text="Limit")
+    
+    vals <- c("", names(ply))
+    frame2c.box.1.2 <- ttkcombobox(frame2c, state="readonly", values=vals, textvariable=cbox1.var, width=15)
+    frame2c.box.2.2 <- ttkcombobox(frame2c, state="readonly", values=vals, textvariable=cbox2.var, width=15)
+    
+    tkgrid(frame2c.lab.1.1, frame2c.box.1.2, pady=3)
+    tkgrid(frame2c.lab.2.1, frame2c.box.2.2, pady=3)
     
     tkgrid.configure(frame2c.lab.1.1, sticky="e")
     tkgrid.configure(frame2c.lab.2.1, sticky="e")
-    tkgrid.configure(frame2c.lab.3.1, sticky="e")
-    tkgrid.configure(frame2c.lab.4.1, sticky="e")
     
-    tkgrid.configure(frame2c.lab.1.2, sticky="w")
-    tkgrid.configure(frame2c.lab.2.2, sticky="w")
-    tkgrid.configure(frame2c.lab.3.2, sticky="w")
-    tkgrid.configure(frame2c.lab.4.2, sticky="w")
+    tcl("grid", "anchor", frame2c, "center")
     
-    tcl("grid", "anchor", frame2c, "w")
     
     frame2d <- tkframe(frame2, relief="flat")
     frame2d.lab <- tklabel(frame2d, text=tclvalue(xy.var))
@@ -606,10 +612,12 @@
 ### frame2d.grp <- ttksizegrip(frame2d)
 ### tkpack(frame2d.grp, side="right")
     
-    tkpack(frame2a, fill="both", expand=TRUE, padx=3, pady=3)
-    tkpack(frame2b, fill="both", expand=TRUE, padx=3)
+    
+    tkpack(frame2a, fill="both", expand=TRUE, padx=3)
+    tkpack(frame2b, fill="both", expand=TRUE, padx=3, pady=3)
     tkpack(frame2c, fill="both", expand=TRUE, padx=3, pady=3)
     tkpack(frame2d, fill="both")
+    
     
     tkgrid(frame0.cvs, frame1, frame2, sticky="news")
     

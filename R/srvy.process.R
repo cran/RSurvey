@@ -22,6 +22,7 @@
         
         dat$vx <- if(is.null(vars$vx)) NULL else data.raw[[vars$vx]]
         dat$vy <- if(is.null(vars$vy)) NULL else data.raw[[vars$vy]]
+        dat$vz <- if(is.null(vars$vz)) NULL else data.raw[[vars$vz]]
         
       # constrain spatial data
         
@@ -121,6 +122,7 @@
         
         vx <- data.pts$vx
         vy <- data.pts$vy
+        vz <- data.pts$vz
         
         if(is.null(z)) return()
         
@@ -177,6 +179,19 @@
         
         if(!is.null(vx)) dat$vx <- surf(x, y, vx, pts, n, m)$z
         if(!is.null(vy)) dat$vy <- surf(x, y, vy, pts, n, m)$z
+        if(!is.null(vz)) {
+            dat$vz <- surf(x, y, vz, pts, n, m)$z
+            
+          # volumetrix flux
+            
+            arc <- function(x) diff(c(x[1], x[-1] - (diff(x) / 2), x[length(x)])) # center nodes in new grid cells, return arc length
+            m <- length(dat$x)
+            n <- length(dat$y)
+            area <- matrix(rep(arc(dat$x), n), nrow=m, ncol=n, byrow=FALSE) * 
+                    matrix(rep(arc(dat$y), m), nrow=m, ncol=n, byrow=TRUE) # matrix; area of new cells
+            volflux <- sum(dat$vz * area, na.rm=TRUE) # volumetric flux = velocity * area
+            if(is.numeric(volflux)) dat$vf <- volflux
+        }
         
       # save surface data
         

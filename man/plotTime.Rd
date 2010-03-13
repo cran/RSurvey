@@ -20,9 +20,13 @@ width = 7, pointsize = 10, fmt = "\%H:\%M:\%OS\\n\%Y-\%m-\%d")
 \item{ylim}{numeric; the \code{y} limits \code{(y1,y2)} of the plot}
 \item{ylab}{character; the label for the \code{y} axis}
 \item{gap}{numeric; time gap exceedance level in seconds}
-\item{width}{numeric; the width of the canvas of the plotting window in inches}
+\item{width}{numeric; the width of the plotting window canvas in inches}
 \item{pointsize}{integer; the point size of plotted text}
-\item{fmt}{character; date-time format for \code{x} axis labels, see \code{\link{strptime}}}
+\item{fmt}{character; date-time format for \code{x} axis tic mark labels, see \code{\link{strptime}}}
+}
+
+\details{
+Line segments will not be drawn where time differences between consecutive points are greater than \code{gap}.
 }
 
 \author{Fisher, J. C.}

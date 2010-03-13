@@ -5,7 +5,7 @@
 \title{Plot Points or Interpolated Surface}
 
 \description{
-Draws a scatter plot or contour plot with arrows. A key showing how the colors map to state variable values is shown to the right of the plot.
+Draws a scatter plot with arrows or contour plot with arrows. A key showing how the colors map to state variable values is shown to the right of the plot.
 }
 
 \usage{
@@ -20,19 +20,19 @@ vxby = NULL, vyby = NULL)
 \arguments{
 \item{x}{numeric; a vector of \code{x} coordinates for the plot. If \code{x} is a list, its components \code{x$x}, \code{x$y}, \code{x$z}, \code{x$vx}, and \code{x$vy} are used for \code{x}, \code{y}, \code{z}, \code{vx}, and \code{vy}, respectively.}
 \item{y}{numeric; a vector of \code{y} coordinates for the plot}
-\item{z}{matrix; the state variable values to be plotted, NAs allowed}
-\item{vx}{numeric; a vector of arrow component lengths in the \code{x} direction.}
-\item{vy}{numeric; a vector of arrow component lengths in the \code{y} direction.}
+\item{z}{matrix; the state variable values to be plotted, NAs allowed (optional if \code{type = "p"})}
+\item{vx}{numeric; a vector of arrow component lengths in the \code{x} direction (optional)}
+\item{vy}{numeric; a vector of arrow component lengths in the \code{y} direction (optional)}
 \item{type}{character; a 1-character string giving the type of plot desired. The following values are possible: "p" for points, "l" for level contour, "g" for grid contour.}
-\item{xlim}{numeric; the \code{x} limits \code{(x1,x2)} of the plot}
-\item{ylim}{numeric; the \code{y} limits \code{(y1,y2)} of the plot}
-\item{zlim}{numeric; the \code{z} limits \code{(z1,z2)} of the plot}
+\item{xlim}{numeric; a vector of \code{x} limits \code{(x1,x2)} for the plot}
+\item{ylim}{numeric; a vector of \code{y} limits \code{(y1,y2)} for the plot}
+\item{zlim}{numeric; a vector of \code{z} limits \code{(z1,z2)} for the plot}
 \item{xlab}{character; the label for the \code{x} axis}
 \item{ylab}{character; the label for the \code{y} axis}
 \item{zlab}{character; the label for the \code{z} legend}
 \item{asp}{numeric; the \code{y/x} aspect ratio}
 \item{csi}{numeric; height of text characters in inches}
-\item{width}{numeric; the width of the canvas of the plotting window in inches}
+\item{width}{numeric; the width of the plotting window canvas in inches}
 \item{pointsize}{integer; the point size of plotted text}
 \item{cex.pts}{numeric; the amount by which point symbols should be magnified relative to the default.}
 \item{nlevels}{integer; number of contour levels desired}

@@ -5,7 +5,7 @@
 \title{Autocrop Spatial Domain}
 
 \description{
-Eliminate mesh cells with arc lengths greater than a user specified maximum.
+This function removes mesh cells with arc lengths greater than a user specified maximum.
 }
 
 \usage{

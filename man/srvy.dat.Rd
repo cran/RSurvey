@@ -26,20 +26,18 @@ srvy.dat(option, value, clearAll = FALSE)
     \item{\code{[,1]}}{numeric; a vector of \code{x} coordinates}
     \item{\code{[,2]}}{numeric; a vector of \code{y} coordinates}
   }
-  Processed point data is saved in \code{data.pts}, an object of class data.frame with the following components:
+  Processed point data is saved in \code{data.pts}, an object of class data.frame with components:
   \describe{
-    \item{\code{x}}{numeric; a vector of \code{x} coordinates}
-    \item{\code{y}}{numeric; a vector of \code{y} coordinates}
-    \item{\code{z}}{numeric; a vector of \code{z} coordinates (optional)}
+    \item{\code{x, y}}{numeric; a vector of \code{x} and \code{y} coordinates}
+    \item{\code{z}}{numeric; a vector of state variable values (optional)}
     \item{\code{t}}{POSIXlt; a vector of time stamps (optional)}
-    \item{\code{vx}}{numeric; a vector of vector components in the \code{x} direction (optional)}
-    \item{\code{vy}}{numeric; a vector of vector components in the \code{y} direction (optional)}
+    \item{\code{vx, vy, vz}}{numeric; a vector of velocity components in the \code{x}, \code{y}, and \code{z} directions, respectively (optional)}
   }
-  Interpolated surface data is saved in \code{data.grd}, an object of class list with the following components: 
+  Interpolated surface data is saved in \code{data.grd}, an object of class list with components: 
   \describe{
-    \item{\code{x}}{numeric; a vector of \code{x} coordinates}
-    \item{\code{y}}{numeric; a vector of \code{y} coordinates}
-    \item{\code{z}}{matrix; with rows and columns corresponding to grid lines in the \code{x} and \code{y} directions, respectively.}
+    \item{\code{x, y}}{numeric; a vector of grid line locations at which the values in \code{z} are measured.}
+    \item{\code{z}}{matrix; interplated surface of state variable with rows and columns corresponding to grid lines in the \code{x} and \code{y} directions, respectively.}
+    \item{\code{vx, vy, vz}}{matrix; interpolated surface of velocity components with rows and columns corresponding to grid lines in the \code{x} and \code{y} directions, respectively (optional).}
   }
 }
 

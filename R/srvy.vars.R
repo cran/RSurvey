@@ -59,7 +59,7 @@
     
   # frame 0 contains temporal field identification
     
-    frame0 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=3, text="Temporal Field")
+    frame0 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=3, text="Temporal")
     
     frame0.lab.1 <- ttklabel(frame0, justify="center", text="Date/Time")
     
@@ -76,7 +76,7 @@
     
   # frame 1 contains spatial field identification
     
-    frame1 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=3, text="Spatial Fields")
+    frame1 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=3, text="Spatial")
     
     frame1.lab.1 <- ttklabel(frame1, justify="center", text="x-axis")
     frame1.lab.2 <- ttklabel(frame1, justify="center", text="y-axis")
@@ -103,7 +103,7 @@
     
   # frame 2 contains velocity vector field identification
     
-    frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=3, text="Vector Components")
+    frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=3, text="Velocity Components")
     
     frame2.lab.1 <- ttklabel(frame2, justify="center", text="x-axis")
     frame2.lab.2 <- ttklabel(frame2, justify="center", text="y-axis")

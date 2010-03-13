@@ -14,7 +14,7 @@ caption = cmd, multi = FALSE)}
 
 \arguments{
 \item{parent}{tkwin; the parent window (optional)}
-\item{cmd}{character; specifies whether an \code{"Open"} or \code{"Save As"} file management pop up dialog box is implemented.}
+\item{cmd}{character; specifies if an \code{"Open"} or \code{"Save As"} file management pop up dialog box is implemented.}
 \item{file}{character; the name of the file which the data are to be read from.  Alternatively, \code{file} can be a readable text-mode \code{\link{connection}} (optional).}
 \item{exts}{character; a vector of default file extensions}
 \item{initialdir}{character; specifies that the files in this directory should be displayed when the dialog pops up.}

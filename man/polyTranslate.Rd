@@ -5,7 +5,7 @@
 \title{Translate Alternate Polygon File Format}
 
 \description{
-Reads polygon information from a \acronym{ASCII} file.
+Reads polygon information from a \acronym{ASCII} file and adds vertices.
 }
 
 \usage{
@@ -18,7 +18,7 @@ polyTranslate(file = NULL, dl = NULL)
 }
 
 \format{
-The tab delineated text file adheres to the following 4 column format:
+The tab delineated text file adheres to the following table format:
   \describe{
     \item{\code{[,1]}}{integer; an index for vertices within a polygon}
     \item{\code{[,2]}}{numeric; the vertex location in the x-direction}
