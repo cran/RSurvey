@@ -1,25 +1,27 @@
-\name{buildPackage}
+\name{BuildPackage}
 
-\alias{buildPackage}
+\alias{BuildPackage}
 
-\title{Build R Package in Windows OS}
+\title{R Package Builder in Windows OS}
 
 \description{
+Writes a series of commands for creating an \R package to a Windows batch file.
+}
+
+\usage{
+BuildPackage()
+}
+
+\details{
 This function is intended for package developers and has only been tested on a 
-Windows operating system (\acronym{OS}) within the package source directory.
+Windows operating system (\acronym{OS}) within the package source directory. 
+The user is tasked with executing the batch file (\file{.bat}).
 }
 
-\usage{buildPackage()}
-
-\value{
-Prints shell commands for building an \R package. 
-The user is tasked with copy/pasting the commands into a Windows command shell.
-}
-
-\author{Fisher, J. C.}
+\author{Fisher, J.C.}
 
 \examples{
-\dontrun{buildPackage()}
+\dontrun{BuildPackage()}
 }
 
-\keyword{programming}
+\keyword{internal}

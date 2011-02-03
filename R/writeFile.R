@@ -1,97 +1,145 @@
-"writeFile" <- function() {
+WriteFile <- function(ext="txt") {
+  # Exports post-processed data to a file.
+  
+  # Check for necessary information
+  
+  if (is.null(Data("data.raw")) || is.null(ext)) 
+    return()
+  if (is.null(Data("data.pts")) && "shp" %in% ext) 
+    return()
+  if (is.null(Data("data.grd")) && "grd" %in% ext) 
+    return()
+  
+  # Select output file
+  
+  f <- GetFile(cmd="Save As", exts=ext, file=NULL, win.title="Save Data As", 
+               defaultextension="txt")
+  if (is.null(f)) 
+    return()
+  
+  ext <- f$ext
+  
+  # Open connection
+  
+  enc <- Data("encoding")
+  
+  if (ext == "gz") {
+    con <- gzfile(description=f$path, open="w", encoding=enc, compression=6)
+  } else if (ext != "shp") {
+    con <- file(description=f$path, open="w", encoding=enc)
+  }
+  
+  # Organize data
+  
+  vars <- Data("vars")
+  cols <- Data("cols")
+  
+  ncols <- length(cols)
+  
+  col.ids  <- sapply(1:ncols, function(i) cols[[i]]$id)
+  col.funs <- sapply(1:ncols, function(i) cols[[i]]$fun)
+  col.clas <- sapply(1:ncols, function(i) cols[[i]]$class)
+  col.nams <- sapply(1:ncols, function(i) cols[[i]]$name)
+  col.unts <- sapply(1:ncols, 
+                     function(i) {
+                       rtn <- cols[[i]]$unit
+                       if (is.null(rtn)) 
+                         rtn <- NA
+                       rtn
+                     })
+  col.digs <- sapply(1:ncols, 
+                     function(i) {
+                       rtn <- cols[[i]]$digits
+                       if (is.null(rtn))
+                         rtn <- NA
+                       rtn
+                     })
+  
+  # Prepare for export
+  
+  if (ext == "grd") {
+    d <- Data("data.grd")
+  } else {
     
-# additional functions (subroutines)
+    # Get row indexs
     
-  # file header info
+    idxs <- Data("data.pts")$index
+    if (is.null(idxs)) 
+      idxs <- 1:nrow(Data("data.raw"))
     
-    headerInfo <- function(typs) {
-        idxs <- as.vector(unlist(vars[typs]))
-        
-        cols <- srvy.dat("cols")
-        cols.name <- unlist(lapply(1:length(cols), function(i) cols[[i]]$name))[idxs]
-        cols.unit <- unlist(lapply(1:length(cols), function(i) cols[[i]]$unit))[idxs]
-        
-        if(!is.null(vars$t)) cols.unit[1] <- date.fmt
-        
-        list(nams=cols.name, unts=cols.unit)
+    # Initialize data table for export
+    
+    d <- as.data.frame(matrix(NA, nrow=length(idxs), ncol=length(cols)))
+    
+    # Evaluate functions
+    
+    for (i in 1:ncols) {
+      d[, i] <- EvalFunction(cols[[i]]$fun, cols)[idxs]
+      if (!is.na(d[1, i]) && d[1, i] == "length-error") 
+        d[1, i] <- NA
     }
     
-  # file connection
+    # Format data
     
-    fileCon <- function(path) {
-        if("connection" %in% class(file)) 
-            con <- file
-        else 
-            con <- file(path, "w", encoding=srvy.dat("encoding"))
+    for (i in 1:ncols) {
+      if (col.clas[i] == "numeric") {
+        dig <- col.digs[i]
+        if (is.na(dig)) 
+          dig <- getOption("digits")
+        d[, i] <- format(round(d[, i], dig), nsmall=dig)
+        if (ext == "shp") 
+          d[, i] <- as.numeric(d[, i])
+      } else if (col.clas[i] == "integer") {
+        d[, i] <- format(d[, i], nsmall=0)
+        if (ext == "shp") 
+          d[, i] <- as.integer(d[, i])
+      } else if (col.clas[i] == "POSIXct") {
+        fmt <- col.unts[i]
+        if (is.na(fmt)) 
+          fmt <- "%Y-%m-%d %H:%M:%S"
+        d[, i] <- format(d[, i], format=fmt)
+      }
     }
-    
-    
-# main program
-    
-  # simplify data
-    
-    data.pts <- srvy.dat("data.pts")
-    data.grd <- srvy.dat("data.grd")
-    vars     <- srvy.dat("vars")
-    date.fmt <- srvy.dat("date.fmt")
-    sep      <- srvy.dat("sep")
-    
-  # determine file name and save
-    
-    ext <- "dat"
-    if(!is.null(data.grd)) 
-        ext <- append(ext, "grd")
-    if(!is.null(data.pts)) 
-        ext <- append(ext, "shp")
-    
-    f <- getFile(cmd="Save As", exts=ext, file=NULL, caption="Save Survey Data As", defaultextension="dat")
-    if(is.null(f)) return()
-    
-    if(f$ext == "dat") {
-        con <- fileCon(f$path)
-        
-        if(!is.null(data.pts$t)) {
-            datetime <- strptime(data.pts$t, "%Y-%m-%d %H:%M:%OS")
-            data.pts$t <- format(datetime, format=date.fmt)
-        }
-        
-        data.pts$x <- format(data.pts$x, nsmall=4)
-        data.pts$y <- format(data.pts$y, nsmall=4)
-        data.pts$z <- format(data.pts$z, nsmall=4)
-        
-        header <- headerInfo(c("t", "x", "y", "z"))
-        
-        dat <- rbind(header$nams, header$unts, data.pts)
-        
-        write.table(dat, file=con, append=FALSE, quote=FALSE, 
-            row.names=FALSE, col.names=FALSE, sep=sep)
-    }
-    
-    if(f$ext == "grd") {
-        con <- fileCon(f$path)
-        
-        x <- rep(data.grd$x, ncol(data.grd$z))
-        y <- sort(rep(data.grd$y, nrow(data.grd$z)))
-        z <- as.vector(data.grd$z, mode="numeric")
-        
-        dat <- cbind(x, y, z)
-        dat <- dat[!is.na(dat[,3]),]
-        
-        header <- headerInfo(c("x", "y", "z"))
-        
-        dat <- rbind(header$nams, header$unts, dat)
-        
-        write.table(dat, file=con, quote=FALSE, row.names=FALSE, col.names=FALSE, sep=sep)
-    }
-    
-    if(f$ext == "shp") {
-        coordinates(data.pts) <- c("x", "y")
-        
-        hld <- strsplit(f$name, ".", fixed=TRUE)[[1]]
-        fname <- paste(hld[-length(hld)], collapse=".")
-        
-        writeOGR(data.pts, f$dir, fname, driver="ESRI Shapefile", verbose=TRUE)
-    }
-    
-    if(exists("con")) close(con)
+  }
+  
+  # Write data to ouput file
+  
+  if (ext == "grd") {
+      dput(d, file=con)
+  } else if (ext == "shp") {
+      
+      # Names are finicky for shapefiles, rules are convoluted, 
+      # 8-bit names and no periods
+      
+      col.names <- gsub("\\.", "", make.names(substr(col.ids, 1, 7), 
+                        unique=TRUE))
+      colnames(d) <- col.names
+      coordinates(d) <- col.names[c(vars$x, vars$y)]
+      
+      writeOGR(obj=d, dsn=f$dir, layer=f$name, driver="ESRI Shapefile", 
+               verbose=TRUE)
+  } else {
+      
+      # Construct header
+      
+      h <- t(col.nams)
+      if (!all(is.na(col.unts))) 
+        h <- rbind(h, col.unts)
+      if (!all(is.na(col.digs))) 
+        h <- rbind(h, col.digs)
+      
+      # Value seperator
+      
+      sep <- ifelse(ext == "csv", ",", "\t")
+      
+      # Write table to file
+      
+      write.table(h, file=con, append=FALSE, quote=FALSE, row.names=FALSE, 
+                  col.names=FALSE, sep=sep)
+      write.table(d, file=con, append=TRUE,  quote=FALSE, row.names=FALSE, 
+                  col.names=FALSE, sep=sep)
+  }
+  
+  if (exists("con")) 
+    close(con)
 }

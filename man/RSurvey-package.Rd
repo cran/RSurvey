@@ -9,41 +9,43 @@ Analysis of Spatially Distributed Data
 }
 
 \description{
-This package is a processing program for spatially distributed data.  The application is capable of 
-error corrections, polygon manipulation, and data visualization.  A graphical user interface 
-(\acronym{GUI}) is provided.
+This package is a processing program for spatially distributed data. 
+It features graphing tools, query building, and polygon clipping. 
+A graphical user interface (\acronym{GUI}) is provided.
 }
 
 \details{
   \tabular{ll}{
     Package: \tab RSurvey\cr
     Type: \tab Package\cr
-    Version: \tab 0.5.0\cr
-    Date: \tab 2010-03-13\cr
-    License: \tab GPL version 2 or newer
+    Version: \tab 0.5-8\cr
+    Date: \tab 2010-02-03\cr
+    License: \tab GPL (>= 2)
   }
 }
 
 \note{
-The \pkg{RSurvey} \acronym{GUI}s require that 
-\R operate as an \acronym{SDI} application with multiple top-level 
-windows for the console, graphics, and pager. 
-Preservation of unit consistency within this package is tasked to the user. 
+The \pkg{RSurvey} \acronym{GUI} requires \R operate as an \acronym{SDI} 
+application, using multiple top-level windows for the console, graphics, and 
+pager. Files can be one of four types as indicated by their extension: 
+tables (\file{.txt}, \file{.csv}, \file{.dat}, or \file{.shp}), 
+grids (\file{.grd}), polygons (\file{.ply}), or project images (\file{.rda}). 
+Tables (\file{.txt}, \file{.csv}, \file{.dat}) can be compressed by \code{gzip} 
+with additional extension \file{.gz}. Shapefiles (\file{.shp}) and interpolated 
+grid files (\file{.grd}) are limited to data export. Support for programmatic 
+manipulation of measurement units is only provided for date and time values; 
+therefore, the bulk of unit consistency is tasked to the user. 
+Time zones, spatial datum's and projections are not supported.
 
-Filename extensions are used to infer information about the way data is stored in a file. 
-The extensions \file{dat}, \file{grd}, and \file{ply} are \acronym{ASCII} files; where the 
-\file{dat} extension is reserved for table formated data, 
-\file{grd} for grided formated data, and 
-\file{ply} for polygon formated data.
-The extensions \file{shp} and \file{rda} are binary files; the 
-\file{shp} extension is reserved for the \acronym{ESRI} shapefile format, and 
-\file{rda} for \pkg{RSurvey} project files.
+The set of standards used for coding \pkg{RSurvey} is documented in 
+\emph{Google's R Style Guide}, 
+\url{http://google-styleguide.googlecode.com/svn/trunk/google-r-style.html}.
 }
 
 \author{
 Jason C. Fisher
 
-Maintainer: Jason C. Fisher <\email{jfisher@usgs.gov}>
+Maintainer: <\email{jfisher@usgs.gov}>
 }
 
 \examples{

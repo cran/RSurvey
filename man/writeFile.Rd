@@ -1,35 +1,42 @@
-\name{writeFile}
+\name{WriteFile}
 
-\alias{writeFile}
+\alias{WriteFile}
 
 \title{Write Data File}
 
 \description{
-Writes point and surface data to a file.
+Exports post-processed data to a file.
 }
 
 \usage{
-writeFile()
+WriteFile(ext = "txt")
+}
+
+\arguments{
+\item{ext}{character; the default \code{file} extension.}
 }
 
 \value{
-The format and type of data written is based on the file type chosen within the file 
-management pop up dialog box. 
-A selection of \emph{Table data files} (\file{*.dat}) writes the contents of \code{data.pts} to a \acronym{ASCII} file; 
-selecting \emph{Interpolated grid files} (\file{*.grd}) writes the contents of \code{data.grd} to a \acronym{ASCII} file; 
-and a selection of \emph{ESRI shapfiles} (\file{*.shp}) writes the contents of \code{data.pts} to a binary file.
+The format and type of data written is based on the file type chosen within 
+the file management pop-up dialog box. A selection of \emph{Text Files} 
+(\file{*.txt}, \file{*.csv}, \file{*.dat}) writes the contents of 
+\code{data.pts} to a text file; 
+selecting \emph{Interpolated Grid Test Files} (\file{*.grd}) writes the contents of 
+\code{data.grd} to a text file; and a selection of 
+\emph{ESRI Shapefiles} (\file{*.shp}) writes the contents of \code{data.pts} to 
+a binary file.
 }
 
-\author{Fisher, J. C.}
+\author{Fisher, J.C.}
 
 \seealso{
-\code{\link{getFile}}, \code{\link{write.table}}
+\code{\link{GetFile}}, \code{\link{write.table}}, \code{writeOGR}
 }
 
 \examples{
 \donttest{
 data(project)
-writeFile()
+WriteFile("txt")
 }
 }
 

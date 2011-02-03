@@ -1,23 +1,24 @@
-\name{loadPackages}
+\name{LoadPackages}
 
-\alias{loadPackages}
+\alias{LoadPackages}
 
 \title{Load Required Packages for RSurvey}
 
 \description{
 This function loads \R packages required by \pkg{RSurvey}. 
-If a required package is unavailable on the local computer an attempt is made to 
-acquire the package from \acronym{CRAN} using an existing network connection.
+If a required package is unavailable on the local computer an attempt 
+is made to acquire the package from \acronym{CRAN}, 
+\url{http://cran.r-project.org/}, using an existing network connection.
 }
 
 \usage{
-loadPackages()
+LoadPackages()
 }
 
-\author{Fisher, J. C.}
+\author{Fisher, J.C.}
 
 \examples{
-loadPackages()
+LoadPackages()
 }
 
 \keyword{misc}
