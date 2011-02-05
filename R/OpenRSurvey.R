@@ -123,12 +123,12 @@ OpenRSurvey <- function() {
     if (is.null(vars$x) | is.null(vars$y) | is.null(vars$z)) 
       s <- "disabled"
     tkconfigure(frame2.but.1.2, state=s)
-    tkconfigure(frame2.but.2.1, state=s)
+    tkconfigure(frame2.but.2.2, state=s)
     
     s <- "normal"
     if (is.null(vars$z) | is.null(vars$t)) 
       s <- "disabled"
-    tkconfigure(frame2.but.2.2, state=s)
+    tkconfigure(frame2.but.2.1, state=s)
   }
   
   # Set variables
@@ -986,18 +986,15 @@ OpenRSurvey <- function() {
                               command=function() {
                                 CallPlotSurface2d(type="p")
                               })
-  
-  frame2.but.1.2 <- ttkbutton(frame2, width=15, text="Surface 2D", 
+  frame2.but.1.2 <- ttkbutton(frame2, width=15, text="2D Surface", 
                               command=function() {
                                 tmp <- if (Data("img.contour")) "g" else "l"
                                 CallPlotSurface2d(type=tmp)
                               })
-  
-  frame2.but.2.1 <- ttkbutton(frame2, width=15, text="Surface 3D", 
-                              command=CallPlotSurface3d)
-  
-  frame2.but.2.2 <- ttkbutton(frame2, width=15, text="Time Series", 
+  frame2.but.2.1 <- ttkbutton(frame2, width=15, text="Time Series", 
                               command=CallPlotTimeSeries)
+  frame2.but.2.2 <- ttkbutton(frame2, width=15, text="3D Surface", 
+                              command=CallPlotSurface3d)
   
   tkgrid(frame2.but.1.1, frame2.but.1.2, padx=2, pady=2)
   tkgrid(frame2.but.2.1, frame2.but.2.2, padx=2, pady=c(2, 4))

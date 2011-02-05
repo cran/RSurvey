@@ -53,7 +53,8 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
     
     # Remove columns containing all NA values
     
-    d <- d[, sapply(seq(along=d), function(i) !all(is.na(d[, i])))]
+    is.all.na <- sapply(seq(along=d), function(i) all(is.na(d[, i])))
+    d <- d[, !is.all.na, drop=FALSE]
     
     # Determine the number of columns
     
@@ -160,19 +161,6 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
       cols[[idx]]$fun <- paste("DATA[[\"", id, "\"]]", sep="")
       
       d[, idx] <- val
-    }
-    
-    # Error checks
-    
-    if (length(c(vars$x, vars$y)) < 2) {
-      msg <- "Insufficient number of numeric fields, try revising."
-      if (is.null(parent)) {
-        stop(msg, call.=FALSE)
-      } else {
-        tkmessageBox(icon="error", message=msg, title="Error", type="ok", 
-                     parent=parent)
-        return()
-      }
     }
     
     # Store data

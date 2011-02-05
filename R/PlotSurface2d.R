@@ -343,7 +343,8 @@ PlotSurface2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
     v$vy[is.na(v$vy)] <- 0
     v <- v[!(v$vx == 0 & v$vy == 0), ]
     
-    arrows(v$x, v$y, v$x + v$vx, v$y + v$vy, length=0.05, angle=30, lwd=lwd)
+    suppressWarnings(arrows(v$x, v$y, v$x + v$vx, v$y + v$vy, 
+                            length=0.05, angle=30, lwd=lwd))
   }
   
   # Plot points

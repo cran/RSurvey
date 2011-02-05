@@ -491,8 +491,7 @@ ManageData <- function(cols, vars, parent=NULL) {
   
   tkgrid(frame0.but.1, frame0.but.2, frame0.but.3, frame0.grp.4)
   
-  tkgrid.configure(frame0.but.1, sticky="e", padx=2, pady=c(5, 8))
-  tkgrid.configure(frame0.but.2, sticky="e", padx=c(2, 8), pady=c(5, 8))
+  tkgrid.configure(frame0.but.1, frame0.but.2, sticky="e", padx=2, pady=c(5, 8))
   tkgrid.configure(frame0.but.3, sticky="w", padx=2, pady=c(5, 8), rowspan=2)
   tkgrid.configure(frame0.grp.4, sticky="se")
   
@@ -569,7 +568,7 @@ ManageData <- function(cols, vars, parent=NULL) {
   
   tkgrid.configure(frame2.txt.5.2, sticky="nswe")
   
-  tkgrid.configure(frame2.but.2.3, frame2.but.5.3, sticky="nw", padx=c(1, 0))
+  tkgrid.configure(frame2.but.2.3, frame2.but.5.3, sticky="nw", padx=c(2, 0))
   
   tkgrid.columnconfigure(frame2, 1, weight=1, minsize=25)
   tkgrid.rowconfigure(frame2, 4, weight=1, minsize=25)

@@ -34,11 +34,11 @@ the entry type.
 }
 
 \examples{
-CheckEntry("date", "07/12/1971")
-## [1] "07/12/1971"
+CheckEntry("numeric", "3.14ab")
+## [1] "3.14"
 
-CheckEntry("date", "7/2/19uq")
-## [1] "7/2/19"
+CheckEntry("integer", "3.")
+## [1] "3"
 
 CheckEntry("hour", "13")
 ## [1] "13"

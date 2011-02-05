@@ -4,7 +4,6 @@ LoadPackages <- function() {
   # acquire the package from CRAN using an existing network connection.
   
   r.packages <- c("tcltk", "sp", "rgdal", "gpclib", "rgl", "MBA", "tripack")
-  tcl.packages <- c("Tktable")
   
   # Packages that may be useful for future work: 
   #   r.packages <- append(r.packages, c("udunits", "mgcv", "RColorBrewer"))

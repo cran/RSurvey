@@ -488,8 +488,7 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   
   tkgrid(frame0.but.1, frame0.but.2, frame0.but.3, frame0.grp.4)
   
-  tkgrid.configure(frame0.but.1, sticky="e", padx=2, pady=c(5, 8))
-  tkgrid.configure(frame0.but.2, sticky="e", padx=c(2, 8), pady=c(5, 8))
+  tkgrid.configure(frame0.but.1, frame0.but.2, sticky="e", padx=2, pady=c(5, 8))
   tkgrid.configure(frame0.but.3, sticky="w", padx=2, pady=c(5, 8), rowspan=2)
   tkgrid.configure(frame0.grp.4, sticky="se")
   

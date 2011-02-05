@@ -3,7 +3,7 @@ ImportData <- function(parent=NULL) {
   
   # Additional functions (subroutines)
   
-  # Read data
+  # Read data and fill example data table
   
   FillTable <- function(summary.only=TRUE) {
     src <- as.character(tclvalue(source.var))
@@ -67,8 +67,8 @@ ImportData <- function(parent=NULL) {
       
       # Remove columns containing all NA values
       
-      d <- d[, sapply(seq(along=d), function(i) !all(is.na(d[, i])))]
-      
+      is.all.na <- sapply(seq(along=d), function(i) all(is.na(d[, i])))
+      d <- d[, !is.all.na, drop=FALSE]
       return(d)
     } else {
       hds <- as.logical(c(as.integer(tclvalue(names.var)), 
@@ -307,7 +307,7 @@ ImportData <- function(parent=NULL) {
   
   tkconfigure(frame0.but.1, state="disabled")
   
-  # Frame 1
+  # Frame 1 contains file locator
   
   frame1 <- ttkframe(tt, relief="flat", padding=0, borderwidth=0)
   
@@ -317,7 +317,7 @@ ImportData <- function(parent=NULL) {
   frame1.lab.2 <- ttklabel(frame1, text=txt)
   
   frame1.ent.1 <- ttkentry(frame1, textvariable=source.var)
-  frame1.but.1 <- ttkbutton(frame1, width=10, text="Browse", 
+  frame1.but.1 <- ttkbutton(frame1, width=8, text="Browse", 
                             command=GetDataFile)
   
   tkgrid(frame1.lab.1, frame1.ent.1, frame1.but.1, pady=c(10, 0))
@@ -334,7 +334,7 @@ ImportData <- function(parent=NULL) {
   
   tkbind(frame1.ent.1, "<Return>", RebuildTable)
   
-  # Frame 2
+  # Frame 2 contains header line information
   
   frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5, 
                           text="Identify header lines")
@@ -356,7 +356,7 @@ ImportData <- function(parent=NULL) {
   
   tkpack(frame2, anchor="w", fill="x", padx=10, pady=10)
   
-  # Frame 3
+  # Frame 3 contains import parameters
   
   frame3 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5, 
                           text="Select import parameters")
@@ -424,7 +424,7 @@ ImportData <- function(parent=NULL) {
   if (!is.null(Data("comment.char"))) 
     tcl(frame3.box.2.5, "current", match(Data("comment.char"), com0) - 1)
   
-  # Frame 4
+  # Frame 4 contains example data table
   
   frame4 <- ttkframe(tt, relief="flat", padding=0, borderwidth=0)
   
@@ -466,7 +466,7 @@ ImportData <- function(parent=NULL) {
   
   tkbind(frame4.tbl, "<<Paste>>", PasteData)
   
-  # Frame 5
+  # Frame 5 contians paste and clear buttons
   
   frame5 <- ttkframe(tt, relief="flat", padding=0, borderwidth=0)
   
