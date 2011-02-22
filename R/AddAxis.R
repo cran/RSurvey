@@ -22,18 +22,24 @@ AddAxis <- function(side, lim, ticks.inside=FALSE,
       at.minor <- pretty(lim, n=len.minor)
     } else {
       typ <- round(delta / 10^floor(log10(delta) + .Machine$double.eps))
-      if (typ == 1 || typ == 2) {
-        len.minor <- 2 * n + 1
-      } else if (typ == 5) {
-        len.minor <- 5 * n + 1
-      } else {
-        msg <- "Unexpected interval; minor tickmarks not plotted."
-        warning(call.=FALSE, msg)
-        return(NULL)
+      mult <- if (typ == 1 || typ == 2) 2 else 5
+      
+      i <- 0
+      no.match <- TRUE
+      while (no.match) {
+        i <- i + 1
+        len.minor <- mult * n + i
+        at.minor <- seq(x1, x2, length=len.minor)
+        
+        if (i > 100) {
+          msg <- "Unexpected interval; minor tickmarks not plotted."
+          warning(call.=FALSE, msg)
+          return(NULL)
+        } else if (all(at.major %in% at.minor)) {
+          no.match <- FALSE
+        }
       }
-      at.minor <- seq(x1, x2, length=len.minor)
     }
-    
     at.minor[!at.minor %in% at.major]
   }
   
@@ -47,11 +53,10 @@ AddAxis <- function(side, lim, ticks.inside=FALSE,
   tcl.major <- tcl.dir * (0.50 / (6 * par("csi")))
   tcl.minor <- tcl.dir * (0.25 / (6 * par("csi")))
   
-  at.major <- pretty(lim)
   lwd.ticks <- 0.5 * (96 / (6 * 12))
   
   if (inherits(lim, c("integer", "numeric"))) {
-    axis(side, at=at.major, tcl=tcl.major, cex.axis=0.8, las=las, 
+    axis(side, tcl=tcl.major, cex.axis=0.8, las=las, 
          labels=add.labels, lwd=-1, lwd.ticks=lwd.ticks, ...)
     if (minor.ticks) {
       at <- LocateMinorTicks()
@@ -61,7 +66,7 @@ AddAxis <- function(side, lim, ticks.inside=FALSE,
       }
     }
   } else if (inherits(lim, "POSIXt")) {
-    axis.POSIXct(side, at=at.major, tcl=tcl.major, cex.axis=0.8, las=las, 
+    axis.POSIXct(side, lim, tcl=tcl.major, cex.axis=0.8, las=las, 
                  labels=add.labels, lwd=-1, lwd.ticks=lwd.ticks, ...)
     if (minor.ticks) {
       at <- LocateMinorTicks()

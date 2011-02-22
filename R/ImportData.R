@@ -49,12 +49,12 @@ ImportData <- function(parent=NULL) {
     
     if (summary.only) {
       tclServiceMode(FALSE)
-      d <- try(read.table(con, sep=sep, quote=quo, row.names=NULL, 
+      d <- try(read.table(con, header=FALSE, sep=sep, quote=quo, row.names=NULL,
                           na.strings=c("", nas), colClasses="character", 
                           nrows=nrows, skip=skp, check.names=TRUE, fill=TRUE, 
                           strip.white=TRUE, blank.lines.skip=TRUE, 
-                          comment.char=com, 
-                          allowEscapes=TRUE, flush=TRUE), silent=TRUE)
+                          comment.char=com, allowEscapes=TRUE, 
+                          flush=TRUE), silent=TRUE)
       close(con)
       tclServiceMode(TRUE)
       

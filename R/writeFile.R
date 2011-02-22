@@ -75,8 +75,6 @@ WriteFile <- function(ext="txt") {
     
     for (i in 1:ncols) {
       d[, i] <- EvalFunction(cols[[i]]$fun, cols)[idxs]
-      if (!is.na(d[1, i]) && d[1, i] == "length-error") 
-        d[1, i] <- NA
     }
     
     # Format data

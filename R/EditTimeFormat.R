@@ -30,19 +30,19 @@ EditTimeFormat <- function(spec=NULL, parent=NULL) {
   # Add string to conversion format entry
   
   AddString <- function(txt) {
-      if (as.logical(tcl(frame2a.ent, "selection", "present")))
-        tcl(frame2a.ent, "delete", "sel.first", "sel.last")
-      tkinsert(frame2a.ent, "insert", txt)
-      UpdateFormat()
-      tkfocus(frame2a.ent)
+    if (as.logical(tcl(frame2a.ent, "selection", "present")))
+      tcl(frame2a.ent, "delete", "sel.first", "sel.last")
+    tkinsert(frame2a.ent, "insert", txt)
+    UpdateFormat()
+    tkfocus(frame2a.ent)
   }
   
-  # Clear conversion specification
+  # Clear conversion specification format
   
-   ClearAll <- function() {
-      tclvalue(con.var) <- ""
-      UpdateFormat()
-      tkfocus(frame2a.ent)
+  ClearAll <- function() {
+    tclvalue(con.var) <- ""
+    UpdateFormat()
+    tkfocus(frame2a.ent)
   }
   
   
@@ -74,7 +74,7 @@ EditTimeFormat <- function(spec=NULL, parent=NULL) {
     tkwm.geometry(tt, paste("+", as.integer(tmp[2]) + 25, 
                             "+", as.integer(tmp[3]) + 25, sep=""))
   }
-  tktitle(tt) <- "Edit Date and Time Format"
+  tktitle(tt) <- "Date and Time Format"
   
   # Frame 0 contains load and cancel buttons, and size grip
   
@@ -184,9 +184,6 @@ EditTimeFormat <- function(spec=NULL, parent=NULL) {
   tkicursor(frame2a.ent, "end")
   tkbind(frame2a.ent, "<KeyRelease>", UpdateFormat)
   
-  tkgrid(frame2a.ent, padx=5, pady=c(5, 0))
-  tkgrid.configure(frame2a.ent, sticky="we", columnspan=6)
-  
   frame2a.but.1 <- ttkbutton(frame2a, width=2, text="/", 
                              command=function() AddString("/"))
   frame2a.but.2 <- ttkbutton(frame2a, width=2, text="-", 
@@ -197,11 +194,14 @@ EditTimeFormat <- function(spec=NULL, parent=NULL) {
                              command=function() AddString(":"))
   frame2a.but.5 <- ttkbutton(frame2a, width=2, text=" ", 
                              command=function() AddString(" "))
-  frame2a.but.6 <- ttkbutton(frame2a, width=8, text="Clear", 
+  frame2a.but.6 <- ttkbutton(frame2a, width=5, text="Clear", 
                              command=ClearAll)
   
+  tkgrid(frame2a.ent, padx=5, pady=c(5, 0))
   tkgrid(frame2a.but.1, frame2a.but.2, frame2a.but.3, frame2a.but.4, 
          frame2a.but.5, frame2a.but.6, padx=2, pady=c(8, 5), sticky="e")
+  
+  tkgrid.configure(frame2a.ent, sticky="we", columnspan=6)
   tkgrid.configure(frame2a.but.1, padx=c(5, 2))
   tkgrid.configure(frame2a.but.6, padx=c(15, 5))
   
@@ -225,7 +225,7 @@ EditTimeFormat <- function(spec=NULL, parent=NULL) {
   
   
   frame2c <- ttklabelframe(frame2, relief="flat", borderwidth=3, padding=3, 
-                           text="Example conversion")
+                           text="Example")
   
   fg <- "#414042"
   fmt <- "%Y-%m-%d %H:%M:%S"

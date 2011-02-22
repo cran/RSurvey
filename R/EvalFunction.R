@@ -1,5 +1,5 @@
 EvalFunction <- function(txt, cols) {
-  # Evaluates an R expression
+  # Evaluate R expression
   
   d <- list()
   
@@ -25,17 +25,13 @@ EvalFunction <- function(txt, cols) {
   
   fun <- eval(parse(text=paste("function(DATA) {", fun, "}", sep="")))
   
-  rtn <- try(fun(d), silent=TRUE)
+  ans <- try(fun(d), silent=TRUE)
   
-  if (inherits(rtn, "try-error")) 
-    return(rtn)
+  if (inherits(ans, "try-error")) 
+    return(ans)
   
-  n <- length(rtn)
-  nrows <- nrow(Data("data.raw"))
-  if (n == 0 || (!is.null(nrows) && n != nrows))  
-    return("length-error")
-  if (is.numeric(rtn)) 
-    rtn[!is.finite(rtn)] <- NA
+  if (is.numeric(ans)) 
+    ans[is.infinite(ans) | is.nan(ans)] <- NA
   
-  rtn
+  ans
 }

@@ -176,12 +176,12 @@ PlotSurface2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
   
   # Canvas setup
   
-  mar.plot   <- c(4, 3.75, 2, 0.75)
-  mar.legend <- c(4, 0.00, 2, 4.25)
-  
   if (is.null(z)) {
+    mar.plot   <- c(4, 3.75, 2, 2)
     legend.width <- 0
   } else {
+    mar.plot   <- c(4, 3.75, 2, 0.75)
+    mar.legend <- c(4, 0.00, 2, 4.25)
     legend.width <- (1 + mar.legend[2] + mar.legend[4]) * csi # width (in)
   }
   if (is.na(asp)) {
@@ -215,7 +215,7 @@ PlotSurface2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
     if (rkey) 
       zlim <- rev(zlim)
     
-    plot.window(xlim=c(0, 1), ylim=zlim, xaxs="i", yaxs="i")
+    plot.window(xlim=c(0, 1), ylim=zlim, xaxs="i", yaxs="i", xaxt="n", yaxt="n")
     rect(0, levels[-length(levels)], 1, levels[-1], col=col, border=NA)
     
     tcl <- (0.1 / (6 * par("csi")))
@@ -225,8 +225,7 @@ PlotSurface2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
          lwd=-1, lwd.ticks=lwd)
     
     tcl <- -(0.5 / (6 * par("csi")))
-    axis(4, las=3, cex.axis=0.8, padj=-1, tcl=tcl, 
-         lwd=-lwd, lwd.ticks=lwd)
+    axis(4, las=3, cex.axis=0.8, padj=-1, tcl=tcl, lwd=-lwd, lwd.ticks=lwd)
     
     mtext(zlab, side=4, line=2, cex=0.9, las=3)
     box(lwd=lwd)

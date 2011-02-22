@@ -46,12 +46,12 @@ EditLimits <- function(lim=NULL, win.title="Limits", parent=NULL) {
       d$z2.chk <- as.integer(tclvalue(z2.chk.var))
     }
     
-    d$xlim <- c(if (!is.null(d$x1) && !d$x1.chk) d$x1 else NA, 
-                if (!is.null(d$x2) && !d$x2.chk) d$x2 else NA)
-    d$ylim <- c(if (!is.null(d$y1) && !d$y1.chk) d$y1 else NA, 
-                if (!is.null(d$y2) && !d$y2.chk) d$y2 else NA)
-    d$zlim <- c(if (!is.null(d$z1) && !d$z1.chk) d$z1 else NA, 
-                if (!is.null(d$z2) && !d$z2.chk) d$z2 else NA)
+    d$x <- c(if (!is.null(d$x1) && !d$x1.chk) d$x1 else NA, 
+             if (!is.null(d$x2) && !d$x2.chk) d$x2 else NA)
+    d$y <- c(if (!is.null(d$y1) && !d$y1.chk) d$y1 else NA, 
+             if (!is.null(d$y2) && !d$y2.chk) d$y2 else NA)
+    d$z <- c(if (!is.null(d$z1) && !d$z1.chk) d$z1 else NA, 
+             if (!is.null(d$z2) && !d$z2.chk) d$z2 else NA)
     
     t1.str <- paste(tclvalue(t1d.var), " ", 
                     as.integer(tclvalue(t1h.var)), ":", 
@@ -89,7 +89,7 @@ EditLimits <- function(lim=NULL, win.title="Limits", parent=NULL) {
       t1.str <- NA
     if (is.null(d$t2) || d$t2.chk) 
       t2.str <- NA
-    d$tlim <- as.POSIXct(c(t1.str, t2.str), origin=origin)
+    d$t <- as.POSIXct(c(t1.str, t2.str), origin=origin)
     
     tclvalue(tt.done.var) <- 1
     new <<- d

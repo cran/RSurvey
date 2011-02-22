@@ -156,7 +156,7 @@ OpenRSurvey <- function() {
         return()
     }
     
-    ids   <- sapply(cols, function(i) i$id)
+    ids <- sapply(cols, function(i) i$id)
     classes <- sapply(cols, function(i) i$class)
     
     idxs.t <- which(classes %in% c("POSIXct"))
@@ -415,7 +415,7 @@ OpenRSurvey <- function() {
     if (Data("show.2.axes")) 
       axis.side <- 1:4
     
-    PlotTimeSeries(x=dat$t, y=dat$z, xlim=lim$tlim, ylim=lim$zlim, ylab=ylab, 
+    PlotTimeSeries(x=dat$t, y=dat$z, xlim=lim$t, ylim=lim$z, ylab=ylab, 
                    tgap=tgap, width=width, cex.pts=cex.pts, 
                    axis.side=axis.side, minor.ticks=Data("minor.ticks"), 
                    ticks.inside=Data("ticks.inside"))
@@ -495,10 +495,10 @@ OpenRSurvey <- function() {
     
     lim <- Data("lim.axes")
     
-    xlim <- lim$xlim
+    xlim <- lim$x
     if (is.null(xlim)) 
       xlim <- c(NA, NA)
-    ylim <- lim$ylim
+    ylim <- lim$y
     if (is.null(ylim)) 
       ylim <- c(NA, NA)
     
@@ -522,16 +522,16 @@ OpenRSurvey <- function() {
       bbx <- extendrange(bbx, f=0.02)
       bby <- extendrange(bby, f=0.02)
       if (is.na(xlim[1]) && bbx[1] < xran[1]) 
-        lim$xlim[1] <- bbx[1]
+        lim$x[1] <- bbx[1]
       if (is.na(xlim[2]) && bbx[2] > xran[2]) 
-        lim$xlim[2] <- bbx[2]
+        lim$x[2] <- bbx[2]
       if (is.na(ylim[1]) && bby[1] < yran[1]) 
-        lim$ylim[1] <- bby[1]
+        lim$y[1] <- bby[1]
       if (is.na(ylim[2]) && bby[2] > yran[2]) 
-        lim$ylim[2] <- bby[2]
+        lim$y[2] <- bby[2]
     }
     
-    PlotSurface2d(dat, type=type, xlim=lim$xlim, ylim=lim$ylim, zlim=lim$zlim, 
+    PlotSurface2d(dat, type=type, xlim=lim$x, ylim=lim$y, zlim=lim$z, 
                   xlab=xlab, ylab=ylab, zlab=zlab, asp=Data("asp.yx"), 
                   csi=Data("csi"), width=Data("width"), nlevels=nlevels,
                   cex.pts=Data("cex.pts"), rkey=Data("rkey"), 
@@ -618,7 +618,7 @@ OpenRSurvey <- function() {
       pts <- Data("data.pts")
     lim <- Data("lim.axes")
     
-    PlotSurface3d(x=dat, px=pts, xlim=lim$xlim, ylim=lim$ylim, zlim=lim$zlim, 
+    PlotSurface3d(x=dat, px=pts, xlim=lim$x, ylim=lim$y, zlim=lim$z, 
                   vasp=Data("asp.zx"), hasp=Data("asp.yx"), 
                   width=Data("width"), cex.pts=Data("cex.pts"),
                   nlevels=Data("nlevels"))
@@ -792,6 +792,7 @@ OpenRSurvey <- function() {
   
   tkadd(menu.poly, "command", label="Manage polygons", 
         command=CallManagePolygons)
+  tkadd(menu.poly, "separator")
   tkadd(menu.poly, "command", label="Set polygon limits", 
         command=CallSetPolygonLimits)
   tkadd(menu.poly, "command", label="Clear polygon limits", 

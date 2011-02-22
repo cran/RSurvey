@@ -117,7 +117,9 @@ SummarizeData <- function(obj, digits=NULL, units=NULL) {
       if(!all(is.na(obj))) 
         s$"Hist" <- hist(as.integer(na.omit(obj)) + 1, seq(0, 2), plot=FALSE)
       
-    } else if (s$Class == "factor") {
+    } else if (s$Class %in% c("character", "factor")) {
+      if (s$Class == "character") 
+        obj <- as.factor(obj)
       s$"Unique" <- length(levels(obj))
       s$"Hist" <- hist(na.omit(as.integer(obj)), plot=FALSE)
     }

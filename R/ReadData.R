@@ -65,14 +65,14 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
     if (headers[1]) {
       nams <- as.character(d[1, ])
       nams[is.na(nams)] <- "Unknown"
-      d <- d[-1, ]
+      d <- d[-1, , drop=FALSE]
     } else {
         nams <- rep("Unknown", n)
     }
     
     if (headers[2]) {
       unts <- as.character(d[1, ])
-      d <- d[-1, ]
+      d <- d[-1, , drop=FALSE]
     } else {
       unts <- rep(NA, n)
     }
@@ -80,7 +80,7 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
     if (headers[3]) {
       digs <- suppressWarnings(as.integer(d[1, ]))
       digs[is.na(digs) | (digs < 0 | digs > 20)] <- NA
-      d <- d[-1, ]
+      d <- d[-1, , drop=FALSE]
     } else {
       digs <- rep(NA, n)
     }
@@ -110,11 +110,7 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
       
       # Convert value to assumed format
       
-      if (is.date) {
-        val <- date.time
-      } else {
-        val <- type.convert(d[, idx], as.is=FALSE)
-      }
+      val <- if (is.date) date.time else type.convert(d[, idx], as.is=TRUE)
       
       # Class POSIXct
       

@@ -32,6 +32,12 @@ Returns a list containing the following components:
     value is used for the minimum and maximum \code{z} value.}
   \item{t1.chk, t2.chk}{logical; if \code{TRUE} a default 
     value is used for the minimum and maximum \code{t} value.}
+  \item{x}{numeric; a vector of \code{x} limits \code{(x1,x2)}, 
+    default is \code{(NA,NA)}.}
+  \item{y}{numeric; a vector of \code{y} limits \code{(y1,y2)}, 
+    default is \code{(NA,NA)}.}
+  \item{z}{numeric; a vector of \code{z} limits \code{(z1,z2)}, 
+    default is \code{(NA,NA)}.}
 }
 
 \author{Fisher, J.C.}

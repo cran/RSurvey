@@ -7,11 +7,11 @@
   
   Eval <- function(v) {
     if (is.null(v)) {
-      rtn <- NULL
+      ans <- NULL
     } else {
-      rtn <- EvalFunction(cols[[v]]$fun, cols)
+      ans <- EvalFunction(cols[[v]]$fun, cols)
     }
-    rtn
+    ans
   }
   
   
@@ -28,61 +28,28 @@
     cols <- Data("cols")
     vars <- Data("vars")
     
-    if (is.null(Data("data.raw"))) {
-      tmp  <- Eval(vars$x)
-      d <- data.frame(index=1:length(tmp))
-      d$x  <- tmp
-    } else {
-      d <- data.frame(index=1:nrow(Data("data.raw")))
-      d$x  <- Eval(vars$x)
+    var.names <- names(vars)
+    l <- lapply(var.names, function(i) Eval(vars[[i]]))
+    lengths <- sapply(l, function(i) length(i))
+    nrows <- max(lengths)
+    d <- data.frame(index=1:nrows)
+    for (i in seq(along=l)) {
+      d[[var.names[i]]] <- c(l[[i]], rep(NA, nrows - lengths[i]))
     }
-    
-    d$y  <- Eval(vars$y)
-    d$z  <- Eval(vars$z)
-    d$t  <- Eval(vars$t)
-    d$vx <- Eval(vars$vx)
-    d$vy <- Eval(vars$vy)
-    d$vz <- Eval(vars$vz)
     
     # Remove NA's
     
-    if (!is.null(vars$x)) 
-      d <- d[!is.na(d$x), ]
-    if (!is.null(vars$y)) 
-      d <- d[!is.na(d$y), ]
-    if (!is.null(vars$z)) 
-      d <- d[!is.na(d$z), ]
-    if (!is.null(vars$t)) 
-      d <- d[!is.na(d$t), ]
+    d <- d[rowSums(is.na(d)) == 0, ]
     
     # Range limits
     
     lim <- Data("lim.data")
-    
     if (!is.null(lim)) {
-      if (!is.null(vars$x)) {
-        if (!is.na(lim$xlim[1])) 
-          d <- d[d$x >= lim$xlim[1], ]
-        if (!is.na(lim$xlim[2])) 
-          d <- d[d$x <= lim$xlim[2], ]
-      }
-      if (!is.null(vars$y)) {
-        if (!is.na(lim$ylim[1])) 
-          d <- d[d$y >= lim$ylim[1], ]
-        if (!is.na(lim$ylim[2])) 
-          d <- d[d$y <= lim$ylim[2], ]
-      }
-      if (!is.null(vars$z)) {
-        if (!is.na(lim$zlim[1])) 
-          d <- d[d$z >= lim$zlim[1], ]
-        if (!is.na(lim$zlim[2])) 
-          d <- d[d$z <= lim$zlim[2], ]
-      }
-      if (!is.null(vars$t)) {
-        if (!is.na(lim$tlim[1])) 
-          d <- d[d$t >= lim$tlim[1], ]
-        if (!is.na(lim$tlim[2])) 
-          d <- d[d$t <= lim$tlim[2], ]
+      for (i in var.names) {
+        if (!is.na(lim[[i]][1])) 
+          d <- d[d[[i]] >= lim[[i]][1], ]
+        if (!is.na(lim[[i]][2])) 
+          d <- d[d[[i]] <= lim[[i]][2], ]
       }
     }
     
