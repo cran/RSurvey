@@ -13,15 +13,15 @@ AddAxis(side, lim, ticks.inside = FALSE, minor.ticks = FALSE, ...)
 }
 
 \arguments{
-\item{side}{integer; a vector of values specifying the plot sides for the axis 
+\item{side}{integer; a vector of values specifying the plot sides for the axis
   to be drawn.}
-\item{lim}{numeric or POSIXt; the axis limits (\code{x1}, \code{x2}) of 
+\item{lim}{numeric or POSIXt; the axis limits (\code{x1}, \code{x2}) of
   the plot.}
-\item{ticks.inside}{logical; if \code{TRUE} tickmarks are placed inside the 
+\item{ticks.inside}{logical; if \code{TRUE} tickmarks are placed inside the
   plot region; its default is \code{FALSE}.}
-\item{minor.ticks}{logical; if \code{TRUE} minor tickmarks are added to the 
+\item{minor.ticks}{logical; if \code{TRUE} minor tickmarks are added to the
   plot; its default is \code{FALSE}.}
-\item{...}{other graphical parameters may also be passed as arguments to this 
+\item{...}{other graphical parameters may also be passed as arguments to this
   function.}
 }
 
@@ -32,7 +32,7 @@ The plot sides are designated as: 1 = below, 2 = left, 3 = above, and 4 = right.
 \author{Fisher, J.C.}
 
 \seealso{
-\code{\link{axis}}, \code{\link{axis.POSIXct}}, 
+\code{\link{axis}}, \code{\link{axis.POSIXct}},
 \code{\link{seq}}, \code{\link{pretty}}
 }
 

@@ -13,8 +13,8 @@ BuildPackage()
 }
 
 \details{
-This function is intended for package developers and has only been tested on a 
-Windows operating system (\acronym{OS}) within the package source directory. 
+This function is intended for package developers and has only been tested on a
+Windows operating system (\acronym{OS}) within the package source directory.
 The user is tasked with executing the batch file (\file{.bat}).
 }
 

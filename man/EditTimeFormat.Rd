@@ -5,7 +5,7 @@
 \title{A \acronym{GUI} for constructing date and time formats.}
 
 \description{
-A \acronym{GUI} for converting between character representations and objects of 
+A \acronym{GUI} for converting between character representations and objects of
 class \dQuote{POSIXt} representing calendar dates and times.
 }
 

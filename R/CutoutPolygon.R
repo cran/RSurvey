@@ -1,6 +1,6 @@
 CutoutPolygon <- function(dat, ply=NULL) {
   # This function excludes gridded data lying outside of a given polygon.
-  
+
   if (inherits(dat, "matrix")) {
     new.dat <- list(x=unique(dat[, 1]), y=unique(dat[, 2]), z=NULL)
     nrows <- length(new.dat$x)
@@ -12,23 +12,23 @@ CutoutPolygon <- function(dat, ply=NULL) {
   } else {
     nrows <- length(dat$x)
     ncols <- length(dat$y)
-    x <- as.vector(matrix(rep(dat$x, ncols), nrow=nrows, ncol=ncols, 
+    x <- as.vector(matrix(rep(dat$x, ncols), nrow=nrows, ncol=ncols,
                           byrow=FALSE))
-    y <- as.vector(matrix(rep(dat$y, nrows), nrow=nrows, ncol=ncols, 
+    y <- as.vector(matrix(rep(dat$y, nrows), nrow=nrows, ncol=ncols,
                           byrow=TRUE))
   }
-  
-  if (is.null(ply)) 
+
+  if (is.null(ply))
     return(dat)
-  
+
   pnt.in.ply <- matrix(0, nrow=length(dat$x), ncol=length(dat$y))
-  if (is.null(dat$z)) 
+  if (is.null(dat$z))
     dat$z <- pnt.in.ply
-  
+
   d <- get.pts(ply)
   holes <- sapply(d, function(x) x$hole)
   d <- append(d[!holes], d[holes])
-  
+
   for (i in seq(along=d)) {
     pts <- d[[i]]
     in.poly <- point.in.polygon(point.x=x, point.y=y, pol.x=pts$x, pol.y=pts$y)
@@ -39,28 +39,28 @@ CutoutPolygon <- function(dat, ply=NULL) {
       pnt.in.ply <- pnt.in.ply + mat.in.poly
     }
   }
-  
-  dat$z[pnt.in.ply == 0] <- NA 
-  
+
+  dat$z[pnt.in.ply == 0] <- NA
+
   # Remove rows and columns consisting of all NA values
-  
+
   rm.cols <- rm.rows <- NULL
-  
+
   cols <- 1:ncol(dat$z)
   rows <- 1:nrow(dat$z)
-  
+
   for (i in rows) {
-    if (all(is.na(dat$z[i,]))) 
+    if (all(is.na(dat$z[i,])))
       rm.rows <- c(rm.rows, i)
   }
   for (i in cols) {
-    if (all(is.na(dat$z[,i]))) 
+    if (all(is.na(dat$z[,i])))
       rm.cols <- c(rm.cols, i)
   }
-  
+
   dat$x <- dat$x[!(rows %in% rm.rows)]
   dat$y <- dat$y[!(cols %in% rm.cols)]
   dat$z <- dat$z[!(rows %in% rm.rows), !(cols %in% rm.cols)]
-  
+
   dat
 }

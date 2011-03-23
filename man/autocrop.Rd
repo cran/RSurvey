@@ -19,9 +19,9 @@ Autocrop(mesh, max.len, max.itr)
 }
 
 \details{
-This subroutine uses a Delaunay triangulation to approximate the shape of an 
-area defined by a set of arbitrarily distributed points in a plane. 
-All triangles with arc lengths greater than an established maximum length are 
+This subroutine uses a Delaunay triangulation to approximate the shape of an
+area defined by a set of arbitrarily distributed points in a plane.
+All triangles with arc lengths greater than an established maximum length are
 removed; a polygon is created from the union of the remaining triangles.
 }
 

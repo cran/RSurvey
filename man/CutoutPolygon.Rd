@@ -13,14 +13,14 @@ CutoutPolygon(dat, ply = NULL)
 }
 
 \arguments{
-\item{dat}{list; with components \code{x}, \code{y}, and \code{z}, 
+\item{dat}{list; with components \code{x}, \code{y}, and \code{z},
   see \sQuote{Value}.}
-\item{ply}{gpc.poly; the polygon defining the crop region for the gridded 
+\item{ply}{gpc.poly; the polygon defining the crop region for the gridded
   data.}
 }
 
 \details{
-Values of \code{z} corresponding to coordinates (\code{x}, \code{y}) located 
+Values of \code{z} corresponding to coordinates (\code{x}, \code{y}) located
 outside the polygon will be set to \code{NA}.
 }
 
@@ -43,7 +43,7 @@ x11()
 ply <- as(cbind(c(2, 8, 9, 6, 3), c(3, 1, 4, 8, 6)), "gpc.poly")
 x <- seq(0, 10, 0.1)
 y <- seq(0, 10, 0.1)
-z <- matrix(runif(length(x) * length(y)), nrow = length(y), 
+z <- matrix(runif(length(x) * length(y)), nrow = length(y),
             ncol = length(x))
 
 d <- list(x = x, y = y, z = z)

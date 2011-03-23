@@ -13,27 +13,27 @@ EvalFunction(txt, cols)
 }
 
 \arguments{
-\item{txt}{character; a string representation of an \R function; 
+\item{txt}{character; a string representation of an \R function;
   see \sQuote{Details}.}
 \item{cols}{list; see \code{\link{ManageData}}.}
 }
 
 \details{
-The \dQuote{DATA} identifier is a reserved word within the \code{txt} argument. 
-\dQuote{DATA} is used to reference the \code{data.raw} data 
-frame, a component of \code{\link{Data}} with variable names keyed to 
+The \dQuote{DATA} identifier is a reserved word within the \code{txt} argument.
+\dQuote{DATA} is used to reference the \code{data.raw} data
+frame, a component of \code{\link{Data}} with variable names keyed to
 column index numbers in \code{data.raw} using the \code{vars} argument.
 }
 
 \value{
-The result of evaluating the \code{txt} object after the appropriate 
-substitutions for \dQuote{DATA} has been made. 
-\code{Inf}, \code{-Inf}, and \code{NaN} values are converted to \code{NA} in 
+The result of evaluating the \code{txt} object after the appropriate
+substitutions for \dQuote{DATA} has been made.
+\code{Inf}, \code{-Inf}, and \code{NaN} values are converted to \code{NA} in
 numeric vectors.
 }
 
 \seealso{
-\code{\link{parse}}, \code{\link{eval}}, \code{\link{round}}, 
+\code{\link{parse}}, \code{\link{eval}}, \code{\link{round}},
 \code{\link{is.infinite}}, \code{\link{is.nan}}
 }
 
