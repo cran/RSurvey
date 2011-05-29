@@ -1,6 +1,6 @@
 Package: RSurvey
-Version: 0.6-1
-Date: 2011-03-23
+Version: 0.6-2
+Date: 2011-05-29
 Title: Analysis of Spatially Distributed Data
 Author: Jason C. Fisher <jfisher@usgs.gov>
 Maintainer: Jason C. Fisher <jfisher@usgs.gov>
@@ -12,6 +12,6 @@ Description: This package is a processing program for spatially
         and polygon clipping. A graphical user interface is provided.
 License: GPL (>= 2)
 URL: http://rsurvey.org
-Packaged: 2011-03-23 23:36:39 UTC; jfisher
+Packaged: 2011-05-30 01:32:08 UTC; jfisher
 Repository: CRAN
-Date/Publication: 2011-03-24 08:00:56
+Date/Publication: 2011-05-30 04:32:55

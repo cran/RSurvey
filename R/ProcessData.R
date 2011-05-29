@@ -39,9 +39,9 @@
     for (i in seq(along=lst))
       d[[i]] <- c(lst[[i]], rep(NA, max.len - len[i]))
 
-    # Remove NA's
+    # Remove NA's for spatial and temporal data
 
-    d <- d[rowSums(is.na(d)) == 0, ]
+    d <- d[rowSums(is.na(d[, names(d) %in% c("x", "y", "t")])) == 0, ]
 
     # Range limits
 
@@ -49,9 +49,9 @@
     if (!is.null(lim)) {
       for (i in var.names) {
         if (!is.na(lim[[i]][1]))
-          d <- d[d[[i]] >= lim[[i]][1], ]
+          d <- d[!is.na(d[[i]]) & d[[i]] >= lim[[i]][1], ]
         if (!is.na(lim[[i]][2]))
-          d <- d[d[[i]] <= lim[[i]][2], ]
+          d <- d[!is.na(d[[i]]) & d[[i]] <= lim[[i]][2], ]
       }
     }
 
@@ -144,11 +144,10 @@
     } else {
       k <- y.diff / x.diff
     }
-    if (k < 1) {
+    if (k < 1)
       m <- 2
-    } else {
+    else
       n <- 2
-    }
     if (!is.null(Data("mba.m")))
       m <- Data("mba.m")
     if (!is.null(Data("mba.n")))
@@ -156,7 +155,7 @@
     h <- Data("mba.h")
 
     GetSurface <- function(x, y, z, pts, n, m) {
-      xyz <- matrix(data=c(x, y, z), ncol=3)
+      xyz <- matrix(data=c(x, y, z), ncol=3)[!is.na(z), ]
       ans <- mba.points(xyz=xyz, xy.est=pts, n=n, m=m, h=h,
                         extend=TRUE, verbose=FALSE)$xyz.est
       xy <- cbind(x, y)

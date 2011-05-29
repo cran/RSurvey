@@ -22,7 +22,7 @@ AddAxis <- function(side, lim, ticks.inside=FALSE,
       at.minor <- pretty(lim, n=len.minor)
     } else {
       typ <- round(delta / 10^floor(log10(delta) + .Machine$double.eps))
-      mult <- if (typ == 1 || typ == 2) 2 else 5
+      mult <- if (typ == 1 || typ == 2) 5 else 10
 
       i <- 0
       no.match <- TRUE
@@ -60,10 +60,9 @@ AddAxis <- function(side, lim, ticks.inside=FALSE,
          labels=add.labels, lwd=-1, lwd.ticks=lwd.ticks, ...)
     if (minor.ticks) {
       at <- LocateMinorTicks()
-      if (!is.null(at)) {
+      if (!is.null(at))
         axis(side, at=at, tcl=tcl.minor, labels=FALSE,
              lwd=-1, lwd.ticks=lwd.ticks)
-      }
     }
   } else if (inherits(lim, "POSIXt")) {
     axis.POSIXct(side, lim, tcl=tcl.major, cex.axis=0.8, las=las,

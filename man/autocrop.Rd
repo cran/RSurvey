@@ -9,12 +9,12 @@ Approximate the shape of an area defined by a set of points in a plane.
 }
 
 \usage{
-Autocrop(mesh, max.len, max.itr)
+Autocrop(mesh, max.len, max.itr = 10000)
 }
 
 \arguments{
 \item{mesh}{tri; a Delaunay triangulation.}
-\item{max.len}{numeric; maximum arc length for a triangle.}
+\item{max.len}{numeric; maximum arc length for an outer triangle.}
 \item{max.itr}{integer; maximum number of iterations.}
 }
 

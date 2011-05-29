@@ -18,8 +18,8 @@ A graphical user interface (\acronym{GUI}) is provided.
   \tabular{ll}{
     Package: \tab RSurvey\cr
     Type: \tab Package\cr
-    Version: \tab 0.6-1\cr
-    Date: \tab 2010-03-23\cr
+    Version: \tab 0.6-2\cr
+    Date: \tab 2011-05-29\cr
     License: \tab GPL (>= 2)
   }
 }
@@ -29,8 +29,9 @@ The \pkg{RSurvey} \acronym{GUI} requires \R operate as an \acronym{SDI}
 application, using multiple top-level windows for the console, graphics, and
 pager. Files can be one of four types as indicated by their extension:
 tables (\file{.txt}, \file{.csv}, \file{.dat}, or \file{.shp}),
-grids (\file{.grd}), polygons (\file{.ply}), or project images (\file{.rda}).
-Tables (\file{.txt}, \file{.csv}, \file{.dat}) can be compressed by \code{gzip}
+grids (\file{.grd}), polygons (\file{.ply}), or binary project images
+(\file{.rda}).Tables (\file{.txt}, \file{.csv}, \file{.dat})
+can be compressed by \href{http://www.gzip.org/}{gzip}
 with additional extension \file{.gz}. Shapefiles (\file{.shp}) and interpolated
 grid files (\file{.grd}) are limited to data export. Support for programmatic
 manipulation of measurement units is only provided for date and time values;
@@ -38,8 +39,7 @@ therefore, the bulk of unit consistency is tasked to the user.
 Time zones, spatial datum's and projections are not supported.
 
 The set of standards used for coding \pkg{RSurvey} is documented in
-\emph{Google's R Style Guide},
-\url{http://google-styleguide.googlecode.com/svn/trunk/google-r-style.html}.
+\href{http://google-styleguide.googlecode.com/svn/trunk/google-r-style.html}{Google's R Style Guide}.
 }
 
 \author{

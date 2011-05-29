@@ -1,5 +1,5 @@
 ManageData <- function(cols, vars, parent=NULL) {
-  # A GUI for managing and manipulating data.
+  # A GUI for managing and manipulating data
 
   # Additional functions (subroutines)
 
@@ -110,11 +110,10 @@ ManageData <- function(cols, vars, parent=NULL) {
     is.unt <- !identical(old.unt, new.unt) && cols[[idx]]$class == "POSIXct"
     is.fun <- !identical(old.fun, new.fun)
     if (is.dig || is.unt || is.fun) {
-      if (is.fun) {
+      if (is.fun)
         sum.dat <- SummarizeData(EvalFunction(new.fun, cols), new.dig, new.unt)
-      } else {
+      else
         sum.dat <- SummarizeData(cols[[idx]]$summary, new.dig, new.unt)
-      }
       cols[[idx]]$summary <<- sum.dat
     }
 
@@ -288,11 +287,10 @@ ManageData <- function(cols, vars, parent=NULL) {
     }
 
     tkselection.clear(frame1.lst, 0, "end")
-    if (idx > length(cols)) {
+    if (idx > length(cols))
       tkselection.set(frame1.lst, idx - 2)
-    } else {
+    else
       tkselection.set(frame1.lst, idx - 1)
-    }
     UpdateNb()
   }
 
@@ -318,9 +316,9 @@ ManageData <- function(cols, vars, parent=NULL) {
 
   # Edit date and time format
 
-  CallEditTimeFormat <- function() {
+  CallEditDateFormat <- function() {
     old.unit <- as.character(tclvalue(unit.var))
-    new.unit <- EditTimeFormat(old.unit, tt)
+    new.unit <- EditDateFormat(old.unit, tt)
     if (!is.null(new.unit))
       tclvalue(unit.var) <- new.unit
   }
@@ -364,10 +362,9 @@ ManageData <- function(cols, vars, parent=NULL) {
 
     ids <- sapply(cols, function(i) i$id)
 
-    for (i in 1:n) {
+    for (i in 1:n)
       tclvalue(list.var) <- tcl("lreplace", tclvalue(list.var),
                                 i - 1, i - 1, ids[i])
-    }
     tkselection.clear(frame1.lst, 0, "end")
     tkselection.set(frame1.lst, new.idx - 1)
   }
@@ -430,9 +427,7 @@ ManageData <- function(cols, vars, parent=NULL) {
     fun <- as.character(tclvalue(tkget(frame2.txt.5.2, '1.0', 'end-1c')))
     d <- as.data.frame(EvalFunction(fun, cols))
 
-    tkconfigure(tt, cursor="watch")
     ViewData(d, col.names, col.units, col.digs, parent=tt)
-    tkconfigure(tt, cursor="arrow")
   }
 
 
@@ -498,7 +493,7 @@ ManageData <- function(cols, vars, parent=NULL) {
 
   tkconfigure(tt, menu=top.menu)
 
-  # Frame 0 contains ok and cancel buttons, and size grip
+  # Frame 0, ok and cancel buttons, and size grip
 
   frame0 <- ttkframe(tt, relief="flat")
 
@@ -524,7 +519,7 @@ ManageData <- function(cols, vars, parent=NULL) {
 
   pw <- ttkpanedwindow(tt, orient="horizontal")
 
-  # Frame 1 contains listbox with variable names
+  # Frame 1, listbox with variable names
 
   frame1 <- tkframe(pw, relief="flat", padx=0, pady=0)
 
@@ -547,7 +542,7 @@ ManageData <- function(cols, vars, parent=NULL) {
 
   nb <- ttknotebook(pw)
 
-  # Frame 2 variable
+  # Frame 2, variable
 
   frame2 <- ttkframe(nb, relief="flat", padding=10, borderwidth=2)
   tkadd(nb, frame2, text="   Variable   ")
@@ -569,7 +564,7 @@ ManageData <- function(cols, vars, parent=NULL) {
                            background="#ebebe4", borderwidth=1, font=fnt)
 
   frame2.but.2.3 <- ttkbutton(frame2, text="Edit", width=5,
-                              command=CallEditTimeFormat)
+                              command=CallEditDateFormat)
   frame2.but.5.3 <- ttkbutton(frame2, text="Edit", width=5,
                               command=CallEditFunction)
 
@@ -604,7 +599,7 @@ ManageData <- function(cols, vars, parent=NULL) {
            tclvalue(digs.var) <- CheckEntry("integer", tclvalue(digs.var))
          })
 
-  # Frame 3 summary
+  # Frame 3, summary
 
   frame3 <- ttkframe(nb, relief="flat", padding=0, borderwidth=0)
   tkadd(nb, frame3, text="   Summary   ")
@@ -637,7 +632,7 @@ ManageData <- function(cols, vars, parent=NULL) {
   tkgrid.rowconfigure(frame3, 0, weight=1, minsize=25)
   tkgrid.rowconfigure(frame3, 2, weight=1)
 
-  # Frame 4 comment
+  # Frame 4, comment
 
   frame4 <- ttkframe(nb, relief="flat", padding=0, borderwidth=0)
   tkadd(nb, frame4, text="   Comments   ")
