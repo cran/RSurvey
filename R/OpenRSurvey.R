@@ -29,8 +29,12 @@ OpenRSurvey <- function() {
       return()
     if (ClearObjs() == "cancel")
       return()
-    load(file=f$path, envir=.GlobalEnv)
+
+    project <- NULL
+    load(file=f$path)
+    Data(replace.all=project)
     Data("proj.file", f$path)
+
     SetCsi()
     SetVars()
   }
@@ -54,7 +58,10 @@ OpenRSurvey <- function() {
     if (!is.null(Data("proj.file"))) {
       csi <- Data("csi")
       Data("csi", NULL)
-      save(list="Data", file=Data("proj.file"), compress=TRUE)
+
+      project <- Data()
+      save(project, file=Data("proj.file"), compress=TRUE)
+
       Data("csi", csi)
     }
   }
@@ -109,7 +116,7 @@ OpenRSurvey <- function() {
     tkconfigure(frame2.but.2.2, state=s)
 
     s <- "normal"
-    if (is.null(vars$z) | is.null(vars$t))
+    if (is.null(vars$x) | is.null(vars$y) | is.null(vars$z) | is.null(vars$t))
       s <- "disabled"
     tkconfigure(frame2.but.2.1, state=s)
   }
@@ -338,7 +345,22 @@ OpenRSurvey <- function() {
       return()
     CallProcessData()
 
-    ply.new <- AutocropPolygon(tt)
+    d <- Data("data.pts")
+
+    xlab <- Data("cols")[[Data("vars")$x]]$id
+    ylab <- Data("cols")[[Data("vars")$y]]$id
+    zlab <- Data("cols")[[Data("vars")$z]]$id
+
+    asp     <- Data("asp.yx")
+    csi     <- Data("csi")
+    width   <- Data("width")
+    nlevels <- Data("nlevels")
+    cex.pts <- Data("cex.pts")
+    rkey    <- Data("rkey")
+
+    ply.new <- AutocropPolygon(d, tt, xlab=xlab, ylab=ylab, zlab=zlab,
+                               asp=asp, csi=csi, width=width, nlevels=nlevels,
+                               cex.pts=cex.pts, rkey=rkey)
 
     if (inherits(ply.new, "gpc.poly")) {
       ply <- list()
@@ -412,7 +434,6 @@ OpenRSurvey <- function() {
       ply <- Data("poly")[[ply]]
 
     show.poly   <- Data("show.poly") && inherits(ply, "gpc.poly")
-    show.arrows <- Data("show.arrows")
     show.lines  <- type %in% c("l", "g") && Data("show.lines")
     show.points <- type %in% c("l", "g") && Data("show.points")
 
@@ -421,8 +442,8 @@ OpenRSurvey <- function() {
       axis.side <- 1:4
 
     nlevels <- Data("nlevels")
-    cols <- Data("cols")
-    vars <- Data("vars")
+    cols    <- Data("cols")
+    vars    <- Data("vars")
 
     xlab <- cols[[vars$x]]$id
     ylab <- cols[[vars$y]]$id
@@ -432,30 +453,17 @@ OpenRSurvey <- function() {
       dat <- Data("data.pts")
     } else if (type %in% c("l", "g")) {
       dat <- Data("data.grd")
-      if (type == "g") {
-        ave.elem <- function(z) {
-          m <- nrow(z)
-          n <- ncol(z)
-          rtn <- (z[1:(m - 1), 1:(n - 1)] + z[1:(m - 1), 2:n] +
-                  z[2:m, 1:(n - 1)] + z[2:m, 2:n]) / 4
-          rtn
-        }
-        dat$z <- ave.elem(dat$z)
-        if (show.arrows) {
-          if (!is.null(dat$vx))
-            dat$vx <- ave.elem(dat$vx)
-          if (!is.null(dat$vy))
-            dat$vy <- ave.elem(dat$vy)
-        }
-      }
-    }
-    if (!show.arrows) {
-      dat$vx <- NULL
-      dat$vy <- NULL
     }
 
-    xran <- range(dat$x, finite=TRUE)
-    yran <- range(dat$y, finite=TRUE)
+    if (type == "g") {
+      x.midpoint <- dat$x[1:(length(dat$x) - 1)] + diff(dat$x) / 2
+      y.midpoint <- dat$y[1:(length(dat$y) - 1)] + diff(dat$y) / 2
+      xran <- range(x.midpoint, finite=TRUE)
+      yran <- range(y.midpoint, finite=TRUE)
+    } else {
+      xran <- range(dat$x, finite=TRUE)
+      yran <- range(dat$y, finite=TRUE)
+    }
 
     # Adjust axes limits for polygon
 
@@ -661,7 +669,67 @@ OpenRSurvey <- function() {
 
   CallProcessData <- function() {
     tkconfigure(tt, cursor="watch")
-    ProcessData()
+
+    if (is.null(Data("data.raw"))) {
+      Data("data.pts", NULL)
+      Data("data.grd", NULL)
+      return()
+    }
+
+    # Process points
+
+    if (is.null(Data("data.pts"))) {
+      cols <- Data("cols")
+      vars <- Data("vars")
+
+      var.names <- names(vars)
+
+      Eval <- function(v) {
+        if (is.null(v)) NULL else EvalFunction(cols[[v]]$fun, cols)
+      }
+      lst <- lapply(var.names, function(i) Eval(vars[[i]]))
+      len <- sapply(lst, function(i) length(i))
+      max.len <- max(len)
+
+      d <- as.data.frame(matrix(NA, nrow=max.len, ncol=length(lst)))
+      names(d) <- var.names
+      for (i in seq(along=lst))
+        d[[i]] <- c(lst[[i]], rep(NA, max.len - len[i]))
+
+      lim <- Data("lim.data")
+
+      if (!is.null(vars$x) & !is.null(vars$y)) {
+        ply <- Data("poly.data")
+        if (!is.null(ply))
+          ply <- Data(c("poly", ply))
+      }
+
+      data.pts <- ProcessData(d, type="p", lim=lim, ply=ply)
+      Data("data.pts", data.pts)
+    }
+
+    if (is.null(Data("data.pts"))) {
+      Data("data.grd", NULL)
+      return()
+    }
+
+    # Process grid
+
+    if (is.null(Data("data.grd"))) {
+      d <- Data("data.pts")
+
+      ply <- Data("poly.crop")
+      if (!is.null(ply))
+        ply <- Data("poly")[[ply]]
+
+      grid.res <- Data("grid.res")
+      grid.mba <- Data("grid.mba")
+
+      data.grd <- ProcessData(d, type="g", ply=ply,
+                              grid.res=grid.res, grid.mba=grid.mba)
+      Data("data.grd", data.grd)
+    }
+
     tkconfigure(tt, cursor="arrow")
   }
 

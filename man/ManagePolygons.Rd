@@ -15,12 +15,12 @@ ManagePolygons(ply = NULL, encoding = getOption("encoding"),
 }
 
 \arguments{
-\item{ply}{list; its components are objects of class \code{gpc.poly-class}.}
+\item{ply}{list; its components are objects of \code{\link{gpc.poly-class}}.}
 \item{encoding}{character; encoding to be assumed for input strings. If the
   value is \code{"latin1"} or \code{"UTF-8"} it is used to mark character
   strings as known to be in Latin-1 or UTF-8: it is not used to re-encode
   the input.}
-\item{parent}{tkwin; the parent window (optional).}
+\item{parent}{tkwin; the \acronym{GUI} parent window.}
 }
 
 \details{
@@ -41,15 +41,15 @@ See \code{read.polyfile} within the \pkg{gpclib} package for details.
 }
 
 \value{
-Queries and sets the \code{ply} (see \sQuote{Arguments}),
-\code{poly.data}, and \code{poly.crop} (see \code{\link{SetPolygonLimits}})
-components of \code{\link{Data}}.
+Queries and sets the \code{ply}, \code{poly.data}, and \code{poly.crop}
+components of \code{\link{Data}} (see \code{\link{SetPolygonLimits}}).
 }
 
 \author{Fisher, J.C.}
 
 \seealso{
-\code{polyfile}, \code{union}, \code{setdiff}, \code{intersect}
+\code{\link{polyfile}}, \code{\link{union}}, \code{\link{setdiff}},
+\code{\link{intersect}}
 }
 
 \examples{

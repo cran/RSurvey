@@ -13,26 +13,27 @@ Data <- local({
                   "rkey"         = 0,
                   "show.poly"    = 0,
                   "img.contour"  = 0,
-                  "show.arrows"  = 0,
                   "show.lines"   = 0,
                   "show.points"  = 0,
                   "vuni"         = 0,
                   "show.2.axes"  = 0,
                   "minor.ticks"  = 0,
                   "ticks.inside" = 0,
-                  "mba.h"        = 11,
+                  "grid.res"     = list(x=NA, y=NA),
+                  "grid.mba"     = list(n=NA, m=NA, h=11),
                   "encoding"     = getOption("encoding")
               )
 
   # Main program
 
-  function(option, value, clear.all=FALSE, clear.proj=FALSE, clear.data=FALSE) {
+  function(option, value, clear.proj=FALSE, clear.data=FALSE,
+           replace.all=NULL) {
 
-    # Clear all values
+    # Replace all values
 
-    if (clear.all) {
-      dat <<- list()
-      return()
+    if (is.list(replace.all)) {
+      dat <<- replace.all
+      return(invisible())
     }
 
     # Save parameters
@@ -43,12 +44,11 @@ Data <- local({
         save.params <- c(save.params, "nlevels", "asp.yx", "asp.zx",
                          "vmax", "vxby", "vyby", "rkey", "show.poly",
                          "img.contour", "show.lines", "show.points",
-                         "show.arrows", "vuni", "date.fmt", "poly",
-                         "proj.file", "show.2.axes", "minor.ticks",
-                         "ticks.inside")
+                         "vuni", "date.fmt", "poly", "proj.file",
+                         "show.2.axes", "minor.ticks", "ticks.inside")
       save.params <- save.params[save.params %in% names(dat)]
       dat <<- sapply(save.params, function(i) list(dat[[i]]))
-      return()
+      return(invisible())
     }
 
     # Return all data

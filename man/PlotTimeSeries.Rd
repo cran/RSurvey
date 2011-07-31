@@ -26,7 +26,7 @@ PlotTimeSeries(x, y = NULL, xlim = NULL, ylim = NULL, ylab = NULL,
 \item{cex.pts}{numeric; the amount by which point symbols should be magnified
   relative to the default.}
 \item{pointsize}{integer; the point size of plotted text.}
-\item{fmt}{character; date-time format for \code{x} axis tic mark labels, see
+\item{fmt}{character; date-time format for \code{x} axis tickmark labels, see
   \code{\link{strptime}}.}
 \item{axis.side}{integer; the side of the plot the axis is to be drawn on.
   The axis is placed as follows: 1 = below, 2 = left, 3 = above and 4 = right.}
@@ -49,7 +49,7 @@ points are greater than \code{tgap}.
 
 \examples{
 data(project)
-d <- Data("data.pts")
+d <- project$data.pts
 PlotTimeSeries(x = d$t, y = d$z)
 PlotTimeSeries(x = d$t, y = d$z, tgap = 3000)
 }

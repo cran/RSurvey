@@ -22,7 +22,7 @@ AddAxis(side, lim, ticks.inside = FALSE, minor.ticks = FALSE, ...)
 \item{minor.ticks}{logical; if \code{TRUE} minor tickmarks are added to the
   plot; its default is \code{FALSE}.}
 \item{...}{other graphical parameters may also be passed as arguments to this
-  function.}
+  function, see \code{\link{axis}}.}
 }
 
 \details{
