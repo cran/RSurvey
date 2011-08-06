@@ -23,21 +23,27 @@ ImportData <- function(parent=NULL) {
     }
   }
 
+  # Establish data connection
+
+  GetConnection <- function(src) {
+    if (src == "") {
+      con <- try(textConnection(cb), silent=TRUE)
+    } else if (substr(src, 1, 6) %in% c("http:/", "ftp://", "file:/")) {
+      con <- try(url(description=src, open="r", encoding=enc), silent=TRUE)
+    } else if (GetFile(file=src)$ext == "gz") {
+      con <- try(gzfile(description=src, open="r", encoding=enc,
+                        compression=6), silent=TRUE)
+    } else {
+      con <- try(file(description=src, open="r", encoding=enc), silent=TRUE)
+    }
+    con
+  }
+
   # Read file and populate example table
 
   ReadFile <- function(summary.only=TRUE) {
     src <- as.character(tclvalue(source.var))
-    if (src == "") {
-      src <- "clipboard"
-      con <- textConnection(cb)
-    } else {
-      if (substr(src, 1, 6) %in% c("http:/", "ftp://", "file:/"))
-        con <- try(url(description=src, open="r", encoding=encoding),
-                   silent=TRUE)
-      else
-        con <- try(gzfile(description=src, open="r", encoding=encoding,
-                          compression=6), silent=TRUE)
-    }
+    con <- GetConnection(src)
 
     if (inherits(con, "try-error") || !isOpen(con, "r")) {
       RaiseError()
@@ -104,7 +110,6 @@ ImportData <- function(parent=NULL) {
         Data("headers", hds)
         Data("skip", skp)
         Data("sep", sep)
-        Data("nrows", if (nrw < 1) NULL else nrw)
         Data("na.strings", nas)
         Data("quote", quo)
         Data("comment.char", com)
@@ -155,15 +160,20 @@ ImportData <- function(parent=NULL) {
 
   # Determine the number of lines in a file
 
-  NumLinesInFile <- function(f, max.rows=50000) {
-    con <- try(gzfile(f, open="r", encoding=encoding), silent=TRUE)
+  NumLinesInFile <- function() {
+    src <- as.character(tclvalue(source.var))
+    con <- GetConnection(src)
     if (inherits(con, "try-error"))
       return()
+
+    tkconfigure(tt, cursor="watch")
     total.rows <- 0
-    while ((read.rows <- length(readLines(con, max.rows))) > 0)
+    while ((read.rows <- length(readLines(con, n=50000))) > 0)
       total.rows <- total.rows + read.rows
+    tkconfigure(tt, cursor="arrow")
+
     close(con)
-    total.rows
+    tclvalue(nrow.var) <- total.rows
   }
 
   # Data file
@@ -175,17 +185,12 @@ ImportData <- function(parent=NULL) {
     if (is.null(f))
       return()
     tclvalue(source.var) <- f$path
+    tclvalue(nrow.var) <- ""
     cb <<- NULL
     if (f$ext == "csv")
       tcl(frame3.box.1.2, "current", match(",", sep0) - 1)
 
     RebuildTable()
-
-    tkconfigure(tt, cursor="watch")
-    nlines <- NumLinesInFile(f$path)
-    if (!is.null(nlines))
-      tclvalue(nrow.var) <- nlines
-    tkconfigure(tt, cursor="arrow")
   }
 
   # Paste clipboard
@@ -206,6 +211,7 @@ ImportData <- function(parent=NULL) {
   ClearData <- function() {
     cb <<- NULL
     tclvalue(source.var) <- ""
+    tclvalue(nrow.var) <- ""
     tclServiceMode(FALSE)
     ResetGUI()
     tclServiceMode(TRUE)
@@ -298,7 +304,7 @@ ImportData <- function(parent=NULL) {
   com1 <- c("", "Number sign ( # )", "Exclamation ( ! )",
             "Backslash ( \\\\ )", "Tilde ( ~ )")
 
-  encoding <- Data("encoding")
+  enc <- Data("encoding")
 
   # Assign variables linked to Tk widgets
 
@@ -444,10 +450,13 @@ ImportData <- function(parent=NULL) {
          }
   )
 
+  frame3.but.2.7 <- ttkbutton(frame3, width=2, image=GetBitmapImage("find"),
+                              command=NumLinesInFile)
+
   tkgrid(frame3.lab.1.1, frame3.box.1.2, frame3.lab.1.3, frame3.box.1.4,
          frame3.lab.1.5, frame3.ent.1.6)
   tkgrid(frame3.lab.2.1, frame3.box.2.2, frame3.lab.2.3, frame3.box.2.4,
-         frame3.lab.2.5, frame3.ent.2.6, pady=c(5, 0))
+         frame3.lab.2.5, frame3.ent.2.6, frame3.but.2.7, pady=c(5, 0))
 
   tkgrid.configure(frame3.lab.1.1, frame3.lab.1.3, frame3.lab.1.5,
                    frame3.lab.2.1, frame3.lab.2.3, frame3.lab.2.5,
@@ -464,8 +473,6 @@ ImportData <- function(parent=NULL) {
 
   if (!is.null(Data("skip")))
     tclvalue(skip.var) <- Data("skip")
-  if (!is.null(Data("nrows")))
-    tclvalue(nrow.var) <- Data("nrows")
 
   if (!is.null(Data("sep")))
     tcl(frame3.box.1.2, "current", match(Data("sep"), sep0) - 1)
