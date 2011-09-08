@@ -116,7 +116,7 @@ OpenRSurvey <- function() {
     tkconfigure(frame2.but.2.2, state=s)
 
     s <- "normal"
-    if (is.null(vars$x) | is.null(vars$y) | is.null(vars$z) | is.null(vars$t))
+    if (is.null(vars$z) | is.null(vars$t))
       s <- "disabled"
     tkconfigure(frame2.but.2.1, state=s)
   }
@@ -200,22 +200,16 @@ OpenRSurvey <- function() {
 
     vars <- list()
 
-    vars$x <- NULL
     if (idx.x > 0)
       vars$x <- idxs.n[idx.x]
-    vars$y <- NULL
     if (idx.y > 0)
       vars$y <- idxs.n[idx.y]
-    vars$z <- NULL
     if (idx.z > 0)
       vars$z <- idxs.n[idx.z]
-    vars$t <- NULL
     if (idx.t > 0)
       vars$t <- idxs.t[idx.t]
-    vars$vx <- NULL
     if (idx.vx > 0)
       vars$vx <- idxs.n[idx.vx]
-    vars$vy <- NULL
     if (idx.vy > 0)
       vars$vy <- idxs.n[idx.vy]
 
@@ -237,11 +231,22 @@ OpenRSurvey <- function() {
 
   # Export data
 
-  ExportData <- function(ext) {
+  CallExportData <- function(file.type) {
     if (is.null(Data("data.raw")))
       return()
     CallProcessData()
-    WriteFile(c("txt", "csv", "dat", "gz", "shp", "grd"))
+
+    is.coordinate <- !is.null(Data("vars")$x) & !is.null(Data("vars")$y)
+    if (!is.coordinate & file.type %in% c("shape", "grid"))
+      stop("Spatial coordinates missing")
+
+    if (file.type == "grid") {
+      WriteFile(file.type="grid")
+    } else {
+      col.ids <- sapply(Data("cols"), function(i) i$id)
+      ExportData(col.ids, file.type=file.type, parent=tt)
+    }
+
     tkfocus(tt)
   }
 
@@ -258,8 +263,8 @@ OpenRSurvey <- function() {
   SaveRDevice <- function() {
     if (is.null(dev.list()))
       return()
-    tmp <- c("eps", "png", "jpg", "jpeg", "pdf", "bmp", "tif", "tiff")
-    f <- GetFile(cmd="Save As", exts=tmp, win.title="Save R Graphic As",
+    exts <- c("eps", "png", "jpg", "jpeg", "pdf", "bmp", "tif", "tiff")
+    f <- GetFile(cmd="Save As", exts=exts, win.title="Save R Graphic As",
                  defaultextension="eps", parent=tt)
     if (is.null(f))
       return()
@@ -396,13 +401,15 @@ OpenRSurvey <- function() {
     if (is.null(Data("data.pts")))
       return()
 
-    dat <- Data("data.pts")
-    lim <- Data("lim.axes")
-    cols <- Data("cols")
-    vars <- Data("vars")
-    tgap <- Data("tgap")
-    width <- Data("width")
-    cex.pts <- Data("cex.pts")
+    dat          <- Data("data.pts")
+    lim          <- Data("lim.axes")
+    cols         <- Data("cols")
+    vars         <- Data("vars")
+    tgap         <- Data("tgap")
+    width        <- Data("width")
+    cex.pts      <- Data("cex.pts")
+    minor.ticks  <- Data("minor.ticks")
+    ticks.inside <- Data("ticks.inside")
 
     ylab <- cols[[vars$z]]$id
 
@@ -413,8 +420,8 @@ OpenRSurvey <- function() {
     tkconfigure(tt, cursor="watch")
     PlotTimeSeries(x=dat$t, y=dat$z, xlim=lim$t, ylim=lim$z, ylab=ylab,
                    tgap=tgap, width=width, cex.pts=cex.pts,
-                   axis.side=axis.side, minor.ticks=Data("minor.ticks"),
-                   ticks.inside=Data("ticks.inside"))
+                   axis.side=axis.side, minor.ticks=minor.ticks,
+                   ticks.inside=ticks.inside)
     tkconfigure(tt, cursor="arrow")
     tkfocus(tt)
   }
@@ -546,9 +553,10 @@ OpenRSurvey <- function() {
           pts <- get.pts(ply.new)
           logic <- rep(TRUE, nrow(dat))
           for (i in seq(along=pts)) {
-              tmp <- point.in.polygon(point.x=dat$x, point.y=dat$y,
-                                      pol.x=pts[[i]]$x, pol.y=pts[[i]]$y) > 0
-              logic <- logic & if (pts[[i]]$hole) !tmp else tmp
+              is.in <-  point.in.polygon(point.x=dat$x, point.y=dat$y,
+                                         pol.x=pts[[i]]$x, pol.y=pts[[i]]$y) > 0
+              is.in <- if (pts[[i]]$hole) !is.in else is.in
+              logic <- logic & is.in
           }
           if (any(logic)) {
             points(dat$x[logic], dat$y[logic], col="red",
@@ -642,6 +650,8 @@ OpenRSurvey <- function() {
     if (is.null(Data("data.pts")))
       return()
 
+    tkconfigure(tt, cursor="watch")
+
     vars <- Data("vars")
     cols <- Data("cols")
 
@@ -658,23 +668,24 @@ OpenRSurvey <- function() {
     }
     col.names <- sapply(state.idxs, function(i) fun(i, "name"))
     col.units <- sapply(state.idxs, function(i) fun(i, "unit"))
-    col.digs <- sapply(state.idxs, function(i) fun(i, "digits"))
+    col.formats <- sapply(state.idxs, function(i) fun(i, "format"))
 
-    ViewData(d, col.names, col.units, col.digs, parent=tt)
+    ViewData(d, col.names, col.units, col.formats, parent=tt)
 
+    tkconfigure(tt, cursor="arrow")
     tkfocus(tt)
   }
 
   # Call process data
 
   CallProcessData <- function() {
-    tkconfigure(tt, cursor="watch")
-
     if (is.null(Data("data.raw"))) {
       Data("data.pts", NULL)
       Data("data.grd", NULL)
       return()
     }
+
+    tkconfigure(tt, cursor="watch")
 
     # Process points
 
@@ -702,6 +713,8 @@ OpenRSurvey <- function() {
         ply <- Data("poly.data")
         if (!is.null(ply))
           ply <- Data(c("poly", ply))
+      } else {
+        ply <- NULL
       }
 
       data.pts <- ProcessData(d, type="p", lim=lim, ply=ply)
@@ -710,6 +723,7 @@ OpenRSurvey <- function() {
 
     if (is.null(Data("data.pts"))) {
       Data("data.grd", NULL)
+      tkconfigure(tt, cursor="arrow")
       return()
     }
 
@@ -809,8 +823,16 @@ OpenRSurvey <- function() {
   tkadd(menu.file, "separator")
   tkadd(menu.file, "command", label="Import data",
         command=CallImportData)
-  tkadd(menu.file, "command", label="Export data as",
-        command=ExportData)
+
+  menu.file.export <- tkmenu(tt, tearoff=0)
+  tkadd(menu.file.export, "command", label="Text file",
+        command=function() CallExportData("text"))
+  tkadd(menu.file.export, "command", label="ESRI shapefile",
+        command=function() CallExportData("shape"))
+  tkadd(menu.file, "cascade", label="Export point data as", menu=menu.file.export)
+
+  tkadd(menu.file, "command", label="Export grid data as",
+        command=function() CallExportData("grid"))
 
   tkadd(menu.file, "separator")
   menu.file.save <- tkmenu(tt, tearoff=0)
@@ -904,8 +926,8 @@ OpenRSurvey <- function() {
 
   tkadd(menu.plot, "command", label="Set axes limits",
         command=function() {
-          tmp <- EditLimits(Data("lim.axes"), "Axes Limits", tt)
-          Data("lim.axes", tmp)
+          lim <- EditLimits(Data("lim.axes"), "Axes Limits", tt)
+          Data("lim.axes", lim)
         })
 
   tkadd(menu.plot, "separator")
@@ -993,9 +1015,9 @@ OpenRSurvey <- function() {
   frame0.but.7  <- tkbutton(frame0, relief="flat", overrelief="raised",
                             borderwidth=1, image=axes.var,
                             command=function() {
-                             tmp <- EditLimits(Data("lim.axes"),
+                             lim <- EditLimits(Data("lim.axes"),
                                                "Axes Limits", tt)
-                             Data("lim.axes", tmp)
+                             Data("lim.axes", lim)
                            })
   frame0.but.8  <- tkbutton(frame0, relief="flat", overrelief="raised",
                             borderwidth=1, image=help.var,
@@ -1012,22 +1034,15 @@ OpenRSurvey <- function() {
 
   # Frame 1, variables
 
-  frame1 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=3,
+  frame1 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
                           text="State variables")
 
-  frame1.lab.1.1 <- ttklabel(frame1, justify="center", width=8,
-                             anchor="e", text="x-axis")
-  frame1.lab.2.1 <- ttklabel(frame1, justify="center", width=8,
-                             anchor="e", text="y-axis")
-  frame1.lab.3.1 <- ttklabel(frame1, justify="center", width=8,
-                             anchor="e", text="z-axis")
-  frame1.lab.4.1 <- ttklabel(frame1, justify="center", width=8,
-                             anchor="e", text="t-axis")
-
-  frame1.lab.5.1 <- ttklabel(frame1, justify="center", width=8,
-                             anchor="e", text="x-vector")
-  frame1.lab.6.1 <- ttklabel(frame1, justify="center", width=8,
-                             anchor="e", text="y-vector")
+  frame1.lab.1.1 <- ttklabel(frame1, text="x-axis")
+  frame1.lab.2.1 <- ttklabel(frame1, text="y-axis")
+  frame1.lab.3.1 <- ttklabel(frame1, text="z-axis")
+  frame1.lab.4.1 <- ttklabel(frame1, text="t-axis")
+  frame1.lab.5.1 <- ttklabel(frame1, text="x-vector")
+  frame1.lab.6.1 <- ttklabel(frame1, text="y-vector")
 
   frame1.box.1.2 <- ttkcombobox(frame1, state="readonly")
   frame1.box.2.2 <- ttkcombobox(frame1, state="readonly")
@@ -1036,23 +1051,29 @@ OpenRSurvey <- function() {
   frame1.box.5.2 <- ttkcombobox(frame1, state="readonly")
   frame1.box.6.2 <- ttkcombobox(frame1, state="readonly")
 
-  tkgrid(frame1.lab.1.1, frame1.box.1.2, padx=1, pady=3, sticky="we")
-  tkgrid(frame1.lab.2.1, frame1.box.2.2, padx=1, pady=3, sticky="we")
-  tkgrid(frame1.lab.3.1, frame1.box.3.2, padx=1, pady=3, sticky="we")
-  tkgrid(frame1.lab.4.1, frame1.box.4.2, padx=1, pady=3, sticky="we")
-  tkgrid(frame1.lab.5.1, frame1.box.5.2, padx=1, pady=3, sticky="we")
-  tkgrid(frame1.lab.6.1, frame1.box.6.2, padx=1, pady=3, sticky="we")
+  tkgrid(frame1.lab.1.1, frame1.box.1.2, pady=c(0, 4))
+  tkgrid(frame1.lab.2.1, frame1.box.2.2, pady=c(0, 4))
+  tkgrid(frame1.lab.3.1, frame1.box.3.2, pady=c(0, 4))
+  tkgrid(frame1.lab.4.1, frame1.box.4.2, pady=c(0, 4))
+  tkgrid(frame1.lab.5.1, frame1.box.5.2, pady=c(0, 4))
+  tkgrid(frame1.lab.6.1, frame1.box.6.2)
 
   tkgrid.configure(frame1.lab.1.1, frame1.lab.2.1, frame1.lab.3.1,
-                   frame1.lab.4.1, frame1.lab.5.1, frame1.lab.6.1, sticky="e")
+                   frame1.lab.4.1, frame1.lab.5.1, frame1.lab.6.1,
+                   sticky="e", padx=c(0, 2))
+
+  tkgrid.configure(frame1.box.1.2, frame1.box.2.2, frame1.box.3.2,
+                   frame1.box.4.2, frame1.box.5.2, frame1.box.6.2, sticky="we")
+  tkgrid.configure(frame1.box.1.2, frame1.box.2.2, frame1.box.3.2,
+                   frame1.box.4.2, frame1.box.5.2)
 
   tkgrid.columnconfigure(frame1, 1, weight=1, minsize=25)
 
-  tkpack(frame1, fill="x", expand=TRUE, ipadx=2, ipady=2, padx=8, pady=c(5, 3))
+  tkpack(frame1, fill="x", expand=TRUE, ipadx=0, ipady=0, padx=10, pady=5)
 
   # Frame 2, plotting buttons
 
-  frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=3,
+  frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
                           text="Plot types")
 
   frame2.but.1.1 <- ttkbutton(frame2, width=15, text="Scatter",
@@ -1061,20 +1082,23 @@ OpenRSurvey <- function() {
                               })
   frame2.but.1.2 <- ttkbutton(frame2, width=15, text="2D Surface",
                               command=function() {
-                                tmp <- if (Data("img.contour")) "g" else "l"
-                                CallPlot2d(type=tmp)
+                                type <- if (Data("img.contour")) "g" else "l"
+                                CallPlot2d(type=type)
                               })
   frame2.but.2.1 <- ttkbutton(frame2, width=15, text="Time Series",
                               command=CallPlotTimeSeries)
   frame2.but.2.2 <- ttkbutton(frame2, width=15, text="3D Surface",
                               command=CallPlot3d)
 
-  tkgrid(frame2.but.1.1, frame2.but.1.2, padx=2, pady=2)
-  tkgrid(frame2.but.2.1, frame2.but.2.2, padx=2, pady=c(2, 4))
+  tkgrid(frame2.but.1.1, frame2.but.1.2, pady=c(0, 4))
+  tkgrid(frame2.but.2.1, frame2.but.2.2, pady=0)
+
+  tkgrid.configure(frame2.but.1.1, frame2.but.2.1, padx=c(0, 4))
 
   tcl("grid", "anchor", frame2, "center")
 
-  tkpack(frame2, fill="x", expand=TRUE, pady=c(2, 6), padx=8)
+  tkpack(frame2, fill="x", ipadx=0, ipady=0, expand=TRUE,
+         padx=10, pady=c(0, 10))
 
   # Variables
 

@@ -7,11 +7,21 @@ ProcessData <- function(d, type="p", lim=NULL, ply=NULL,
 
   if (type == "p") {
 
+    # Check for missing variables
+
     var.names <- names(d)
+    is.x <- "x" %in% var.names
+    is.y <- "y" %in% var.names
+    is.t <- "t" %in% var.names
 
-    # Remove NA's for spatial and temporal data
+    # Remove records with NA's for spatial or temporal data
 
-    d <- d[rowSums(is.na(d[, var.names %in% c("x", "y", "t")])) == 0, ]
+    if (is.x)
+      d <- d[!is.na(d[, "x"]), ]
+    if (is.y)
+      d <- d[!is.na(d[, "y"]), ]
+    if (is.t)
+      d <- d[!is.na(d[, "t"]), ]
 
     # Set range limits
 
@@ -28,13 +38,15 @@ ProcessData <- function(d, type="p", lim=NULL, ply=NULL,
 
     # Incorporate polygon spatial domain
 
-    if (!is.null(ply) && inherits(ply, "gpc.poly")) {
+    is.ply <- !is.null(ply) && inherits(ply, "gpc.poly")
+    if (is.ply && is.x && is.y) {
       all.pts <- get.pts(ply)
       for (i in seq(along=all.pts)) {
         pts <- all.pts[[i]]
-        tmp <- point.in.polygon(point.x=d$x, point.y=d$y,
-                                pol.x=pts$x, pol.y=pts$y)
-        d <- d[if (pts$hole) tmp != 1 else tmp != 0, ]
+        is.in <- point.in.polygon(point.x=d$x, point.y=d$y,
+                                  pol.x=pts$x, pol.y=pts$y)
+        is.in <- if (pts$hole) is.in != 1 else is.in != 0
+        d <- d[is.in, ]
       }
     }
 

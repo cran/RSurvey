@@ -176,9 +176,9 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
     if (is.na(nam))
       nam <- "New Polygon"
     i <- 1
-    hld <- nam
+    hold.nam <- nam
     while (nam %in% old) {
-      nam <- paste(hld, " (", i, ")", sep="")
+      nam <- paste(hold.nam, " (", i, ")", sep="")
       i <- i + 1
     }
     nam
@@ -334,7 +334,7 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
       return()
     if (!is.list(f[[1]]))
       f <- list(f)
-    for (i in seq(along=f)) {
+    for (i in rev(seq(along=f))) {
       con <- file(f[[i]]$path, "r", encoding=encoding)
       new.poly <- read.polyfile(con, nohole=FALSE)
       close(con)
@@ -419,9 +419,9 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
 
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
-    tmp <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(tmp[2]) + 25,
-                            "+", as.integer(tmp[3]) + 25, sep=""))
+    geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
+    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
+                            "+", as.integer(geo[3]) + 25, sep=""))
   }
 
   tktitle(tt) <- "Manage Polygons"
@@ -473,23 +473,44 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
 
   frame0 <- ttkframe(tt, relief="flat")
 
-  frame0.but.1 <- ttkbutton(frame0, width=12, text="OK",
+  frame0.but.1 <- ttkbutton(frame0, width=2, image=GetBitmapImage("up"),
+                            command=function() ArrangePolygon("backward"))
+  frame0.but.2 <- ttkbutton(frame0, width=2, image=GetBitmapImage("top"),
+                            command=function() ArrangePolygon("back"))
+  frame0.but.3 <- ttkbutton(frame0, width=2, image=GetBitmapImage("bottom"),
+                            command=function() ArrangePolygon("front"))
+  frame0.but.4 <- ttkbutton(frame0, width=2, image=GetBitmapImage("down"),
+                            command=function() ArrangePolygon("forward"))
+  frame0.but.5 <- ttkbutton(frame0, width=2, image=GetBitmapImage("delete"),
+                            command=ClearPolygon)
+
+  frame0.but.7 <- ttkbutton(frame0, width=12, text="OK",
                             command=function() SavePolygon("ok"))
-  frame0.but.2 <- ttkbutton(frame0, width=12, text="Apply",
+  frame0.but.8 <- ttkbutton(frame0, width=12, text="Apply",
                             command=function() SavePolygon("apply"))
-  frame0.but.3 <- ttkbutton(frame0, width=12, text="Cancel",
+  frame0.but.9 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
 
-  frame0.grp.4 <- ttksizegrip(frame0)
+  frame0.grp.10 <- ttksizegrip(frame0)
 
-  tkgrid(frame0.but.1, frame0.but.2, frame0.but.3, frame0.grp.4)
+  tkgrid(frame0.but.1, frame0.but.2, frame0.but.3, frame0.but.4, frame0.but.5,
+         "x", frame0.but.7, frame0.but.8, frame0.but.9, frame0.grp.10)
 
-  tkgrid.configure(frame0.but.1, frame0.but.2, sticky="e", padx=2, pady=c(5, 8))
-  tkgrid.configure(frame0.but.2, padx=c(2, 6))
-  tkgrid.configure(frame0.but.3, sticky="w", padx=2, pady=c(5, 8), rowspan=2)
-  tkgrid.configure(frame0.grp.4, sticky="se")
 
-  tkpack(frame0, side="bottom", anchor="e")
+  tkgrid.columnconfigure(frame0, 5, weight=1)
+
+  tkgrid.configure(frame0.but.1, frame0.but.2, frame0.but.3, frame0.but.4,
+                   frame0.but.5, sticky="n", padx=c(0, 2), pady=c(4, 0))
+  tkgrid.configure(frame0.but.1, padx=c(10, 2))
+  tkgrid.configure(frame0.but.5, padx=c(5, 0))
+  tkgrid.configure(frame0.but.7, frame0.but.8, frame0.but.9,
+                   padx=c(0, 4), pady=c(15, 10))
+  tkgrid.configure(frame0.but.9, columnspan=2, padx=c(0, 10))
+  tkgrid.configure(frame0.grp.10, sticky="se")
+
+  tkraise(frame0.but.9, frame0.grp.10)
+
+  tkpack(frame0, fill="x", side="bottom", anchor="e")
 
   # Paned window
 
@@ -509,10 +530,8 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
               yscrollcommand=paste(.Tk.ID(frame1.ysc), "set"))
   tkconfigure(frame1.ysc, command=paste(.Tk.ID(frame1.lst), "yview"))
 
-  tkpack(frame1.lst, side="left",  fill="both", expand=TRUE,
-         pady=c(6, 0), padx=0)
-  tkpack(frame1.ysc, side="right", fill="y", anchor="w",
-         pady=c(7, 0), padx=c(0, 6))
+  tkpack(frame1.lst, side="left",  fill="both", expand=TRUE)
+  tkpack(frame1.ysc, side="right", fill="y", anchor="w")
 
   n <- length(ply)
   if (n > 0)
@@ -531,7 +550,7 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
 
   frame3 <- ttkframe(pw, relief="flat")
 
-  frame3a <- ttklabelframe(frame3, relief="flat", borderwidth=3, padding=3,
+  frame3a <- ttklabelframe(frame3, relief="flat", borderwidth=5, padding=5,
                            text="Shape modes")
 
   frame3a.rb.1 <- ttkradiobutton(frame3a, variable=rb.var, command=PlotPolygon,
@@ -554,7 +573,8 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
 
   tcl("grid", "anchor", frame3a, "w")
 
-  frame3b <- ttklabelframe(frame3, relief="flat", padding=3, text="Attributes")
+  frame3b <- ttklabelframe(frame3, relief="flat", borderwidth=5, padding=5,
+                           text="Attributes")
 
   frame3b.lab.1.1 <- tklabel(frame3b, text="Area")
   frame3b.lab.2.1 <- tklabel(frame3b, text="Polygons")
@@ -584,22 +604,21 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
 
   tcl("grid", "anchor", frame3b, "w")
 
-  frame3c <- ttkframe(frame3, relief="flat", borderwidth=3, padding=3)
+  frame3c <- ttkframe(frame3, relief="flat", borderwidth=0, padding=0)
 
   frame3c.lab.1 <- tklabel(frame3c, text=tclvalue(xy.var))
   tkconfigure(frame3c.lab.1, textvariable=xy.var)
   tkgrid(frame3c.lab.1)
 
-  tkpack(frame3a, fill="both", expand=TRUE, padx=5, pady=c(5, 2))
-  tkpack(frame3b, fill="both", expand=TRUE, padx=5, pady=c(5, 2))
-
+  tkpack(frame3a, fill="both", expand=TRUE, padx=0, pady=c(0, 5))
+  tkpack(frame3b, fill="both", expand=TRUE, padx=0, pady=c(5, 5))
   tkpack(frame3c)
 
   # Final layout
 
   tkgrid(frame2.cvs, sticky="news")
 
-  tkgrid.configure(frame2.cvs, padx=0, pady=c(5, 0))
+  tkgrid.configure(frame2.cvs, padx=5, pady=0)
 
   tkgrid.rowconfigure(frame2, frame2.cvs, weight=1)
   tkgrid.columnconfigure(frame2, frame2.cvs, weight=1)
@@ -608,7 +627,7 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   tkadd(pw, frame2, weight=1)
   tkadd(pw, frame3, weight=0)
 
-  tkpack(pw, fill="both", expand=TRUE, padx=15, pady=c(10, 5))
+  tkpack(pw, fill="both", expand=TRUE, padx=10, pady=c(10, 0))
 
   # Bind events
 

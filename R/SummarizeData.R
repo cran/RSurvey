@@ -1,4 +1,4 @@
-SummarizeData <- function(obj, digits=NULL, units=NULL) {
+SummarizeData <- function(obj, fmt=NULL) {
   # Summarizes the descriptive statistics of an array object.
 
   # Additional functions (subroutines)
@@ -6,20 +6,16 @@ SummarizeData <- function(obj, digits=NULL, units=NULL) {
   # Construct text string
 
   BuildString <- function(i) {
-    if (s$Class == "POSIXct") {
-      if (is.na(dic[[i]][[3]]))
-        val <- format(s[[i]])
-      else
-        val <- format(s[[i]], format=dic[[i]][[3]])
+    if (is.null(dic[[i]]$fmt)) {
+      val <- format(s[[i]])
+    } else if (s$Class == "POSIXct") {
+      val <- format(s[[i]], format=dic[[i]]$fmt)
     } else {
-      if (is.na(dic[[i]][[2]])) {
-        val <- format(s[[i]])
-      } else {
-        dig <- as.integer(dic[[i]][[2]])
-        val <- format(round(s[[i]], dig), nsmall=dig, trim=TRUE)
-      }
+      val <- try(sprintf(dic[[i]]$fmt, s[[i]]), silent=TRUE)
+      if (inherits(val, "try-error"))
+        val <- ""
     }
-    paste(dic[[i]][[1]], val, sep=": ")
+    paste(dic[[i]]$id, val, sep=": ")
   }
 
 
@@ -29,43 +25,41 @@ SummarizeData <- function(obj, digits=NULL, units=NULL) {
 
   if (is.null(obj))
     return(NULL)
-  if (is.null(digits) || (digits < 0 | digits > 20))
-    digits <- getOption("digits")
-  if (is.null(units))
-    units <- ""
 
-  # Determine object class
+  if (is.null(fmt) || is.na(fmt) || fmt == "")
+    fmt <- NULL
 
-  is.list.int <- inherits(obj, "list") && obj$Class == "integer"
-  if(inherits(obj, "integer") || is.list.int)
-    digits <- 0
-
-  # Dictionary for element names in list
+  # Build dictionary with summary components
 
   dic <- list()
-  dic$"Class"     <- list("Class", NA, NA)
-  dic$"Time Per." <- list("Length of period", NA, NA)
-  dic$"NA's"      <- list("Number of NA's", 0, NA)
-  dic$"Count"     <- list("Count", 0, NA)
-  dic$"TRUE"      <- list("Number of TRUE values", 0, NA)
-  dic$"FALSE"     <- list("Number of FALSE values", 0, NA)
-  dic$"Unique"    <- list("Number of unique values", 0, NA)
-  dic$"Mean"      <- list("Mean", digits, NA)
-  dic$"Sum"       <- list("Sum", digits, NA)
-  dic$"Min."      <- list("Minimum", digits, units)
-  dic$"Max."      <- list("Maximum", digits, units)
-  dic$"1st Qu."   <- list("Lower quartile", digits, units)
-  dic$"3rd Qu."   <- list("Upper quartile", digits, units)
-  dic$"Median"    <- list("Median", digits, units)
-  dic$"St. Dev."  <- list("Standard deviation", digits, NA)
 
-  # A list indicates that only formatting on the summary text is desired
+  dic$"Class"     <- list(id="Class")
+  dic$"Time Per." <- list(id="Length of period")
 
-  if (inherits(obj, "list") && !is.null(obj$String)) {
+  dic$"NA's"      <- list(id="Number of NA's", fmt="%d")
+  dic$"Count"     <- list(id="Count", fmt="%d")
+  dic$"TRUE"      <- list(id="Number of TRUE values", fmt="%d")
+  dic$"FALSE"     <- list(id="Number of FALSE values", fmt="%d")
+  dic$"Unique"    <- list(id="Number of unique values",fmt="%d")
+
+  dic$"Mean"      <- list(id="Mean", fmt=fmt)
+  dic$"Sum"       <- list(id="Sum", fmt=fmt)
+  dic$"St. Dev."  <- list(id="Standard deviation", fmt=fmt)
+  dic$"Min."      <- list(id="Minimum", fmt=fmt)
+  dic$"1st Qu."   <- list(id="Lower quartile", fmt=fmt)
+  dic$"Median"    <- list(id="Median", fmt=fmt)
+  dic$"3rd Qu."   <- list(id="Upper quartile", fmt=fmt)
+  dic$"Max."      <- list(id="Maximum", fmt=fmt)
+
+  # Reformat old summary string
+
+  is.summary.list <- inherits(obj, "list") && !is.null(obj$String)
+  if (is.summary.list) {
     s <- obj
-    nms <- names(s)[!names(s) %in% c("Hist", "String")]
-    s$String <- paste(paste(sapply(nms, BuildString), collapse="\n"),
-                      "\n", sep="")
+    s.names <- names(s)
+    s.names <- s.names[!s.names %in% c("Hist", "String")]
+    summary.strings <- sapply(s.names, BuildString)
+    s$String <- paste(paste(summary.strings, collapse="\n"), "\n", sep="")
     return(s)
   }
 
@@ -87,7 +81,7 @@ SummarizeData <- function(obj, digits=NULL, units=NULL) {
 
     # Specific parameters
 
-    if (s$Class %in% c("integer", "numeric", "POSIXct")) {
+    if (inherits(obj, c("integer", "numeric", "POSIXct"))) {
       s$"Unique" <- length(unique(na.omit(obj)))
       quan <- quantile(obj, probs=seq(0, 1, 0.25), na.rm=TRUE, names=FALSE)
 
@@ -99,8 +93,8 @@ SummarizeData <- function(obj, digits=NULL, units=NULL) {
 
       s$"Mean" <- mean(obj, na.rm=TRUE)
 
-      if (s$Class %in% c("integer", "numeric")) {
-        if (s$Class == "numeric")
+      if (inherits(obj, c("integer", "numeric"))) {
+        if (inherits(obj, "numeric"))
           s$"St. Dev." <- sd(obj, na.rm=TRUE)
         s$"Sum" <- sum(as.numeric(obj), na.rm=TRUE)
         s$"Hist" <- hist(obj, plot=FALSE)
@@ -110,23 +104,23 @@ SummarizeData <- function(obj, digits=NULL, units=NULL) {
         s$"Hist" <- hist(obj, breaks=25, plot=FALSE)
       }
 
-    } else if (s$Class == "logical") {
+    } else if (inherits(obj, "logical")) {
       s$"FALSE" <- length(which(!obj))
       s$"TRUE" <- length(which(obj))
       if(!all(is.na(obj)))
         s$"Hist" <- hist(as.integer(na.omit(obj)) + 1, seq(0, 2), plot=FALSE)
 
-    } else if (s$Class %in% c("character", "factor")) {
-      if (s$Class == "character")
+    } else if (inherits(obj, c("character", "factor"))) {
+      if (inherits(obj, "character"))
         obj <- as.factor(obj)
       s$"Unique" <- length(levels(obj))
       s$"Hist" <- hist(na.omit(as.integer(obj)), plot=FALSE)
     }
   }
 
-  nms <- names(s)[!names(s) %in% "Hist"]
-  s$String <- paste(paste(sapply(nms, BuildString), collapse="\n"),
-                    "\n", sep="")
-
+  s.names <- names(s)
+  s.names <- s.names[!s.names %in% "Hist"]
+  summary.strings <- sapply(s.names, BuildString)
+  s$String <- paste(paste(summary.strings, collapse="\n"), "\n", sep="")
   s
 }

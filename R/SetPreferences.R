@@ -63,12 +63,12 @@ SetPreferences <- function(parent=NULL) {
   # Open GUI
 
   tclServiceMode(FALSE)
-  tt <- tktoplevel(padx=0, pady=0)
+  tt <- tktoplevel()
   if (!is.null(parent)) {
       tkwm.transient(tt, parent)
-      tmp <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-      tkwm.geometry(tt, paste("+", as.integer(tmp[2]) + 25,
-                              "+", as.integer(tmp[3]) + 25, sep=""))
+      geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
+      tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
+                              "+", as.integer(geo[3]) + 25, sep=""))
   }
   tktitle(tt) <- "Preferences"
 
@@ -76,28 +76,27 @@ SetPreferences <- function(parent=NULL) {
 
   # Frame 0, ok and cancel buttons
 
-  frame0 <- tkframe(tt, relief="flat", padx=0, pady=0)
+  frame0 <- tkframe(tt, relief="flat")
 
   frame0.but.1 <- ttkbutton(frame0, width=12, text="OK",
                             command=UpdatePar)
   frame0.but.2 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
 
-  tkgrid(frame0.but.1, frame0.but.2)
+  tkgrid(frame0.but.1, frame0.but.2, pady=c(15, 10))
 
-  tkgrid.configure(frame0.but.1, sticky="e", padx=c(4, 0), pady=c(5, 8))
-  tkgrid.configure(frame0.but.2, sticky="w", padx=c(4, 8), pady=c(5, 8),
-                   rowspan=2)
+  tkgrid.configure(frame0.but.1, sticky="e", padx=c(0, 4))
+  tkgrid.configure(frame0.but.2, sticky="w", padx=c(0, 10), rowspan=2)
 
   tkpack(frame0, side="bottom", anchor="e")
 
   # Frame 1, interpolation parameteres
 
-  frame1 <- ttkframe(tt, relief="flat", borderwidth=5, padding=8)
+  frame1 <- ttkframe(tt, relief="flat")
 
-  txt <- "Interpolated-grid spacing along the x axis"
+  txt <- "Interpolated-grid spacing along the x-axis"
   frame1.lab.1.1 <- ttklabel(frame1, text=txt)
-  txt <- "Interpolated-grid spacing along the y axis"
+  txt <- "Interpolated-grid spacing along the y-axis"
   frame1.lab.2.1 <- ttklabel(frame1, text=txt)
 
   frame1.ent.1.2 <- ttkentry(frame1, width=15, textvariable=grid.dx.var)
@@ -112,24 +111,24 @@ SetPreferences <- function(parent=NULL) {
            tclvalue(grid.dy.var) <- CheckEntry("numeric", tclvalue(grid.dy.var))
          })
 
-  tkgrid(frame1.lab.1.1, frame1.ent.1.2, padx=1, pady=1)
-  tkgrid(frame1.lab.2.1, frame1.ent.2.2, padx=1, pady=1)
+  tkgrid(frame1.lab.1.1, frame1.ent.1.2, pady=c(10, 4))
+  tkgrid(frame1.lab.2.1, frame1.ent.2.2, pady=c(0, 10))
 
-  tkgrid.configure(frame1.lab.1.1, frame1.lab.2.1, sticky="e")
+  tkgrid.configure(frame1.lab.1.1, frame1.lab.2.1, sticky="e", padx=c(0, 2))
   tkgrid.configure(frame1.ent.1.2, frame1.ent.2.2, sticky="we")
 
   tkgrid.columnconfigure(frame1, 1, weight=1, minsize=20)
 
-  tkpack(frame1, fill="both", expand="yes", padx=20, pady=2)
+  tkpack(frame1, fill="both", expand="yes", padx=30)
 
   # Frame 2, MBA input parameters
 
-  frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
+  frame2 <- ttklabelframe(tt, relief="flat", borderwidth=10, padding=0,
                           text="Multilevel B-spline approximation")
 
-  txt <- "Initial size of the spline space along the x axis"
+  txt <- "Initial size of the spline space along the x-axis"
   frame2.lab.1.1 <- ttklabel(frame2, text=txt)
-  txt <- "Initial size of the spline space along the y axis"
+  txt <- "Initial size of the spline space along the y-axis"
   frame2.lab.2.1 <- ttklabel(frame2, text=txt)
   txt <- "Number of levels in the hierarchical construction"
   frame2.lab.3.1 <- ttklabel(frame2, text=txt)
@@ -138,16 +137,16 @@ SetPreferences <- function(parent=NULL) {
   frame2.ent.2.2 <- ttkentry(frame2, width=15, textvariable=mba.m.var)
   frame2.ent.3.2 <- ttkentry(frame2, width=15, textvariable=mba.h.var)
 
-  tkgrid(frame2.lab.1.1, frame2.ent.1.2, padx=1, pady=1)
-  tkgrid(frame2.lab.2.1, frame2.ent.2.2, padx=1, pady=1)
-  tkgrid(frame2.lab.3.1, frame2.ent.3.2, padx=1, pady=1)
+  tkgrid(frame2.lab.1.1, frame2.ent.1.2, pady=c(0, 4))
+  tkgrid(frame2.lab.2.1, frame2.ent.2.2, pady=c(0, 4))
+  tkgrid(frame2.lab.3.1, frame2.ent.3.2)
 
-  tkgrid.configure(frame2.lab.1.1, frame2.lab.2.1, frame2.lab.3.1, sticky="e")
+  tkgrid.configure(frame2.lab.1.1, frame2.lab.2.1, frame2.lab.3.1, sticky="e", padx=c(0, 2))
   tkgrid.configure(frame2.ent.1.2, frame2.ent.2.2, frame2.ent.3.2, sticky="we")
 
   tkgrid.columnconfigure(frame2, 1, weight=1, minsize=20)
 
-  tkpack(frame2, fill="both", expand="yes", padx=10, pady=c(0, 10))
+  tkpack(frame2, fill="both", expand="yes", padx=10, pady=c(0, 0))
 
   # GUI control
 

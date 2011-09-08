@@ -20,10 +20,11 @@ ManageData(cols, vars, parent = NULL)
 
 \details{
 This \acronym{GUI} lets you:
-(1) specify the names, measurement units, and decimal precision of variables;
-(2) add new variables based on user defined functions
-    (see \code{\link{EditFunction}}); and
-(3) remove and (or) reorder variables in the data table.
+(1) specify the names, measurement units, and format of variables;
+(2) add new variables based on user defined functions,
+    see \code{\link{EditFunction}};
+(3) display data in a spreadsheat, see \code{\link{ViewData}}; and
+(4) remove and (or) reorder variables in the data table.
 }
 
 \value{
@@ -34,28 +35,23 @@ to a specific variable, and contains the following components:
 \item{name}{character; variable name.}
 \item{unit}{character; measurement units (optional); programmatic manipulation
   of measurement units is only supported for date and time variables.}
+\item{format}{character; the conversion specification format (optional).}
 \item{id}{character; a unique identifier that is created from a
   string concatenation of \code{name} and \code{unit}.}
 \item{fun}{character; the expression evaluated when computing the variables
   vector of values.}
 \item{index}{integer; the variables component index number in the
-  \code{data.raw} data frame (see \code{\link{ImportData}}). Only required
+  \code{data.raw} data frame, see \code{\link{ImportData}}. Only required
   for variables directly linked to data columns in \code{data.raw}.}
 \item{class}{character; the data class of the vector object.}
-\item{digs}{integer; the precision of the variable, defined as the number of
-  fractional digits or decimal places (optional).}
 \item{summary}{list; a summary of the variables descriptive statistics (see
   \code{\link{SummarizeData}}).}
 \item{comments}{character; user comments.}
 The \code{vars} object is a list with components:
 \item{x, y, z, t, vx, vy}{integer; the index number of the corresponding
   state variable in \code{cols}.}
-The \code{vars} component of \code{\link{Data}} is only updated to reflect
-the removal and (or) reordering of variables (\code{\link{OpenRSurvey}}).
-}
-
-\seealso{
-\code{\link{EditFunction}}
+The \code{vars} component of \code{\link{Data}} is updated to reflect
+the removal and (or) reordering of variables.
 }
 
 \author{Fisher, J.C.}

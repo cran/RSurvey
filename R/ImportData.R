@@ -5,9 +5,12 @@ ImportData <- function(parent=NULL) {
 
   # Raise error message for bad connection
 
-  RaiseError <- function() {
-    msg <- "Connection to data source failed."
-    tkmessageBox(icon="error", message=msg, title="Error", type="ok", parent=tt)
+  RaiseError <- function(type, detail) {
+    msg <- NULL
+    msg[1L] <- "Connection to data source failed."
+    msg[2L] <- "Problems occured while reading data from text file."
+    tkmessageBox(icon="error", message=msg[type], detail=detail, title="Error",
+                 type="ok", parent=tt)
   }
 
   # Raise warning message if data already exists
@@ -46,7 +49,7 @@ ImportData <- function(parent=NULL) {
     con <- GetConnection(src)
 
     if (inherits(con, "try-error") || !isOpen(con, "r")) {
-      RaiseError()
+      RaiseError(1L, con)
       return()
     }
 
@@ -74,7 +77,7 @@ ImportData <- function(parent=NULL) {
                           flush=TRUE), silent=TRUE)
       close(con)
       if (inherits(d, "try-error")) {
-        RaiseError()
+        RaiseError(2L, d)
         return()
       }
 
@@ -102,7 +105,7 @@ ImportData <- function(parent=NULL) {
       close(con)
 
       if (inherits(ans, "try-error")) {
-        RaiseError()
+        RaiseError(2L, ans)
         return()
       }
 
@@ -235,7 +238,7 @@ ImportData <- function(parent=NULL) {
     s <- "normal"
     if (tclvalue(source.var) == "" && is.null(cb))
       s <- "disabled"
-    tkconfigure(frame0.but.1, state=s)
+    tkconfigure(frame0.but.4, state=s)
   }
 
   # Set tags in table
@@ -292,7 +295,7 @@ ImportData <- function(parent=NULL) {
 
   sep0 <- c("\t", "", ",", ";", "|")
   sep1 <- c("Tab ( \\t )", "White space (  )", "Comma ( , )",
-            "Semicolon ( ; )", "Vertical bar ( | )")
+            "Semicolon ( ; )", "Pipe ( | )")
 
   nas0 <- c("NA", "na", "N/A", "n/a")
   nas1 <- c("NA", "na", "N/A", "n/a")
@@ -335,9 +338,9 @@ ImportData <- function(parent=NULL) {
 
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
-    tmp <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(tmp[2]) + 25,
-                            "+", as.integer(tmp[3]) + 25, sep=""))
+    geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
+    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
+                            "+", as.integer(geo[3]) + 25, sep=""))
   }
 
   tktitle(tt) <- "Import File"
@@ -346,22 +349,34 @@ ImportData <- function(parent=NULL) {
 
   frame0 <- ttkframe(tt, relief="flat")
 
-  frame0.but.1 <- ttkbutton(frame0, width=12, text="Load",
+  frame0.but.1 <- ttkbutton(frame0, width=12, text="Paste",
+                            command=PasteData)
+  frame0.but.2 <- ttkbutton(frame0, width=12, text="Clear",
+                            command=ClearData)
+  frame0.but.4 <- ttkbutton(frame0, width=12, text="Load",
                             command=function() ReadFile(FALSE))
-  frame0.but.2 <- ttkbutton(frame0, width=12, text="Cancel",
+  frame0.but.5 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
 
-  frame0.grp.3 <- ttksizegrip(frame0)
+  frame0.grp.6 <- ttksizegrip(frame0)
 
-  tkgrid(frame0.but.1, frame0.but.2, frame0.grp.3)
+  tkgrid(frame0.but.1, frame0.but.2, "x", frame0.but.4, frame0.but.5,
+         frame0.grp.6)
 
-  tkgrid.configure(frame0.but.1, sticky="e", padx=2, pady=8)
-  tkgrid.configure(frame0.but.2, sticky="w", padx=2, pady=8, rowspan=2)
-  tkgrid.configure(frame0.grp.3, sticky="se")
+  tkgrid.columnconfigure(frame0, 2, weight=1)
 
-  tkpack(frame0, side="bottom", anchor="e")
+  tkgrid.configure(frame0.but.1, frame0.but.2,
+                   sticky="n", padx=c(0, 4), pady=c(4, 0))
+  tkgrid.configure(frame0.but.1, padx=c(10, 4))
+  tkgrid.configure(frame0.but.4, frame0.but.5, padx=c(0, 4), pady=c(15, 10))
+  tkgrid.configure(frame0.but.5, columnspan=2, padx=c(0, 10))
+  tkgrid.configure(frame0.grp.6, sticky="se")
 
-  tkconfigure(frame0.but.1, state="disabled")
+  tkraise(frame0.but.5, frame0.grp.6)
+
+  tkpack(frame0, fill="x", side="bottom", anchor="e")
+
+  tkconfigure(frame0.but.4, state="disabled")
 
   # Frame 1, file locator
 
@@ -395,14 +410,15 @@ ImportData <- function(parent=NULL) {
   frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
                           text="Identify header lines")
 
-  txt <- "Names, short descriptive names for data in each column."
+  txt <- "The variable names for data in each column."
   frame2.chk.1.1 <- ttkcheckbutton(frame2, variable=names.var,
                                    command=SetTags, text=txt)
-  txt <- "Units, measurement units associated with values in each column."
+  txt <- paste("The measurement units for data in each column;",
+               "programmatic manipulation of these units is not supported.")
   frame2.chk.2.1 <- ttkcheckbutton(frame2, variable=units.var,
                                    command=SetTags, text=txt)
-  txt <- paste("Precision, number of decimal places used to",
-               "express data in each column.")
+  txt <- paste("The conversion specification format for data in each column",
+               "(e.g. '%10.6f' or '%Y-%m-%d %H:%M').")
   frame2.chk.3.1 <- ttkcheckbutton(frame2, variable=decis.var,
                                    command=SetTags, text=txt)
 
@@ -424,18 +440,18 @@ ImportData <- function(parent=NULL) {
   frame3.lab.2.3 <- ttklabel(frame3, text="Quote")
   frame3.lab.2.5 <- ttklabel(frame3, text="Max lines")
 
-  frame3.box.1.2 <- ttkcombobox(frame3, width=16, state="readonly", value=sep1)
-  frame3.box.1.4 <- ttkcombobox(frame3, width=16, state="readonly", value=com1)
-  frame3.box.2.2 <- ttkcombobox(frame3, width=16, state="readonly", value=nas1)
-  frame3.box.2.4 <- ttkcombobox(frame3, width=16, state="readonly", value=quo1)
+  frame3.box.1.2 <- ttkcombobox(frame3, width=17, state="readonly", value=sep1)
+  frame3.box.1.4 <- ttkcombobox(frame3, width=17, state="readonly", value=com1)
+  frame3.box.2.2 <- ttkcombobox(frame3, width=17, state="readonly", value=nas1)
+  frame3.box.2.4 <- ttkcombobox(frame3, width=17, state="readonly", value=quo1)
 
   tkbind(frame3.box.1.2, "<<ComboboxSelected>>", RebuildTable)
   tkbind(frame3.box.1.4, "<<ComboboxSelected>>", RebuildTable)
   tkbind(frame3.box.2.2, "<<ComboboxSelected>>", RebuildTable)
   tkbind(frame3.box.2.4, "<<ComboboxSelected>>", RebuildTable)
 
-  frame3.ent.1.6 <- ttkentry(frame3, width=16, textvariable=skip.var)
-  frame3.ent.2.6 <- ttkentry(frame3, width=16, textvariable=nrow.var)
+  frame3.ent.1.6 <- ttkentry(frame3, width=17, textvariable=skip.var)
+  frame3.ent.2.6 <- ttkentry(frame3, width=17, textvariable=nrow.var)
 
   tkbind(frame3.ent.1.6, "<KeyRelease>",
          function() {
@@ -456,13 +472,14 @@ ImportData <- function(parent=NULL) {
   tkgrid(frame3.lab.1.1, frame3.box.1.2, frame3.lab.1.3, frame3.box.1.4,
          frame3.lab.1.5, frame3.ent.1.6)
   tkgrid(frame3.lab.2.1, frame3.box.2.2, frame3.lab.2.3, frame3.box.2.4,
-         frame3.lab.2.5, frame3.ent.2.6, frame3.but.2.7, pady=c(5, 0))
+         frame3.lab.2.5, frame3.ent.2.6, frame3.but.2.7, pady=c(4, 0))
 
   tkgrid.configure(frame3.lab.1.1, frame3.lab.1.3, frame3.lab.1.5,
                    frame3.lab.2.1, frame3.lab.2.3, frame3.lab.2.5,
-                   padx=c(8, 1), sticky="e")
+                   padx=c(10, 2), sticky="e")
 
-  tkgrid.configure(frame3.lab.1.1, frame3.lab.2.1, padx=c(0, 1))
+  tkgrid.configure(frame3.lab.1.1, frame3.lab.2.1, padx=c(0, 2))
+  tkgrid.configure(frame3.but.2.7, padx=c(2, 0))
 
   tkpack(frame3, anchor="w", fill="x", padx=10, pady=c(0, 15))
 
@@ -494,6 +511,7 @@ ImportData <- function(parent=NULL) {
                          highlightcolor="gray75", background="white",
                          foreground="black", titlerows=0, titlecols=0,
                          multiline=0, resizeborders="col",
+                         bordercursor="sb_h_double_arrow", cursor="plus",
                          colstretchmode="none", rowstretchmode="none",
                          anchor="nw", drawmode="single", rowseparator="\n",
                          colseparator="\t", selectmode="extended",
@@ -510,8 +528,8 @@ ImportData <- function(parent=NULL) {
   tkgrid(frame4.xsc, "x")
 
   tkgrid.configure(frame4.tbl, sticky="news", padx=c(10, 0), pady=0)
-  tkgrid.configure(frame4.ysc, sticky="ns", padx=c(0, 10), pady=c(1, 0))
-  tkgrid.configure(frame4.xsc, sticky="we", padx=c(11, 0), pady=0)
+  tkgrid.configure(frame4.ysc, sticky="ns", padx=c(0, 10), pady=0)
+  tkgrid.configure(frame4.xsc, sticky="we", padx=c(10, 0), pady=0)
 
   tktag.configure(frame4.tbl, "active", background="#EAEEFE", relief="")
   tktag.configure(frame4.tbl, "sel", background="#EAEEFE", foreground="black")
@@ -526,19 +544,6 @@ ImportData <- function(parent=NULL) {
   tkbind(frame4.tbl, "<<Paste>>", PasteData)
 
   tkselection.set(frame4.tbl, "origin")
-
-  # Frame 5, paste and clear buttons
-
-  frame5 <- ttkframe(tt, relief="flat", padding=0, borderwidth=0)
-
-  frame5.but.1 <- ttkbutton(frame5, width=12, text="Paste",
-                            command=PasteData)
-  frame5.but.2 <- ttkbutton(frame5, width=12, text="Clear",
-                            command=ClearData)
-
-  tkgrid(frame5.but.1, frame5.but.2, padx=2, pady=c(5, 0))
-
-  tkpack(frame5, anchor="w", padx=9)
 
   # GUI control
 

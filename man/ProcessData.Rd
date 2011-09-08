@@ -15,16 +15,16 @@ ProcessData(d, type = "p", lim = NULL, ply = NULL,
 }
 
 \arguments{
-\item{d}{data.frame; the data to be processed, a table with required
-  numeric variables \code{x} and \code{y}, and optional variables
-  \code{z}, \code{t}, \code{vx}, \code{vy}, and \code{vz}.}
+\item{d}{data.frame; the data to be processed, a table
+  with variables \code{x}, \code{y}, \code{z}, \code{t},
+  \code{vx}, \code{vy}, and \code{vz}.}
 \item{type}{character; a 1-character string giving the resulting
   output type. The following values are possible: "p" for points
   and "g" for interpolated grid.}
 \item{lim}{list; contains numeric vector components giving the minimum
   and maximum values for each variable in \code{d}.}
-\item{ply}{gpc.poly; if \code{type="p"} a polygon that defines either the
-  data limits, else if \code{type="g"} a crop region for gridded data.}
+\item{ply}{gpc.poly; if \code{type = "p"} a polygon that defines either the
+  data limits, else if \code{type = "g"} a crop region for gridded data.}
 \item{grid.res}{list; numeric components giving the grid spacing along
   the x- and y-axis for interpolated values, see \code{\link{SetPreferences}}.}
 \item{grid.mba}{list; integer components giving the input parameters for the
@@ -42,13 +42,13 @@ the polygon boundary are set to \code{\link{NA}}.
 }
 
 \value{
-If \code{type="p"} returns a data frame with variables:
+If \code{type = "p"} returns a data frame with variables:
 \item{x, y}{numeric; a vector of \code{x} and \code{y} coordinates.}
 \item{z}{numeric; a vector of state variable values (optional).}
 \item{t}{POSIXct; a vector of time stamps (optional).}
 \item{vx, vy, vz}{numeric; a vector of velocity components in the \code{x},
   \code{y} and \code{z} directions, respectively (optional).}
-If \code{type="g"} returns a list with components:
+If \code{type = "g"} returns a list with components:
 \item{x, y}{numeric; a vector of grid line locations at which the values in
   \code{z} are measured.}
 \item{z}{matrix; interpolated surface of state variable with rows and columns

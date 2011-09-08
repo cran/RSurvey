@@ -19,53 +19,83 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
       on.exit(close(con))
     }
 
+    # Establish arguments to pass to read.table
+
+    args <- list(file=con, header=FALSE, sep=sep, quote=quote, row.names=NULL,
+                 na.strings=na.strings, check.names=TRUE, fill=TRUE,
+                 strip.white=TRUE, blank.lines.skip=TRUE,
+                 comment.char=comment.char, allowEscapes=TRUE, flush=TRUE,
+                 fileEncoding="", encoding=encoding)
+
+    # Load headers
+
+    col.classes <- "character"
+
+    nheaders <- sum(headers)
+    if (nheaders > 0L) {
+      h <- try(do.call(read.table, c(args, skip=skip, nrows=nheaders,
+                                     colClasses=col.classes)), silent=TRUE)
+      if (inherits(h, "try-error"))
+        return(h)
+
+      i <- 1L
+      if (headers[i]) {
+        nams <- as.character(h[i, ])
+        nams[is.na(nams)] <- "Unknown"
+        i <- i + 1L
+      }
+      if (headers[2]) {
+        unts <- as.character(h[i, ])
+        i <- i + 1L
+      }
+      if (headers[3]) {
+        fmts <- as.character(h[i, ])
+
+        # Use formats to determine column classes
+
+        n <- ncol(h)
+        col.classes <- rep("character", n)
+        for (i in 1:n) {
+          fmt <- fmts[i]
+
+          test <- try(sprintf(fmt, 1), silent=TRUE)
+          is.error <- inherits(test, "try-error")
+          if (!is.error) {
+            is.num <- !is.na(suppressWarnings(as.numeric(test)))
+            if (is.num) {
+              s <- paste(substr(fmt, 1, 1),
+                         substr(fmt, nchar(fmt), nchar(fmt)), sep="")
+              if (s %in% c("%d", "%i")) {
+                col.classes[i] <- "integer"
+              } else if (s %in% c("%f", "%e", "%E")) {
+                col.classes[i] <- "numeric"
+              }
+            }
+          }
+        }
+        col.classes[fmts %in% "%Y-%m-%d %H:%M:%S"] <- "POSIXct"
+      }
+
+      skip <- 0L
+      nrows <- nrows - nheaders
+    }
+
     # Load data
 
-    d <- try(read.table(con, header=FALSE, sep=sep, quote=quote,
-                        row.names=NULL, na.strings=na.strings,
-                        colClasses="character", nrows=nrows,
-                        skip=skip, check.names=TRUE, fill=TRUE,
-                        strip.white=TRUE, blank.lines.skip=TRUE,
-                        comment.char=comment.char,
-                        allowEscapes=TRUE, flush=TRUE,
-                        fileEncoding="", encoding=encoding), silent=TRUE)
-
+    d <- try(do.call(read.table, c(args, skip=skip, nrows=nrows,
+                                   list(colClasses=col.classes))), silent=TRUE)
     if (inherits(d, "try-error"))
       return(d)
 
-    # Remove columns containing all NA values
-
-    is.all.na <- sapply(seq(along=d), function(i) all(is.na(d[, i])))
-    d <- d[, !is.all.na, drop=FALSE]
-
-    # Determine the number of columns
+    # Initialize missing headers
 
     n <- ncol(d)
-
-    # Address file header
-
-    if (headers[1]) {
-      nams <- as.character(d[1, ])
-      nams[is.na(nams)] <- "Unknown"
-      d <- d[-1, , drop=FALSE]
-    } else {
-        nams <- rep("Unknown", n)
-    }
-
-    if (headers[2]) {
-      unts <- as.character(d[1, ])
-      d <- d[-1, , drop=FALSE]
-    } else {
+    if (!headers[1])
+      nams <- rep("Unknown", n)
+    if (!headers[2])
       unts <- rep(NA, n)
-    }
-
-    if (headers[3]) {
-      digs <- suppressWarnings(as.integer(d[1, ]))
-      digs[is.na(digs) | (digs < 0 | digs > 20)] <- NA
-      d <- d[-1, , drop=FALSE]
-    } else {
-      digs <- rep(NA, n)
-    }
+    if (!headers[3])
+      fmts <- rep(NA, n)
 
     # Reset row names
 
@@ -82,21 +112,25 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
     for (idx in 1:n) {
       val <- d[, idx]
       unt <- if (is.na(unts[idx])) NULL else unts[idx]
-      dig <- if (is.na(digs[idx])) NULL else digs[idx]
+      fmt <- if (is.na(fmts[idx])) NULL else fmts[idx]
 
-      is.date <- FALSE
-      if (!is.null(unt) && !all(is.na(val))) {
-        date.time <- as.POSIXct(val, format=unt)
-        is.date <- all(!is.na(date.time[!is.na(val)]))
+      # Try to determine class of character variables
+
+      if (inherits(val, "character")) {
+        is.date <- FALSE
+        if (!is.null(fmt) && !all(is.na(val))) {
+          date.time <- as.POSIXct(val, format=fmt)
+          is.date <- all(!is.na(date.time[!is.na(val)]))
+        }
+        if (is.date)
+          val <- date.time
+        else
+          val <- type.convert(d[, idx], as.is=TRUE)
       }
 
-      # Convert value to assumed format
+      # Determine default x-, y-, z-axis variables
 
-      val <- if (is.date) date.time else type.convert(d[, idx], as.is=TRUE)
-
-      # Class integer or numeric
-
-      if (inherits(val, c("integer", "numeric"))) {
+      if (inherits(val, c("numeric", "integer"))) {
         val[!is.finite(val)] <- NA
         if (is.null(vars$x)) {
           vars$x <- idx
@@ -106,7 +140,7 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
           vars$z <- idx
         }
 
-      # Class POSIXct
+      # Determine default date-time variable
 
       } else if (inherits(val, "POSIXct")) {
         if (is.null(vars$t))
@@ -116,26 +150,27 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
       # Additional attributes
 
       nam <- nams[idx]
-
       id <- paste(c(nam, unt), collapse=", ")
-      i <- 1
 
-      hld <- id
+      i <- 1L
+      hold.id <- id
       while (id %in% ids) {
-        id <- paste(hld, " (", i, ")", sep="")
-        i <- i + 1
+        id <- paste(hold.id, " (", i, ")", sep="")
+        i <- i + 1L
       }
       ids <- c(ids, id)
 
       cols[[idx]] <- list()
-      cols[[idx]]$id <- id
-      cols[[idx]]$name <- nam
-      cols[[idx]]$unit <- unt
-      cols[[idx]]$digits <- dig
-      cols[[idx]]$class <- class(val)[1]
-      cols[[idx]]$index <- idx
-      cols[[idx]]$summary <- SummarizeData(val, dig, unt)
-      cols[[idx]]$fun <- paste("DATA[[\"", id, "\"]]", sep="")
+
+      cols[[idx]]$id      <- id
+      cols[[idx]]$name    <- nam
+      cols[[idx]]$unit    <- unt
+      cols[[idx]]$format  <- fmt
+      cols[[idx]]$class   <- class(val)[1]
+      cols[[idx]]$index   <- idx
+      cols[[idx]]$fun     <- paste("DATA[[\"", id, "\"]]", sep="")
+      cols[[idx]]$sample  <- na.omit(val)[1]
+      cols[[idx]]$summary <- SummarizeData(val, fmt=fmt)
 
       d[, idx] <- val
     }
