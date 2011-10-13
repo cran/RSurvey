@@ -200,9 +200,11 @@ ImportData <- function(parent=NULL) {
 
   PasteData <- function() {
     tkselection.set(frame4.tbl, "origin")
-    cb <- try(as.character(tclvalue(tkXselection.get(selection="CLIPBOARD"))),
+
+    cb <- try(scan(file="clipboard", what="character", sep="\n", quiet=TRUE),
               silent=TRUE)
     cb <<- if (inherits(cb, "try-error")) NULL else cb
+
     if (is.null(cb))
       return()
     tclvalue(source.var) <- ""
@@ -417,8 +419,8 @@ ImportData <- function(parent=NULL) {
                "programmatic manipulation of these units is not supported.")
   frame2.chk.2.1 <- ttkcheckbutton(frame2, variable=units.var,
                                    command=SetTags, text=txt)
-  txt <- paste("The conversion specification format for data in each column",
-               "(e.g. '%10.6f' or '%Y-%m-%d %H:%M').")
+  txt <- paste("The conversion specification format for data in each column,",
+               "for example '%10.6f' or '%Y-%m-%d %H:%M'.")
   frame2.chk.3.1 <- ttkcheckbutton(frame2, variable=decis.var,
                                    command=SetTags, text=txt)
 

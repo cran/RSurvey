@@ -18,8 +18,8 @@ A graphical user interface (\acronym{GUI}) is provided.
   \tabular{ll}{
     Package: \tab RSurvey\cr
     Type: \tab Package\cr
-    Version: \tab 0.6-5\cr
-    Date: \tab 2011-09-08\cr
+    Version: \tab 0.6-6\cr
+    Date: \tab 2011-10-13\cr
     License: \tab GPL (>= 2)
   }
 }

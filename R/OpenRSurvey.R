@@ -175,9 +175,6 @@ OpenRSurvey <- function() {
     if (!is.null(vars$vy))
       tcl(frame1.box.6.2, "current", which(vars$vy == idxs.n))
 
-    Data("data.pts", NULL)
-    Data("data.grd", NULL)
-
     ButtonState(vars)
   }
 
@@ -234,15 +231,16 @@ OpenRSurvey <- function() {
   CallExportData <- function(file.type) {
     if (is.null(Data("data.raw")))
       return()
-    CallProcessData()
 
     is.coordinate <- !is.null(Data("vars")$x) & !is.null(Data("vars")$y)
     if (!is.coordinate & file.type %in% c("shape", "grid"))
       stop("Spatial coordinates missing")
 
     if (file.type == "grid") {
+      CallProcessData(interpolate=TRUE)
       WriteFile(file.type="grid")
     } else {
+      CallProcessData()
       col.ids <- sapply(Data("cols"), function(i) i$id)
       ExportData(col.ids, file.type=file.type, parent=tt)
     }
@@ -345,7 +343,7 @@ OpenRSurvey <- function() {
 
   # Autocrop polygon
 
-  CallAutocropPolygon <- function(type) {
+  CallAutocropPolygon <- function() {
     if (is.null(Data("data.source")))
       return()
     CallProcessData()
@@ -405,11 +403,6 @@ OpenRSurvey <- function() {
     lim          <- Data("lim.axes")
     cols         <- Data("cols")
     vars         <- Data("vars")
-    tgap         <- Data("tgap")
-    width        <- Data("width")
-    cex.pts      <- Data("cex.pts")
-    minor.ticks  <- Data("minor.ticks")
-    ticks.inside <- Data("ticks.inside")
 
     ylab <- cols[[vars$z]]$id
 
@@ -419,9 +412,11 @@ OpenRSurvey <- function() {
 
     tkconfigure(tt, cursor="watch")
     PlotTimeSeries(x=dat$t, y=dat$z, xlim=lim$t, ylim=lim$z, ylab=ylab,
-                   tgap=tgap, width=width, cex.pts=cex.pts,
-                   axis.side=axis.side, minor.ticks=minor.ticks,
-                   ticks.inside=ticks.inside)
+                   tgap=Data("tgap"), width=Data("width"),
+                   cex.pts=Data("cex.pts"), axis.side=axis.side,
+                   minor.ticks=Data("minor.ticks"),
+                   ticks.inside=Data("ticks.inside"),
+                   rm.pnt.line=Data("rm.pnt.line"))
     tkconfigure(tt, cursor="arrow")
     tkfocus(tt)
   }
@@ -429,7 +424,11 @@ OpenRSurvey <- function() {
   # Plot point or 2d surface data
 
   CallPlot2d <- function(type, build.poly=FALSE) {
-    CallProcessData()
+    if (type == "p")
+      CallProcessData()
+    else
+      CallProcessData(interpolate=TRUE)
+
     if (is.null(Data("data.grd")) && type %in% c("g", "l")) {
       return()
     } else if (is.null(Data("data.pts"))) {
@@ -520,7 +519,7 @@ OpenRSurvey <- function() {
            vuni=Data("vuni"), vmax=Data("vmax"),
            vxby=Data("vxby"), vyby=Data("vyby"),
            axis.side=axis.side, minor.ticks=Data("minor.ticks"),
-           ticks.inside=Data("ticks.inside"),
+           ticks.inside=Data("ticks.inside"), rm.pnt.line=Data("rm.pnt.line"),
            add.contour.lines=show.lines)
 
     if (show.poly)
@@ -596,7 +595,7 @@ OpenRSurvey <- function() {
   # Plot 3d surface data
 
   CallPlot3d <- function() {
-    CallProcessData()
+    CallProcessData(interpolate=TRUE)
 
     if (is.null(Data("data.grd")))
       return()
@@ -678,7 +677,7 @@ OpenRSurvey <- function() {
 
   # Call process data
 
-  CallProcessData <- function() {
+  CallProcessData <- function(interpolate=FALSE) {
     if (is.null(Data("data.raw"))) {
       Data("data.pts", NULL)
       Data("data.grd", NULL)
@@ -719,19 +718,17 @@ OpenRSurvey <- function() {
 
       data.pts <- ProcessData(d, type="p", lim=lim, ply=ply)
       Data("data.pts", data.pts)
+      Data("data.grd", NULL)
     }
 
     if (is.null(Data("data.pts"))) {
-      Data("data.grd", NULL)
       tkconfigure(tt, cursor="arrow")
       return()
     }
 
     # Process grid
 
-    if (is.null(Data("data.grd"))) {
-      d <- Data("data.pts")
-
+    if (is.null(Data("data.grd")) && interpolate) {
       ply <- Data("poly.crop")
       if (!is.null(ply))
         ply <- Data("poly")[[ply]]
@@ -739,7 +736,7 @@ OpenRSurvey <- function() {
       grid.res <- Data("grid.res")
       grid.mba <- Data("grid.mba")
 
-      data.grd <- ProcessData(d, type="g", ply=ply,
+      data.grd <- ProcessData(Data("data.pts"), type="g", ply=ply,
                               grid.res=grid.res, grid.mba=grid.mba)
       Data("data.grd", data.grd)
     }
@@ -950,6 +947,8 @@ OpenRSurvey <- function() {
       tkadd(menu.help, "command", label="Restore R session",
             command=function() {
               CloseGUI()
+              Data("data.pts", NULL)
+              Data("data.grd", NULL)
               RestoreSession(file.path(getwd(), "R"), save.objs="Data",
                              fun.call="OpenRSurvey")
             })

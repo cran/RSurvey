@@ -18,7 +18,8 @@ Plot2d(x = NULL, y = NULL, z = NULL, vx = NULL, vy = NULL,
        color.palette = terrain.colors,
        vuni = FALSE, vmax = NULL, vxby = NULL, vyby = NULL,
        axis.side = 1:2, minor.ticks = FALSE,
-       ticks.inside = FALSE, add.contour.lines = FALSE)
+       ticks.inside = FALSE, add.contour.lines = FALSE,
+       rm.pnt.line = FALSE)
 }
 
 \arguments{
@@ -63,6 +64,8 @@ Plot2d(x = NULL, y = NULL, z = NULL, vx = NULL, vy = NULL,
   plot region; its default is \code{FALSE}.}
 \item{add.contour.lines}{logical; if \code{TRUE} and \code{type} is either "l"
   or "g" than contour lines are drawn; its default is \code{FALSE}.}
+\item{rm.pnt.line}{logical; if \code{TRUE} the line boundary on point symbols is
+  not drawn; its default is \code{FALSE}.}
 }
 
 \details{
