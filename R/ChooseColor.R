@@ -1,50 +1,113 @@
 ChooseColor <- function(col, parent=NULL) {
-# ChooseColor("#669933")
+# A GUI for selecting a graphic color.
 
   # Additional functions (subroutines)
 
   # Save color and quit
 
   SaveColor <- function() {
-    hex <- Txt2Hex(tclvalue(col.var))
-    if (hex == "")
-      hex <- NA
-    rtn.col <<- hex
+    col.hex <- Txt2hex(tclvalue(col.var))
+    if (col.hex == "")
+      col.hex <- NA
+    rtn.col <<- col.hex
     tclvalue(tt.done.var) <- 1
   }
 
-  # Draw polygon on small canvas
+  # Draw polygon on color sample
 
-  DrawPolygonSmall <- function(color) {
+  DrawSamplePolygon <- function(fill) {
     tcl(frame0.cvs.1, "delete", "col")
     pts <- .Tcl.args(c(0, 0, dx, 0, dx, dy, 0, dy))
-    tkcreate(frame0.cvs.1, "polygon", pts, fill=color, outline="", tag="col")
+    tkcreate(frame0.cvs.1, "polygon", pts, fill=fill, outline="", tag="col")
   }
 
-  # Draw polygon on large canvas
+  # Draw polygon on color chart
 
-  DrawPolygonLarge <- function(i, j, fill, outline, tag) {
-    x1 <- j * dx - dx - 0.5
-    y1 <- i * dy - dy - 0.5
-    x2 <- j * dx - 0.5
-    y2 <- i * dy - 0.5
-    pts <- .Tcl.args(c(x1, y1, x2, y1, x2, y2, x1, y2))
+  DrawChartPolygon <- function(i, j, fill, outline, tag) {
+    x1 <- j * dx - dx
+    y1 <- i * dy - dy
+    x2 <- j * dx
+    y2 <- i * dy
+    pts <- .Tcl.args(c(x1, y1, x2, y1, x2, y2, x1, y2) - 0.5)
     tkcreate(frame1.cvs, "polygon", pts, fill=fill, outline=outline, tag=tag)
   }
 
-  # Draw color chart
+  # Build color chart
 
-  DrawColorChart <- function() {
+  BuildColorChart <- function() {
     for (i in 1:m) {
       for (j in 1:n) {
-        DrawPolygonLarge(i, j, fill=d[i, j], outline="black", tag="")
+        DrawChartPolygon(i, j, fill=d[i, j], outline="black", tag="")
       }
     }
   }
 
-  # Frame cell based on mouse selection
+  # Update color ramp
 
-  MouseSelect <- function(x, y) {
+  UpdateColorRamp <- function(col.hex) {
+    col.ramp <<- colorRampPalette(c("#FFFFFF", col.hex, "#000000"),
+                                  space="Lab")(n + 4)[3:(n + 2)]
+    tcl(frame2.cvs, "delete", "ramp")
+    dx <- (w - 1) / n
+    x2 <- 1
+    y1 <- 1
+    y2 <- dy / 2
+    for (i in col.ramp) {
+      x1 <- x2
+      x2 <- x1 + dx
+      pts <- .Tcl.args(c(x1, y1, x2, y1, x2, y2, x1, y2))
+      tkcreate(frame2.cvs, "polygon", pts, fill=i, tag="ramp")
+    }
+  }
+
+  # Change color
+
+  ChangeColor <- function(col.hex, is.hsva=FALSE, is.color=FALSE) {
+    col.hex <- substr(col.hex, 1, 7)
+    if (is.na(col.hex) || col.hex == "")
+      col.hex <- "#000000"
+
+    tcl(frame1.cvs, "delete", "browse")
+    if (col.hex %in% d) {
+      ij <- which(d == col.hex, arr.ind=TRUE)[1, ]
+      i <- ij[1]
+      j <- ij[2]
+      DrawChartPolygon(i, j, fill="", outline="white", tag="browse")
+    }
+
+    DrawSamplePolygon(col.hex)
+    UpdateColorRamp(col.hex)
+
+    if (!is.hsva) {
+      col.rgb <- col2rgb(col.hex, alpha=FALSE)
+      col.hsv <- rgb2hsv(col.rgb, maxColorValue=255)
+      nh <<- col.hsv[1]
+      ns <<- col.hsv[2]
+      nv <<- col.hsv[3]
+      tclvalue(h.scl.var) <- nh
+      tclvalue(s.scl.var) <- ns
+      tclvalue(v.scl.var) <- nv
+      tclvalue(a.scl.var) <- na
+      tclvalue(h.ent.var) <- sprintf("%.2f", nh)
+      tclvalue(s.ent.var) <- sprintf("%.2f", ns)
+      tclvalue(v.ent.var) <- sprintf("%.2f", nv)
+      tclvalue(a.ent.var) <- sprintf("%.2f", na)
+    }
+    if (!is.color)
+      tclvalue(col.var) <- Hsv2hex()
+  }
+
+  # Select ramp color
+
+  SelectRampColor <- function(x) {
+    i <- ceiling((as.numeric(x)) / ((w - 1) / n))
+    col.hex <- col.ramp[i]
+    ChangeColor(col.hex)
+  }
+
+  # Select chart color
+
+  SelectChartColor <- function(x, y) {
     tcl(frame1.cvs, "delete", "browse")
     i <- ceiling((as.numeric(y)) / dy)
     j <- ceiling((as.numeric(x)) / dx)
@@ -52,47 +115,13 @@ ChooseColor <- function(col, parent=NULL) {
       i <- 1
     if (j == 0)
       j <- 1
-    color <- d[i, j]
-    DrawPolygonSmall(color)
-    DrawPolygonLarge(i, j, fill="", outline="white", tag="browse")
-
-    rgba <- col2rgb(color)
-    nr <<- rgba[1]
-    ng <<- rgba[2]
-    nb <<- rgba[3]
-    if (is.transparent)
-      hex <- rgb(nr, ng, nb, na, maxColorValue=255)
-    else
-      hex <- rgb(nr, ng, nb, maxColorValue=255)
-    tclvalue(col.var) <- hex
-
-    tclvalue(r.scl.var) <- nr
-    tclvalue(g.scl.var) <- ng
-    tclvalue(b.scl.var) <- nb
-    tclvalue(r.ent.var) <- nr
-    tclvalue(g.ent.var) <- ng
-    tclvalue(b.ent.var) <- nb
+    DrawChartPolygon(i, j, fill="", outline="white", tag="browse")
+    ChangeColor(d[i, j])
   }
 
-  # Update color polygons based on text string in entry-box
+  # Coerce text string to hexadecimal color
 
-  UpdatePolygons <- function(color) {
-    color <- substring(color, 1, 7)
-    tcl(frame1.cvs, "delete", "browse")
-    if (color %in% d) {
-      ij <- which(d == color, arr.ind=TRUE)[1, ]
-      i <- ij[1]
-      j <- ij[2]
-      DrawPolygonLarge(i, j, fill="", outline="white", tag="browse")
-    }
-    if (is.na(color) || color == "")
-      color <- "#000000"
-    DrawPolygonSmall(color)
-  }
-
-  # Coerces text string to hexadecimal color string
-
-  Txt2Hex <- function(txt) {
+  Txt2hex <- function(txt) {
     txt <- CheckColorStr(as.character(txt))
     if (substr(txt, 1, 1) != "#")
       txt <- paste("#", txt, sep="")
@@ -111,29 +140,29 @@ ChooseColor <- function(col, parent=NULL) {
     txt
   }
 
-  # Coerces numeric values to hexadecimal color string
+  # Coerce numeric HSV values to hexadecimal color
 
-  Num2Hex <- function() {
+  Hsv2hex <- function() {
     if (is.transparent)
-      hex <- rgb(nr, ng, nb, na, maxColorValue=255)
+      col.hex <- hsv(h=nh, s=ns, v=nv, alpha=na)
     else
-      hex <- rgb(nr, ng, nb, maxColorValue=255)
-    hex
+      col.hex <- hsv(h=nh, s=ns, v=nv)
+    col.hex
   }
 
-  # Check range of numeric color component
+  # Check range of numeric color attribute
 
   CheckColorNum <- function(...) {
-    num <- as.integer(...)
+    num <- suppressWarnings(as.numeric(...))
     if (is.na(num) || num < 0) {
       num <- 0
-    } else if (num > 255) {
-      num <- 255
+    } else if (num > 1) {
+      num <- 1
     }
     num
   }
 
-  # Check digits of hexadecimal color character string
+  # Check hexadecimal character string
 
   CheckColorStr <- function(txt) {
     txt <- as.character(txt)
@@ -147,68 +176,63 @@ ChooseColor <- function(col, parent=NULL) {
     txt
   }
 
-  # Updates based on change in scale
+  # Update based on change in scales
 
-  ScaleRed <- function(...) {
-    nr <<- CheckColorNum(...)
-    tclvalue(r.ent.var) <- nr
-    tclvalue(col.var) <- Num2Hex()
-    UpdatePolygons(tclvalue(col.var))
+  ScaleH <- function(...) {
+    nh <<- as.numeric(...)
+    tclvalue(h.scl.var) <- nh
+    tclvalue(h.ent.var) <- sprintf("%.2f", nh)
+    ChangeColor(Hsv2hex(), is.hsva=TRUE)
   }
 
-  ScaleGrn <- function(...) {
-    ng <<- CheckColorNum(...)
-    tclvalue(g.ent.var) <- ng
-    tclvalue(col.var) <- Num2Hex()
-    UpdatePolygons(tclvalue(col.var))
+  ScaleS <- function(...) {
+    ns <<- as.numeric(...)
+    tclvalue(s.scl.var) <- ns
+    tclvalue(s.ent.var) <- sprintf("%.2f", ns)
+    ChangeColor(Hsv2hex(), is.hsva=TRUE)
   }
 
-  ScaleBlu <- function(...) {
-    nb <<- CheckColorNum(...)
-    tclvalue(b.ent.var) <- nb
-    tclvalue(col.var) <- Num2Hex()
-    UpdatePolygons(tclvalue(col.var))
+  ScaleV <- function(...) {
+    nv <<- as.numeric(...)
+    tclvalue(v.scl.var) <- nv
+    tclvalue(v.ent.var) <- sprintf("%.2f", nv)
+    ChangeColor(Hsv2hex(), is.hsva=TRUE)
   }
 
-  ScaleAlp <- function(...) {
-    na <<- CheckColorNum(...)
-    tclvalue(a.ent.var) <- na
-    tclvalue(col.var) <- Num2Hex()
-    UpdatePolygons(tclvalue(col.var))
+  ScaleA <- function(...) {
+    na <<- as.numeric(...)
+    tclvalue(a.ent.var) <- sprintf("%.2f", na)
+    tclvalue(col.var) <- Hsv2hex()
   }
 
-  # Updates based on change in entry of numeric colors
+  # Update based on change in numeric color attributes
 
-  EntryRed <- function() {
-    nr <<- CheckColorNum(tclvalue(r.ent.var))
-    tclvalue(r.ent.var) <- nr
-    tclvalue(r.scl.var) <- nr
-    tclvalue(col.var) <- Num2Hex()
-    UpdatePolygons(tclvalue(col.var))
+  EntryH <- function() {
+    txt <- tclvalue(h.ent.var)
+    nh <<- CheckColorNum(txt)
+    tclvalue(h.scl.var) <- nh
+    ChangeColor(Hsv2hex(), is.hsva=TRUE)
   }
 
-  EntryGrn <- function() {
-    ng <<- CheckColorNum(tclvalue(g.ent.var))
-    tclvalue(g.ent.var) <- ng
-    tclvalue(g.scl.var) <- ng
-    tclvalue(col.var) <- Num2Hex()
-    UpdatePolygons(tclvalue(col.var))
+  EntryS <- function() {
+    txt <- tclvalue(s.ent.var)
+    ns <<- CheckColorNum(txt)
+    tclvalue(s.scl.var) <- ns
+    ChangeColor(Hsv2hex(), is.hsva=TRUE)
   }
 
-  EntryBlu <- function() {
-    nb <<- CheckColorNum(tclvalue(b.ent.var))
-    tclvalue(b.ent.var) <- nb
-    tclvalue(b.scl.var) <- nb
-    tclvalue(col.var) <- Num2Hex()
-    UpdatePolygons(tclvalue(col.var))
+  EntryV <- function() {
+    txt <- tclvalue(v.ent.var)
+    nv <<- CheckColorNum(txt)
+    tclvalue(v.scl.var) <- nv
+    ChangeColor(Hsv2hex(), is.hsva=TRUE)
   }
 
-  EntryAlp <- function() {
-    na <<- CheckColorNum(tclvalue(a.ent.var))
-    tclvalue(a.ent.var) <- na
+  EntryA <- function() {
+    txt <- tclvalue(a.ent.var)
+    na <<- CheckColorNum(txt)
     tclvalue(a.scl.var) <- na
-    tclvalue(col.var) <- Num2Hex()
-    UpdatePolygons(tclvalue(col.var))
+    tclvalue(col.var) <- Hsv2hex()
   }
 
   # Toggle transparency check-box
@@ -216,17 +240,24 @@ ChooseColor <- function(col, parent=NULL) {
   ToggleTransparency <- function() {
     is.transparent <<- as.logical(as.integer(tclvalue(trans.var)))
     if (is.transparent) {
-      tkconfigure(frame2.lab.4.1, state="noraml")
-      tcl(frame2.scl.4.2, "state", "!disabled")
-      tkconfigure(frame2.ent.4.3, state="noraml")
+      tkconfigure(frame3.lab.4.1, state="noraml")
+      tcl(frame3.scl.4.2, "state", "!disabled")
+      tkconfigure(frame3.ent.4.3, state="noraml")
     } else {
-      tkconfigure(frame2.lab.4.1, state="disabled")
-      tcl(frame2.scl.4.2, "state", "disabled")
-      tkconfigure(frame2.ent.4.3, state="disabled")
-      tclvalue(a.scl.var) <- 255
-      tclvalue(a.ent.var) <- 255
+      tkconfigure(frame3.lab.4.1, state="disabled")
+      tcl(frame3.scl.4.2, "state", "disabled")
+      tkconfigure(frame3.ent.4.3, state="disabled")
     }
-    tclvalue(col.var) <- Num2Hex()
+    tclvalue(col.var) <- Hsv2hex()
+  }
+
+  # Edit color entry
+
+  EditColorEntry <- function() {
+    txt <- CheckColorStr(tclvalue(col.var))
+    tclvalue(col.var) <- txt
+    col.hex <- Txt2hex(txt)
+    ChangeColor(col.hex, is.color=TRUE)
   }
 
 
@@ -234,62 +265,51 @@ ChooseColor <- function(col, parent=NULL) {
 
   # Color chart information
 
-  w <- 400
-  h <- 240
   m <- 12
-  n <- 20
-  d <- matrix(c("#0247FE", "#000000", "#000000", "#003300", "#006600",
-                "#009900", "#00CC00", "#00FF00", "#330000", "#333300",
-                "#336600", "#339900", "#33CC00", "#33FF00", "#660000",
-                "#663300", "#666600", "#669900", "#66CC00", "#66FF00",
-                "#0392CE", "#1B1B1A", "#000033", "#003333", "#006633",
-                "#009933", "#00CC33", "#00FF33", "#330033", "#333333",
-                "#336633", "#339933", "#33CC33", "#33FF33", "#660033",
-                "#663333", "#666633", "#669933", "#66CC33", "#66FF33",
-                "#66B032", "#333333", "#000066", "#003366", "#006666",
-                "#009966", "#00CC66", "#00FF66", "#330066", "#333366",
-                "#336666", "#339966", "#33CC66", "#33FF66", "#660066",
-                "#663366", "#666666", "#669966", "#66CC66", "#66FF66",
-                "#D0EA2B", "#4E4E4E", "#000099", "#003399", "#006699",
-                "#009999", "#00CC99", "#00FF99", "#330099", "#333399",
-                "#336699", "#339999", "#33CC99", "#33FF99", "#660099",
-                "#663399", "#666699", "#669999", "#66CC99", "#66FF99",
-                "#FEFE33", "#666666", "#0000CC", "#0033CC", "#0066CC",
-                "#0099CC", "#00CCCC", "#00FFCC", "#3300CC", "#3333CC",
-                "#3366CC", "#3399CC", "#33CCCC", "#33FFCC", "#6600CC",
-                "#6633CC", "#6666CC", "#6699CC", "#66CCCC", "#66FFCC",
-                "#FABC02", "#808081", "#0000FF", "#0033FF", "#0066FF",
-                "#0099FF", "#00CCFF", "#00FFFF", "#3300FF", "#3333FF",
-                "#3366FF", "#3399FF", "#33CCFF", "#33FFFF", "#6600FF",
-                "#6633FF", "#6666FF", "#6699FF", "#66CCFF", "#66FFFF",
-                "#FB9902", "#9A999A", "#990000", "#993300", "#996600",
-                "#999900", "#99CC00", "#99FF00", "#CC0000", "#CC3300",
-                "#CC6600", "#CC9900", "#CCCC00", "#CCFF00", "#FF0000",
-                "#FF3300", "#FF6600", "#FF9900", "#FFCC00", "#FFFF00",
-                "#FD5308", "#B4B4B4", "#990033", "#993333", "#996633",
-                "#999933", "#99CC33", "#99FF33", "#CC0033", "#CC3333",
-                "#CC6633", "#CC9933", "#CCCC33", "#CCFF33", "#FF0033",
-                "#FF3333", "#FF6633", "#FF9933", "#FFCC33", "#FFFF33",
-                "#FE2712", "#CCCCCD", "#990066", "#993366", "#996666",
-                "#999966", "#99CC66", "#99FF66", "#CC0066", "#CC3366",
-                "#CC6666", "#CC9966", "#CCCC66", "#CCFF66", "#FF0066",
-                "#FF3366", "#FF6666", "#FF9966", "#FFCC66", "#FFFF66",
-                "#A7194B", "#E6E6E6", "#990099", "#993399", "#996699",
-                "#999999", "#99CC99", "#99FF99", "#CC0099", "#CC3399",
-                "#CC6699", "#CC9999", "#CCCC99", "#CCFF99", "#FF0099",
-                "#FF3399", "#FF6699", "#FF9999", "#FFCC99", "#FFFF99",
-                "#8601AF", "#F3F3F3", "#9900CC", "#9933CC", "#9966CC",
-                "#9999CC", "#99CCCC", "#99FFCC", "#CC00CC", "#CC33CC",
-                "#CC66CC", "#CC99CC", "#CCCCCC", "#CCFFCC", "#FF00CC",
-                "#FF33CC", "#FF66CC", "#FF99CC", "#FFCCCC", "#FFFFCC",
-                "#3D01A4", "#FFFFFF", "#9900FF", "#9933FF", "#9966FF",
-                "#9999FF", "#99CCFF", "#99FFFF", "#CC00FF", "#CC33FF",
-                "#CC66FF", "#CC99FF", "#CCCCFF", "#CCFFFF", "#FF00FF",
-                "#FF33FF", "#FF66FF", "#FF99FF", "#FFCCFF", "#FFFFFF"),
-            nrow=m, ncol=n, byrow=TRUE)
-
-  dx <- w / n
-  dy <- h / m
+  dx <- dy <- 20
+  d1 <- cbind(rainbow_hcl(m), heat_hcl(m), terrain_hcl(m),
+              rev(gray.colors(m, start=0.1, end=0.9, gamma=1.0)))
+  d2 <- c("#000000", "#000033", "#000066", "#000099", "#0000CC", "#0000FF",
+          "#990000", "#990033", "#990066", "#990099", "#9900CC", "#9900FF",
+          "#003300", "#003333", "#003366", "#003399", "#0033CC", "#0033FF",
+          "#993300", "#993333", "#993366", "#993399", "#9933CC", "#9933FF",
+          "#006600", "#006633", "#006666", "#006699", "#0066CC", "#0066FF",
+          "#996600", "#996633", "#996666", "#996699", "#9966CC", "#9966FF",
+          "#009900", "#009933", "#009966", "#009999", "#0099CC", "#0099FF",
+          "#999900", "#999933", "#999966", "#999999", "#9999CC", "#9999FF",
+          "#00CC00", "#00CC33", "#00CC66", "#00CC99", "#00CCCC", "#00CCFF",
+          "#99CC00", "#99CC33", "#99CC66", "#99CC99", "#99CCCC", "#99CCFF",
+          "#00FF00", "#00FF33", "#00FF66", "#00FF99", "#00FFCC", "#00FFFF",
+          "#99FF00", "#99FF33", "#99FF66", "#99FF99", "#99FFCC", "#99FFFF",
+          "#330000", "#330033", "#330066", "#330099", "#3300CC", "#3300FF",
+          "#CC0000", "#CC0033", "#CC0066", "#CC0099", "#CC00CC", "#CC00FF",
+          "#333300", "#333333", "#333366", "#333399", "#3333CC", "#3333FF",
+          "#CC3300", "#CC3333", "#CC3366", "#CC3399", "#CC33CC", "#CC33FF",
+          "#336600", "#336633", "#336666", "#336699", "#3366CC", "#3366FF",
+          "#CC6600", "#CC6633", "#CC6666", "#CC6699", "#CC66CC", "#CC66FF",
+          "#339900", "#339933", "#339966", "#339999", "#3399CC", "#3399FF",
+          "#CC9900", "#CC9933", "#CC9966", "#CC9999", "#CC99CC", "#CC99FF",
+          "#33CC00", "#33CC33", "#33CC66", "#33CC99", "#33CCCC", "#33CCFF",
+          "#CCCC00", "#CCCC33", "#CCCC66", "#CCCC99", "#CCCCCC", "#CCCCFF",
+          "#33FF00", "#33FF33", "#33FF66", "#33FF99", "#33FFCC", "#33FFFF",
+          "#CCFF00", "#CCFF33", "#CCFF66", "#CCFF99", "#CCFFCC", "#CCFFFF",
+          "#660000", "#660033", "#660066", "#660099", "#6600CC", "#6600FF",
+          "#FF0000", "#FF0033", "#FF0066", "#FF0099", "#FF00CC", "#FF00FF",
+          "#663300", "#663333", "#663366", "#663399", "#6633CC", "#6633FF",
+          "#FF3300", "#FF3333", "#FF3366", "#FF3399", "#FF33CC", "#FF33FF",
+          "#666600", "#666633", "#666666", "#666699", "#6666CC", "#6666FF",
+          "#FF6600", "#FF6633", "#FF6666", "#FF6699", "#FF66CC", "#FF66FF",
+          "#669900", "#669933", "#669966", "#669999", "#6699CC", "#6699FF",
+          "#FF9900", "#FF9933", "#FF9966", "#FF9999", "#FF99CC", "#FF99FF",
+          "#66CC00", "#66CC33", "#66CC66", "#66CC99", "#66CCCC", "#66CCFF",
+          "#FFCC00", "#FFCC33", "#FFCC66", "#FFCC99", "#FFCCCC", "#FFCCFF",
+          "#66FF00", "#66FF33", "#66FF66", "#66FF99", "#66FFCC", "#66FFFF",
+          "#FFFF00", "#FFFF33", "#FFFF66", "#FFFF99", "#FFFFCC", "#FFFFFF")
+  d2 <- matrix(d2, nrow=m, ncol=length(d2) / m)
+  d <- cbind(d1, d2)
+  n <- ncol(d)
+  w <- dx * n
+  h <- dy * m
 
   # All possible digits in color character string
 
@@ -297,11 +317,15 @@ ChooseColor <- function(col, parent=NULL) {
                      "a", "b", "c", "d", "e", "f",
                      "A", "B", "C", "D", "E", "F", "#")
 
-  # Initialize color to return
+  # Initialize return color
 
   rtn.col <- NULL
 
-  # Account for improper color argument (col)
+  # Initialize color ramp palette
+
+  col.ramp <- NULL
+
+  # Account for improper color argument
 
   if (missing(col) || !inherits(col, "character"))
     col <- "#000000"
@@ -315,30 +339,31 @@ ChooseColor <- function(col, parent=NULL) {
 
   # Color is intially required to be in hexadecimal format
 
-  col <- Txt2Hex(col)
+  col.hex <- Txt2hex(col)
 
-  # Initialize red, green, blue, and alpha color components
+  # Initialize hue, saturation, value, and alpha color components
 
-  rgba <- col2rgb(col, alpha=TRUE)
-  nr <- rgba[1]
-  ng <- rgba[2]
-  nb <- rgba[3]
-  na <- rgba[4]
+  col.rgb <- col2rgb(col.hex, alpha=TRUE)
+  col.hsv <- rgb2hsv(col.rgb[1:3], maxColorValue=255)
+  nh <- col.hsv[1]
+  ns <- col.hsv[2]
+  nv <- col.hsv[3]
+  na <- col.rgb[4] / 255
 
   # Assign additional variables linked to Tk widgets
 
-  col.var <- tclVar(col)
+  col.var <- tclVar(col.hex)
 
   trans.var <- tclVar(is.transparent)
 
-  r.scl.var <- tclVar(nr)
-  r.ent.var <- tclVar(nr)
-  g.scl.var <- tclVar(ng)
-  g.ent.var <- tclVar(ng)
-  b.scl.var <- tclVar(nb)
-  b.ent.var <- tclVar(nb)
+  h.scl.var <- tclVar(nh)
+  s.scl.var <- tclVar(ns)
+  v.scl.var <- tclVar(nv)
   a.scl.var <- tclVar(na)
-  a.ent.var <- tclVar(na)
+  h.ent.var <- tclVar(sprintf("%.2f", nh))
+  s.ent.var <- tclVar(sprintf("%.2f", ns))
+  v.ent.var <- tclVar(sprintf("%.2f", nv))
+  a.ent.var <- tclVar(sprintf("%.2f", na))
 
   tt.done.var <- tclVar(0)
 
@@ -356,7 +381,7 @@ ChooseColor <- function(col, parent=NULL) {
   tkwm.resizable(tt, 0, 0)
   tktitle(tt) <- "Choose Color"
 
-  # Frame 0, ok and cancel buttons
+  # Frame 0, ok and cancel buttons, and sample color
 
   frame0 <- ttkframe(tt, relief="flat")
 
@@ -395,53 +420,65 @@ ChooseColor <- function(col, parent=NULL) {
   tkgrid(frame1.cvs, padx=10, pady=10)
   tkpack(frame1)
 
-  DrawColorChart()
-  UpdatePolygons(col)
-
-  # Frame 2, red, blue, green, and alpha sliders
+  # Frame 2, color ramp
 
   frame2 <- ttkframe(tt, relief="flat")
+  frame2.cvs <- tkcanvas(frame2, relief="flat", width=w + 1, height=dy / 2 + 1,
+                         background="black", confine=TRUE, closeenough=0,
+                         borderwidth=0, highlightthickness=0)
 
-  frame2.lab.1.1 <- ttklabel(frame2, text="R:")
-  frame2.lab.2.1 <- ttklabel(frame2, text="G:")
-  frame2.lab.3.1 <- ttklabel(frame2, text="B:")
-  frame2.lab.4.1 <- ttklabel(frame2, text="A:")
+  tkgrid(frame2.cvs, padx=10, pady=c(0, 10))
+  tkpack(frame2)
 
-  frame2.scl.1.2 <- tkwidget(frame2, "ttk::scale", from=0, to=255,
-                             orient="horizontal", value=nr, variable=r.scl.var,
-                             command=function(...) ScaleRed(...))
-  frame2.scl.2.2 <- tkwidget(frame2, "ttk::scale", from=0, to=255,
-                             orient="horizontal", value=ng, variable=g.scl.var,
-                             command=function(...) ScaleGrn(...))
-  frame2.scl.3.2 <- tkwidget(frame2, "ttk::scale", from=0, to=255,
-                             orient="horizontal", value=nb, variable=b.scl.var,
-                             command=function(...) ScaleBlu(...))
-  frame2.scl.4.2 <- tkwidget(frame2, "ttk::scale", from=0, to=255,
+  # Frame 3, color attriubte sliders
+
+  frame3 <- ttkframe(tt, relief="flat")
+
+  frame3.lab.1.1 <- ttklabel(frame3, text="H", justify="center")
+  frame3.lab.2.1 <- ttklabel(frame3, text="S", justify="center")
+  frame3.lab.3.1 <- ttklabel(frame3, text="V", justify="center")
+  frame3.lab.4.1 <- ttklabel(frame3, text="A", justify="center")
+
+  frame3.scl.1.2 <- tkwidget(frame3, "ttk::scale", from=0, to=1,
+                             orient="horizontal", value=nh, variable=h.scl.var,
+                             command=function(...) ScaleH(...))
+  frame3.scl.2.2 <- tkwidget(frame3, "ttk::scale", from=0, to=1,
+                             orient="horizontal", value=ns, variable=s.scl.var,
+                             command=function(...) ScaleS(...))
+  frame3.scl.3.2 <- tkwidget(frame3, "ttk::scale", from=0, to=1,
+                             orient="horizontal", value=nv, variable=v.scl.var,
+                             command=function(...) ScaleV(...))
+  frame3.scl.4.2 <- tkwidget(frame3, "ttk::scale", from=0, to=1,
                              orient="horizontal", value=na, variable=a.scl.var,
-                             command=function(...) ScaleAlp(...))
+                             command=function(...) ScaleA(...))
 
-  frame2.ent.1.3 <- ttkentry(frame2, textvariable=r.ent.var, width=4)
-  frame2.ent.2.3 <- ttkentry(frame2, textvariable=g.ent.var, width=4)
-  frame2.ent.3.3 <- ttkentry(frame2, textvariable=b.ent.var, width=4)
-  frame2.ent.4.3 <- ttkentry(frame2, textvariable=a.ent.var, width=4)
+  frame3.ent.1.3 <- ttkentry(frame3, textvariable=h.ent.var, width=4)
+  frame3.ent.2.3 <- ttkentry(frame3, textvariable=s.ent.var, width=4)
+  frame3.ent.3.3 <- ttkentry(frame3, textvariable=v.ent.var, width=4)
+  frame3.ent.4.3 <- ttkentry(frame3, textvariable=a.ent.var, width=4)
 
   ToggleTransparency()
 
-  tkgrid(frame2.lab.1.1, frame2.scl.1.2, frame2.ent.1.3, pady=c(0, 5))
-  tkgrid(frame2.lab.2.1, frame2.scl.2.2, frame2.ent.2.3, pady=c(0, 5))
-  tkgrid(frame2.lab.3.1, frame2.scl.3.2, frame2.ent.3.3, pady=c(0, 5))
-  tkgrid(frame2.lab.4.1, frame2.scl.4.2, frame2.ent.4.3)
+  tkgrid(frame3.lab.1.1, frame3.scl.1.2, frame3.ent.1.3, pady=c(0, 5))
+  tkgrid(frame3.lab.2.1, frame3.scl.2.2, frame3.ent.2.3, pady=c(0, 5))
+  tkgrid(frame3.lab.3.1, frame3.scl.3.2, frame3.ent.3.3, pady=c(0, 5))
+  tkgrid(frame3.lab.4.1, frame3.scl.4.2, frame3.ent.4.3)
 
-  tkgrid.configure(frame2.lab.1.1, frame2.lab.2.1, frame2.lab.3.1,
-                   frame2.lab.4.1, sticky="e", padx=c(10, 2))
-  tkgrid.configure(frame2.scl.1.2, frame2.scl.2.2, frame2.scl.3.2,
-                   frame2.scl.4.2, sticky="we", padx=2)
-  tkgrid.configure(frame2.ent.1.3, frame2.ent.2.3, frame2.ent.3.3,
-                   frame2.ent.4.3, padx=c(10, 10))
+  tkgrid.configure(frame3.lab.1.1, frame3.lab.2.1, frame3.lab.3.1,
+                   frame3.lab.4.1, padx=c(10, 2))
+  tkgrid.configure(frame3.scl.1.2, frame3.scl.2.2, frame3.scl.3.2,
+                   frame3.scl.4.2, sticky="we", padx=2)
+  tkgrid.configure(frame3.ent.1.3, frame3.ent.2.3, frame3.ent.3.3,
+                   frame3.ent.4.3, padx=c(10, 10))
 
-  tkgrid.columnconfigure(frame2, 1, weight=1)
+  tkgrid.columnconfigure(frame3, 1, weight=1)
 
-  tkpack(frame2, fill="x")
+  tkpack(frame3, fill="x")
+
+  # Initial commands
+
+  BuildColorChart()
+  ChangeColor(col.hex)
 
   # Bind events
 
@@ -449,20 +486,16 @@ ChooseColor <- function(col, parent=NULL) {
 
   tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1)
 
-  tkbind(frame0.ent.2, "<KeyRelease>",
-         function() {
-           tclvalue(col.var) <- CheckColorStr(tclvalue(col.var))
-           color <- Txt2Hex(tclvalue(col.var))
-           UpdatePolygons(color)
-         })
+  tkbind(frame0.ent.2, "<KeyRelease>", EditColorEntry)
   tkbind(frame0.ent.2, "<Return>", SaveColor)
 
-  tkbind(frame1.cvs, "<ButtonPress>", function(x, y) MouseSelect(x, y))
+  tkbind(frame1.cvs, "<ButtonPress>", function(x, y) SelectChartColor(x, y))
+  tkbind(frame2.cvs, "<ButtonPress>", function(x) SelectRampColor(x))
 
-  tkbind(frame2.ent.1.3, "<KeyRelease>", EntryRed)
-  tkbind(frame2.ent.2.3, "<KeyRelease>", EntryGrn)
-  tkbind(frame2.ent.3.3, "<KeyRelease>", EntryBlu)
-  tkbind(frame2.ent.4.3, "<KeyRelease>", EntryAlp)
+  tkbind(frame3.ent.1.3, "<KeyRelease>", EntryH)
+  tkbind(frame3.ent.2.3, "<KeyRelease>", EntryS)
+  tkbind(frame3.ent.3.3, "<KeyRelease>", EntryV)
+  tkbind(frame3.ent.4.3, "<KeyRelease>", EntryA)
 
   # GUI control
 
@@ -476,5 +509,5 @@ ChooseColor <- function(col, parent=NULL) {
   tkdestroy(tt)
   tclServiceMode(TRUE)
 
-  rtn.col
+  invisible(rtn.col)
 }

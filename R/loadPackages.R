@@ -4,11 +4,11 @@ LoadPackages <- function(repo="http://cran.r-project.org") {
   # acquire the package from CRAN using an existing network connection.
 
   require.pkgs <- c("tcltk", "sp", "gpclib", "rgl", "MBA", "tripack",
-                    "RColorBrewer")
+                    "colorspace")
   suggest.pkgs <- c("rgdal")
 
   # Packages that may be useful for future work:
-  # "udunits", "mgcv", "RColorBrewer", "classInt", "maptools"
+  # "udunits", "mgcv", "classInt", "maptools"
 
   available.pkgs <- .packages(all.available=TRUE)
 
