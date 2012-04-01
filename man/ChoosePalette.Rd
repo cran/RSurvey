@@ -9,7 +9,7 @@ A \acronym{GUI} for viewing or manipulating color palettes.
 }
 
 \usage{
-ChoosePalette(pal = terrain_hcl, n = 7L, parent = NULL)
+ChoosePalette(pal = diverge_hcl, n = 7L, parent = NULL)
 }
 
 \arguments{
@@ -23,11 +23,11 @@ Computes palettes based on the HCL (\code{\link{polarLUV}}) color space.
 }
 
 \value{
-Returns a function that takes an integer argument and returns that number of
+Returns a function that takes an integer argument and returns that number
 of colors interpolating the given sequence.
 }
 
-\author{J.C. Fisher}
+\author{J.C. Fisher and A. Zeileis}
 
 \references{
 Zeileis A., Hornik K., and Murrell P., 2009, \emph{Escaping RGBland: Selecting
