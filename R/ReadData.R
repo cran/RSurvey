@@ -139,12 +139,6 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
         } else if (is.null(vars$z)) {
           vars$z <- idx
         }
-
-      # Determine default date-time variable
-
-      } else if (inherits(val, "POSIXct")) {
-        if (is.null(vars$t))
-          vars$t <- idx
       }
 
       # Additional attributes
@@ -168,7 +162,7 @@ ReadData <- function(con, headers=c(FALSE, FALSE, FALSE), sep="\t",
       cols[[idx]]$format  <- fmt
       cols[[idx]]$class   <- class(val)[1]
       cols[[idx]]$index   <- idx
-      cols[[idx]]$fun     <- paste("DATA[[\"", id, "\"]]", sep="")
+      cols[[idx]]$fun     <- paste("\"", id, "\"", sep="")
       cols[[idx]]$sample  <- na.omit(val)[1]
       cols[[idx]]$summary <- SummarizeData(val, fmt=fmt)
 

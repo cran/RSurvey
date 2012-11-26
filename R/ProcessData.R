@@ -1,4 +1,4 @@
-ProcessData <- function(d, type="p", lim=NULL, ply=NULL,
+ProcessData <- function(d, type="p", coerce.rows=NULL, ply=NULL,
                         grid.res=list(x=NA, y=NA),
                         grid.mba=list(n=NA, m=NA, h=11)) {
   # This function performs data processing on the state variables.
@@ -7,34 +7,24 @@ ProcessData <- function(d, type="p", lim=NULL, ply=NULL,
 
   if (type == "p") {
 
+    # Coerce rows
+    if (!is.null(coerce.rows) && inherits(coerce.rows, "logical")) {
+      coerce.rows[is.na(coerce.rows)] <- FALSE
+      d <- d[coerce.rows, ]
+    }
+
     # Check for missing variables
 
     var.names <- names(d)
     is.x <- "x" %in% var.names
     is.y <- "y" %in% var.names
-    is.t <- "t" %in% var.names
 
-    # Remove records with NA's for spatial and temporal data
+    # Remove records with NA's for spatial data
 
     if (is.x)
       d <- d[!is.na(d[, "x"]), ]
     if (is.y)
       d <- d[!is.na(d[, "y"]), ]
-    if (is.t)
-      d <- d[!is.na(d[, "t"]), ]
-
-    # Set range limits
-
-    if (!is.null(lim)) {
-      for (i in names(lim)) {
-        if (i %in% var.names) {
-          if (!is.na(lim[[i]][1]))
-            d <- d[!is.na(d[[i]]) & d[[i]] >= lim[[i]][1], ]
-          if (!is.na(lim[[i]][2]))
-            d <- d[!is.na(d[[i]]) & d[[i]] <= lim[[i]][2], ]
-        }
-      }
-    }
 
     # Incorporate polygon spatial domain
 

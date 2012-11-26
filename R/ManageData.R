@@ -7,10 +7,8 @@ ManageData <- function(cols, vars, parent=NULL) {
 
   SaveChanges <- function(type) {
     SaveNb()
-    if (!identical(cols, old.cols)) {
-      Data("cols", cols)
-      Data("vars", vars)
-    }
+    if (!identical(cols, old.cols))
+      rtn <<- list(cols=cols, vars=vars)
     if (type == "ok")
       tclvalue(tt.done.var) <- 1
   }
@@ -61,8 +59,8 @@ ManageData <- function(cols, vars, parent=NULL) {
     if (!is.null(old.id)) {
       old.fun <- cols[[idx]]$fun
 
-      str.1 <- paste("DATA[[\"", old.id, "\"]]", sep="")
-      str.2 <- paste("DATA[[\"", new.id, "\"]]", sep="")
+      str.1 <- paste("\"", old.id, "\"", sep="")
+      str.2 <- paste("\"", new.id, "\"", sep="")
       funs <- sapply(cols, function(i) gsub(str.1, str.2, i$fun, fixed=TRUE))
       sapply(1:length(cols), function(i) cols[[i]]$fun <<- funs[[i]])
 
@@ -72,6 +70,12 @@ ManageData <- function(cols, vars, parent=NULL) {
         tcl(frame2.txt.5.2, "delete", '1.0', 'end')
         tkinsert(frame2.txt.5.2, "end", new.fun)
         tkconfigure(frame2.txt.5.2, state="disabled")
+      }
+      
+      query.fun <- Data("query.fun")
+      if (!is.null(query.fun)) {
+         query.fun <- gsub(str.1, str.2, query.fun, fixed=TRUE)
+         Data("query.fun", query.fun)
       }
     }
   }
@@ -262,7 +266,7 @@ ManageData <- function(cols, vars, parent=NULL) {
     if (length(idx) == 0)
       return()
 
-    var.str <- paste("DATA[[\"", cols[[idx]]$id, "\"]]", sep="")
+    var.str <- paste("\"", cols[[idx]]$id, "\"", sep="")
     funs.with.var <- grep(var.str, sapply(cols, function(i) i$fun), fixed=TRUE)
     dependent.vars <- funs.with.var[!funs.with.var %in% idx]
 
@@ -299,10 +303,26 @@ ManageData <- function(cols, vars, parent=NULL) {
     idx <- as.integer(tkcurselection(frame1.lst)) + 1
     if (length(idx) == 0)
       return()
-
-    new.fun <- EditFunction(cols, idx, tt)
+    
+    if(is.null(Data("data.raw"))) {
+      n <- NULL
+    } else {
+      n <- nrow(Data("data.raw"))
+    }
+    
+    new.fun <- EditFunction(cols, index=idx, value.length=n, parent=tt)
     if (is.null(new.fun))
       return()
+    if (new.fun == "") {
+      msg <- paste("Nothing is defined for the function",
+                   "and the variable will be deleted.")
+      ans <- as.character(tkmessageBox(icon="question", message=msg,
+                                       title="Warning", type="okcancel",
+                                       parent=tt))
+      if (ans == "ok")
+        DeleteVar()
+      return()
+    }
 
     tkconfigure(frame2.txt.5.2, state="normal")
     tcl(frame2.txt.5.2, "delete", '1.0', 'end')
@@ -427,26 +447,26 @@ ManageData <- function(cols, vars, parent=NULL) {
   # View data for selected variable
 
   CallViewData <- function() {
-    col.name <- as.character(tclvalue(name.var))
-    if (col.name == "")
-      col.name <- NULL
-    col.unit <- as.character(tclvalue(unit.var))
-    if (col.unit == "")
-      col.unit <- NULL
-    col.fmt <- as.character(tclvalue(fmt.var))
-    if (col.fmt == "")
-      col.fmt <- NULL
-
-    fun <- as.character(tclvalue(tkget(frame2.txt.5.2, '1.0', 'end-1c')))
-    d <- as.data.frame(EvalFunction(fun, cols))
-
-    ViewData(d, col.name, col.unit, col.fmt, parent=tt)
+    tkconfigure(tt, cursor="watch")
+    SaveNb()
+    
+    nams <- sapply(cols, function(i) ifelse(is.null(i$name), NA, i$name))
+    unts <- sapply(cols, function(i) ifelse(is.null(i$unit), NA, i$unit))
+    fmts <- sapply(cols, function(i) ifelse(is.null(i$format), NA, i$format))
+    funs <- sapply(cols, function(i) ifelse(is.null(i$fun), NA, i$fun))
+    d <- lapply(1:length(cols), function(i) EvalFunction(funs[i], cols))
+    
+    ViewData(as.data.frame(d), nams, unts, fmts, parent=tt)
+    tkconfigure(tt, cursor="arrow")
+    tkfocus(tt)
   }
 
 
   # Main program
 
   # Assign variables
+
+  rtn <- NULL
 
   old.cols <- cols
   ids <- sapply(cols, function(i) i$id)
@@ -519,37 +539,35 @@ ManageData <- function(cols, vars, parent=NULL) {
                             command=function() Arrange("forward"))
   frame0.but.5 <- ttkbutton(frame0, width=2, image=GetBitmapImage("plus"),
                             command=SaveNewVar)
-  frame0.but.6 <- ttkbutton(frame0, width=2, image=GetBitmapImage("view"),
-                            command=CallViewData)
-  frame0.but.7 <- ttkbutton(frame0, width=2, image=GetBitmapImage("delete"),
+  frame0.but.6 <- ttkbutton(frame0, width=2, image=GetBitmapImage("delete"),
                             command=DeleteVar)
-
-  frame0.but.9  <- ttkbutton(frame0, width=12, text="OK",
+  
+  frame0.but.8  <- ttkbutton(frame0, width=12, text="OK",
                             command=function() SaveChanges("ok"))
-  frame0.but.10 <- ttkbutton(frame0, width=12, text="Apply",
+  frame0.but.9 <- ttkbutton(frame0, width=12, text="Apply",
                             command=function() SaveChanges("apply"))
-  frame0.but.11 <- ttkbutton(frame0, width=12, text="Cancel",
+  frame0.but.10 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
 
-  frame0.grp.12 <- ttksizegrip(frame0)
+  frame0.grp.11 <- ttksizegrip(frame0)
 
   tkgrid(frame0.but.1, frame0.but.2, frame0.but.3, frame0.but.4, frame0.but.5,
-         frame0.but.6, frame0.but.7, "x", frame0.but.9, frame0.but.10,
-         frame0.but.11, frame0.grp.12)
+         frame0.but.6, "x", frame0.but.8, frame0.but.9, frame0.but.10, 
+         frame0.grp.11)
 
-  tkgrid.columnconfigure(frame0, 7, weight=1)
+  tkgrid.columnconfigure(frame0, 6, weight=1)
 
   tkgrid.configure(frame0.but.1, frame0.but.2, frame0.but.3, frame0.but.4,
-                   frame0.but.5, frame0.but.6, frame0.but.7,
-                   sticky="n", padx=c(0, 2), pady=c(0, 0))
+                   frame0.but.5, frame0.but.6, sticky="n", 
+                   padx=c(0, 2), pady=c(0, 0))
   tkgrid.configure(frame0.but.1, padx=c(10, 2))
-  tkgrid.configure(frame0.but.7, padx=c(5, 0))
-  tkgrid.configure(frame0.but.9, frame0.but.10, frame0.but.11,
+  tkgrid.configure(frame0.but.5, padx=c(25, 2))
+  tkgrid.configure(frame0.but.8, frame0.but.9, frame0.but.10,
                    padx=c(0, 4), pady=c(15, 10))
-  tkgrid.configure(frame0.but.11, columnspan=2, padx=c(0, 10))
-  tkgrid.configure(frame0.grp.12, sticky="se")
+  tkgrid.configure(frame0.but.10, columnspan=2, padx=c(0, 10))
+  tkgrid.configure(frame0.grp.11, sticky="se")
 
-  tkraise(frame0.but.11, frame0.grp.12)
+  tkraise(frame0.but.10, frame0.grp.11)
 
   tkpack(frame0, fill="x", side="bottom", anchor="e")
 
@@ -630,22 +648,17 @@ ManageData <- function(cols, vars, parent=NULL) {
   tkgrid.columnconfigure(frame2, 1, weight=1, minsize=25)
   tkgrid.rowconfigure(frame2, 4, weight=1, minsize=25)
 
-
-
   # Frame 3, summary
 
   frame3 <- ttkframe(nb, relief="flat", padding=0, borderwidth=0)
   tkadd(nb, frame3, text="   Summary   ")
 
-  frame3.xsc <- ttkscrollbar(frame3, orient="horizontal")
   frame3.ysc <- ttkscrollbar(frame3, orient="vertical")
 
   frame3.txt <- tktext(frame3, bg="white", padx=2, pady=2, width=25, height=8,
                 undo=1, wrap="none", foreground="black", relief="flat",
-                xscrollcommand=function(...) tkset(frame3.xsc,...),
                 yscrollcommand=function(...) tkset(frame3.ysc,...))
 
-  tkconfigure(frame3.xsc, command=paste(.Tk.ID(frame3.txt), "xview"))
   tkconfigure(frame3.ysc, command=paste(.Tk.ID(frame3.txt), "yview"))
 
   frame3.cvs <- tkcanvas(frame3, relief="flat", width=w, height=h,
@@ -653,17 +666,15 @@ ManageData <- function(cols, vars, parent=NULL) {
                          highlightthickness=0)
 
   tkgrid(frame3.txt, frame3.ysc)
-  tkgrid(frame3.xsc, "x")
   tkgrid(frame3.cvs)
 
   tkgrid.configure(frame3.txt, sticky="news", padx=0, pady=0)
   tkgrid.configure(frame3.ysc, sticky="ns", padx=0, pady=0)
-  tkgrid.configure(frame3.xsc, sticky="we", padx=0, pady=0)
   tkgrid.configure(frame3.cvs, sticky="news", padx=2, pady=2, columnspan=2)
 
   tkgrid.columnconfigure(frame3, 0, weight=1, minsize=25)
   tkgrid.rowconfigure(frame3, 0, weight=1, minsize=25)
-  tkgrid.rowconfigure(frame3, 2, weight=1)
+  tkgrid.rowconfigure(frame3, 1, weight=1)
 
   # Frame 4, comment
 
@@ -724,4 +735,6 @@ ManageData <- function(cols, vars, parent=NULL) {
   tkgrab.release(tt)
   tkdestroy(tt)
   tclServiceMode(TRUE)
+
+  rtn
 }

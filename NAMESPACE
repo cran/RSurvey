@@ -1,10 +1,10 @@
 importFrom(sp, point.in.polygon)
 importFrom(MBA, mba.points)
 importFrom(rgl, surface3d, points3d)
-importFrom(gpclib, read.polyfile, write.polyfile, get.pts, get.bbox, area.poly,
+importFrom(rgeos, read.polyfile, write.polyfile, get.pts, get.bbox, area.poly,
            union, setdiff, intersect)
-importClassesFrom(gpclib, gpc.poly)
-importFrom(colorspace, rainbow_hcl, polarLUV)
+importClassesFrom(rgeos, gpc.poly)
+importFrom(colorspace, rainbow_hcl, polarLUV, choose_palette)
 
 export(AddAxis,
        Autocrop,
@@ -12,12 +12,10 @@ export(AddAxis,
        BuildPackage,
        CheckEntry,
        ChooseColor,
-       ChoosePalette,
        ChoosePch,
        CutoutPolygon,
        Data,
        EditFunction,
-       EditLimits,
        EvalFunction,
        ExportData,
        Format,
@@ -31,11 +29,11 @@ export(AddAxis,
        OpenRSurvey,
        Plot2d,
        Plot3d,
-       PlotTimeSeries,
        ProcessData,
        ReadData,
        Rename,
        RestoreSession,
+       SetAxesLimits,
        SetConfiguration,
        SetPolygonLimits,
        SetPreferences,

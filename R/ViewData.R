@@ -113,15 +113,10 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
     tkyview(frame2.tbl, idx - 1L)
   }
 
-  # Get single cell value for table, a simplified version of
-  # as.tclObj(as.character(x), drop=TRUE) is used.
+  # Get single cell value for table
 
   GetCellValue <- function(r, c) {
-    val <- .External("RTcl_ObjFromCharVector",
-                     d[as.integer(r) + 1L, as.integer(c) + 1L],
-                     drop=TRUE, PACKAGE="tcltk")
-    class(val) <- "tclObj"
-    val
+    as.tclObj(d[as.integer(r) + 1L, as.integer(c) + 1L], drop=TRUE)
   }
 
 
@@ -215,7 +210,7 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   }
 
   # Construct character matrix from data frame
-
+  
   d <- rbind(c("", cols), cbind(row.names(d), as.matrix(d)))
 
   # Assign variables linked to Tk widgets
@@ -223,7 +218,7 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   table.var   <- tclArray()
   line.no.var <- tclVar()
   pattern.var <- tclVar()
-  fixed.var   <- tclVar(0)
+  fixed.var   <- tclVar(1)
   perl.var    <- tclVar(0)
   case.var    <- tclVar(0)
   tt.done.var <- tclVar(0)
@@ -311,14 +306,14 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
 
   .Tcl("option add *Table.font {CourierNew 9}")
   frame2.tbl <- tkwidget(frame2, "table", rows=m + 1, cols=n + 1,
-                         colwidth=13, rowheight=1, state="disabled",
+                         colwidth=-2, rowheight=1, state="disabled",
                          height=height + 1, width=width + 1,
                          ipadx=5, ipady=1, wrap=0,
                          highlightcolor="gray75", background="white",
                          foreground="black", titlerows=1, titlecols=1,
                          multiline=0, resizeborders="col", colorigin=0,
                          bordercursor="sb_h_double_arrow", cursor="plus",
-                         colstretchmode="unset", rowstretchmode="none",
+                         colstretchmode="none", rowstretchmode="none",
                          drawmode="single", rowseparator="\n",
                          colseparator="\t", selectmode="extended",
                          insertofftime=0, anchor="nw", justify="left",
@@ -355,13 +350,6 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
                   justify="center")
   tcl(frame2.tbl, "tag", "col", "rowtitles", 0)
   tktag.configure(frame2.tbl, "rowtitles", anchor="ne", justify="right")
-
-  tag.cols <- which(numeric.columns | posix.columns)
-  if (length(tag.cols) > 0) {
-    for (j in tag.cols)
-      tcl(frame2.tbl, "tag", "col", "numeric", j)
-    tktag.configure(frame2.tbl, "numeric", anchor="ne", justify="right")
-  }
 
   tkgrid.columnconfigure(frame2, 0, weight=1)
   tkgrid.rowconfigure(frame2, 0, weight=1)
