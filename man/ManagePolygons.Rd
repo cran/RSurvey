@@ -10,12 +10,11 @@ A \acronym{GUI} for managing and manipulating polygons that is based on the
 }
 
 \usage{
-ManagePolygons(ply = NULL, encoding = getOption("encoding"),
-               parent = NULL)
+ManagePolygons(polys = NULL, encoding = getOption("encoding"), parent = NULL)
 }
 
 \arguments{
-\item{ply}{list; its components are objects of \code{\link{gpc.poly-class}}.}
+\item{polys}{list; its components are objects of \code{\link{gpc.poly-class}}.}
 \item{encoding}{character; encoding to be assumed for input strings. If the
   value is \code{"latin1"} or \code{"UTF-8"} it is used to mark character
   strings as known to be in Latin-1 or UTF-8: it is not used to re-encode
@@ -37,12 +36,13 @@ x1 y1\cr
 x2 y2\cr
 ...\cr\cr
 The hole flag is either 1 to indicate a hole, or 0 for a regular contour.
-See \code{read.polyfile} within the \pkg{rgeos} package for details.
+See \code{\link{read.polyfile}} within the \pkg{rgeos} package for details.
 }
 
 \value{
-Queries and sets the \code{ply}, \code{poly.data}, and \code{poly.crop}
-components of \code{\link{Data}}, see \code{\link{SetPolygonLimits}}.
+Queries and sets the \code{polys} component of \code{\link{Data}}; 
+includes attributes of \code{polys} (\code{data.poly} and \code{crop.poly}), 
+see \code{\link{SetPolygonLimits}}.
 }
 
 \author{J.C. Fisher}

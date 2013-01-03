@@ -1,4 +1,4 @@
-ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
+ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
                            parent=NULL) {
   # A GUI for managing and manipulating polygons;
   # based on the rgeos package.
@@ -8,37 +8,20 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   # Save polygon
 
   SavePolygon <- function(type) {
-    if (length(ply) > 0) {
-      rtn <<- ply[sapply(ply, function(i) inherits(i, "gpc.poly"))]
+    if (length(polys) > 0) {
+      polys <- polys[sapply(polys, function(i) inherits(i, "gpc.poly"))]
+      if (!data.poly %in% names(polys))
+        data.poly <- NULL
+      if (!crop.poly %in% names(polys))
+        crop.poly <- NULL
+      attr(polys, "data.poly") <- data.poly
+      attr(polys, "crop.poly") <- crop.poly
+      rtn <<- polys
     } else {
-      rtn <<- NULL
+      rtn <<- list()
     }
-    if (exists("Data") && !identical(rtn, Data("poly"))) {
-      Data("poly", rtn)
-      Data("poly.data", poly.data)
-      Data("poly.crop", poly.crop)
-
-      if (!is.null(poly.data)) {
-        missing.poly <- !poly.data %in% names(rtn)
-        updated.poly <- !identical(rtn[[poly.data]], old.pdata)
-        if (missing.poly | updated.poly) {
-          Data("poly.data", NULL)
-          Data("data.pts",  NULL)
-          Data("data.grd",  NULL)
-        }
-      }
-      if (!is.null(poly.crop)) {
-        missing.poly <- !poly.crop %in% names(rtn)
-        updated.poly <- !identical(rtn[[poly.crop]], old.pcrop)
-         if (missing.poly | updated.poly) {
-          Data("poly.crop", NULL)
-          Data("data.grd",  NULL)
-        }
-      }
-    }
-      
     if (type == "ok")
-      tclvalue(tt.done.var) <- 1
+      tclvalue(tt.done.var) <- 1L
   }
 
   # Plot polygon
@@ -70,13 +53,13 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
     tclvalue(hole.var) <- ""
     tclvalue(vert.var) <- ""
 
-    base.ply <<- NULL
+    polys.base <<- NULL
 
     if (length(idxs) == 0)
       return()
 
     for (idx in idxs) {
-      bb <- get.bbox(ply[[idx]])
+      bb <- get.bbox(polys[[idx]])
       xran <- range(c(xran, bb$x))
       yran <- range(c(yran, bb$y))
     }
@@ -84,29 +67,29 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
     yran <<- extendrange(yran, f=0.02)
 
     cmd <- tclvalue(rb.var)
-    base.ply <<- ply[[idxs[1]]]
+    polys.base <<- polys[[idxs[1]]]
     for (idx in idxs[-1]) {
       if (cmd == "add") {
-        base.ply <<- union(base.ply, ply[[idx]])
+        polys.base <<- union(polys.base, polys[[idx]])
       } else if (cmd == "sub") {
-        base.ply <<- setdiff(base.ply, ply[[idx]])
+        polys.base <<- setdiff(polys.base, polys[[idx]])
       } else if (cmd == "int") {
-        base.ply <<- intersect(base.ply, ply[[idx]])
+        polys.base <<- intersect(polys.base, polys[[idx]])
       }
     }
     if (cmd == "exc" && length(idxs) > 1) {
-      union.ply <- base.ply
-      inter.ply <- base.ply
+      union.polys <- polys.base
+      inter.polys <- polys.base
       for (idx in idxs[-1]) {
-        union.ply <- union(union.ply, ply[[idx]])
-        inter.ply <- intersect(inter.ply, ply[[idx]])
+        union.polys <- union(union.polys, polys[[idx]])
+        inter.polys <- intersect(inter.polys, polys[[idx]])
       }
-      base.ply <<- setdiff(union.ply, inter.ply)
+      polys.base <<- setdiff(union.polys, inter.polys)
     }
 
-    base.pts <- get.pts(base.ply)
+    base.pts <- get.pts(polys.base)
     if (length(base.pts) == 0) {
-      base.ply <<- NULL
+      polys.base <<- NULL
     } else {
       hole <- NULL
       vert <- 0
@@ -119,14 +102,14 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
         if (any(hole))
           DrawPolygon(base.pts[hole], col.fill="white")
       }
-      tclvalue(area.var) <- format(area.poly(base.ply))
+      tclvalue(area.var) <- format(area.poly(polys.base))
       tclvalue(poly.var) <- length(base.pts)
       tclvalue(hole.var) <- sum(hole)
       tclvalue(vert.var) <- vert
     }
 
     for (i in idxs)
-      DrawPolygon(get.pts(ply[[i]]), tag=names(ply)[i], col.line=col.pal[i])
+      DrawPolygon(get.pts(polys[[i]]), tag=names(polys)[i], col.line=col.pal[i])
   }
 
   # Transform coordinates from real to canvas
@@ -187,27 +170,27 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   # Rename polygon
 
   RenamePolygon <- function() {
-    if (length(ply) == 0)
+    if (length(polys) == 0)
       return()
 
-    old.names <- names(ply)
+    old.names <- names(polys)
     cur.name <- NULL
 
     idxs <- as.integer(tkcurselection(frame1.lst)) + 1
     if (length(idxs) != 0)
       cur.name <- old.names[idxs[1]]
 
-    new.names <- Rename(old.names, cur.name, "Rename Polygons", tt)
+    new.names <- Rename(old.names, cur.name, "Rename Polygon", tt)
 
     if (!is.null(new.names) && length(new.names) == length(old.names)) {
       if (identical(new.names, old.names))
         return()
-      names(ply) <<- new.names
+      names(polys) <<- new.names
 
-      if (!is.null(poly.data))
-        poly.data <<- new.names[which(old.names %in% poly.data)]
-      if (!is.null(poly.crop))
-        poly.crop <<- new.names[which(old.names %in% poly.crop)]
+      if (!is.na(data.poly))
+        data.poly <<- new.names[which(old.names %in% data.poly)]
+      if (!is.na(crop.poly))
+        crop.poly <<- new.names[which(old.names %in% crop.poly)]
     }
 
     for (i in seq(along=new.names)) {
@@ -219,15 +202,15 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   # Save new polygon
 
   SaveNewPolygon <- function() {
-    if (is.null(base.ply))
+    if (is.null(polys.base))
       return()
 
-    nam <- NamePolygon(old=names(ply))
-    ply[[nam]] <<- base.ply
+    nam <- NamePolygon(old=names(polys))
+    polys[[nam]] <<- polys.base
 
     tcl("lappend", list.var, nam)
 
-    idx <- length(ply) - 1
+    idx <- length(polys) - 1
     tkselection.clear(frame1.lst, 0, idx)
     tkselection.set(frame1.lst, idx, idx)
 
@@ -238,10 +221,10 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   # Select polygon
 
   SelectPolygon <- function(type) {
-    n <- length(ply)
+    n <- length(polys)
     if (n == 0)
       return()
-    nams <- names(ply)
+    nams <- names(polys)
     idxs <- (1:n) - 1
     sel <- as.integer(tkcurselection(frame1.lst))
     if (type == "all") {
@@ -263,26 +246,26 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
     if (length(idxs) == 0)
       return()
     if (type == "back") {
-      ply <<- append(ply[idxs], ply[-idxs])
+      polys <<- append(polys[idxs], polys[-idxs])
       new.idxs <- 1:length(idxs)
     } else if (type == "front") {
-      ply <<- append(ply[-idxs], ply[idxs])
-      new.idxs <- (length(ply) - length(idxs) + 1):length(ply)
+      polys <<- append(polys[-idxs], polys[idxs])
+      new.idxs <- (length(polys) - length(idxs) + 1):length(polys)
     } else if (type == "backward") {
-      n <- length(ply)
+      n <- length(polys)
       new.idxs <- idxs
       all.idxs <- 1:n
       for (i in 1:n) {
         if (i %in% new.idxs)
           all.idxs[c(i - 1, i)] <- all.idxs[c(i, i - 1)]
       }
-      ply <<- ply[all.idxs]
+      polys <<- polys[all.idxs]
       if (length(new.idxs) == 0)
         new.idxs <- 1
       else
         new.idxs <- (1:n)[all.idxs %in% new.idxs]
     } else if (type == "forward") {
-      n <- length(ply)
+      n <- length(polys)
       new.idxs <- idxs
       all.idxs <- 1:n
       for (i in rev(1:n)) {
@@ -290,15 +273,15 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
             all.idxs[c(i, i + 1)] <- all.idxs[c(i + 1, i)]
       }
       all.idxs <- na.omit(all.idxs)
-      ply <<- ply[all.idxs]
+      polys <<- polys[all.idxs]
       if (length(new.idxs) == 0)
         new.idxs <- n
       else
         new.idxs <- (1:n)[all.idxs %in% new.idxs]
     }
-    for (i in seq(along=ply))
+    for (i in seq(along=polys))
       tclvalue(list.var) <- tcl("lreplace", tclvalue(list.var),
-                                i - 1, i - 1, names(ply)[i])
+                                i - 1, i - 1, names(polys)[i])
     tkselection.clear(frame1.lst, 0, "end")
     for (i in new.idxs - 1)
       tkselection.set(frame1.lst, i)
@@ -313,13 +296,13 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
       return()
     for (idx in idxs) {
       i <- as.integer(tcl("lsearch", "-exact", tclvalue(list.var),
-                          names(ply)[idx]))
+                          names(polys)[idx]))
       if (i < 0)
         next
       tclvalue(list.var) <- tcl("lreplace", tclvalue(list.var), i, i)
     }
-    ply <<- ply[-idxs]
-    n <- length(ply)
+    polys <<- polys[-idxs]
+    n <- length(polys)
     tkselection.clear(frame1.lst, 0, n - 1)
     tkselection.set(frame1.lst, n - 1)
     PlotPolygon()
@@ -332,21 +315,21 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
                  multi=TRUE, parent=tt)
     if (is.null(f))
       return()
-    if (!is.list(f[[1]]))
+    if (!is.list(f))
       f <- list(f)
     for (i in seq(along=f)) {
-      con <- file(f[[i]]$path, "r", encoding=encoding)
+      con <- file(f[[i]], "r", encoding=encoding)
       new.poly <- read.polyfile(con, nohole=FALSE)
       close(con)
       if (!inherits(new.poly, "gpc.poly"))
         next
-      nam <- NamePolygon(old=names(ply), nam=f[[i]]$name)
-      ply[[nam]] <<- new.poly
+      nam <- NamePolygon(old=names(polys), nam=attr(f[[i]], "name"))
+      polys[[nam]] <<- new.poly
       tcl("lappend", list.var, nam)
     }
     idxs <- as.integer(tkcurselection(frame1.lst))
     if (length(idxs) == 0) {
-      tkselection.set(frame1.lst, length(ply) - 1)
+      tkselection.set(frame1.lst, length(polys) - 1)
       PlotPolygon()
     }
   }
@@ -360,10 +343,10 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
 
     for (i in idxs) {
       f <- GetFile(cmd="Save As", exts="ply", win.title="Save Polygon As",
-                   initialfile=names(ply)[i], defaultextension="ply", parent=tt)
+                   initialfile=names(polys)[i], defaultextension="ply", parent=tt)
       if (is.null(f))
         next
-      write.polyfile(ply[[i]], f$path)
+      write.polyfile(polys[[i]], f)
     }
     tkfocus(tt)
   }
@@ -372,9 +355,6 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   # Main program
 
   rtn <- NULL
-
-  if (is.null(ply))
-    ply <- list()
 
   w <- 300
   h <- 300
@@ -387,15 +367,18 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
                "#3DBF34", "#315A5E", "#5E3831", "#FA330C", "#D45B0A", "#494012",
                substr(rainbow(100), 1, 7))
 
-  base.ply <- NULL
-
-  poly.data <- poly.crop <- NULL
-  if (exists("Data")) {
-    poly.data <- Data("poly.data")
-    poly.crop <- Data("poly.crop")
-    old.pdata <- if (is.null(poly.data)) NULL else Data(c("poly", poly.data))
-    old.pcrop <- if (is.null(poly.crop)) NULL else Data(c("poly", poly.crop))
-  }
+  polys.base <- NULL
+  
+  if (is.null(polys)) 
+    polys <- list()
+  
+  data.poly <- attr(polys, "data.poly")
+  crop.poly <- attr(polys, "crop.poly")
+  
+  if (is.null(data.poly))
+    data.poly <- NA
+  if (is.null(crop.poly))
+    crop.poly <- NA
 
   # Assign the variables linked to Tk widgets
 
@@ -406,7 +389,7 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   vert.var <- tclVar("")
   xy.var   <- tclVar("")
   list.var <- tclVar()
-  for (i in names(ply))
+  for (i in names(polys))
     tcl("lappend", list.var, i)
 
   tt.done.var <- tclVar(0)
@@ -489,7 +472,7 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   frame0.but.8 <- ttkbutton(frame0, width=12, text="Apply",
                             command=function() SavePolygon("apply"))
   frame0.but.9 <- ttkbutton(frame0, width=12, text="Cancel",
-                            command=function() tclvalue(tt.done.var) <- 1)
+                            command=function() tclvalue(tt.done.var) <- 1L)
 
   frame0.grp.10 <- ttksizegrip(frame0)
 
@@ -533,7 +516,7 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
   tkpack(frame1.lst, side="left",  fill="both", expand=TRUE)
   tkpack(frame1.ysc, side="right", fill="y", anchor="w")
 
-  n <- length(ply)
+  n <- length(polys)
   if (n > 0)
     tkselection.set(frame1.lst, n - 1)
 
@@ -634,7 +617,7 @@ ManagePolygons <- function(ply=NULL, encoding=getOption("encoding"),
 
   tclServiceMode(TRUE)
 
-  tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1)
+  tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1L)
 
   tkbind(frame2.cvs, "<Motion>", function(x, y) MouseMotion(x, y))
   tkbind(frame2.cvs, "<Leave>", MouseLeave)

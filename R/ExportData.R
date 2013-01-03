@@ -57,12 +57,13 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
       exts <- "shp"
     }
     f <- GetFile(cmd="Save As", exts=exts, file=NULL, win.title="Save Data As",
-               defaultextension=default.ext)
+                 defaultextension=default.ext)
     if (is.null(f))
       return()
-    if (f$ext == "csv")
+    
+    if (attr(f, "extension") == "csv")
       tclvalue(sep.var) <- ","
-    tclvalue(file.var) <- f$path
+    tclvalue(file.var) <- f
     ToggleExport()
   }
 
@@ -119,7 +120,7 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
   # Assign variables linked to Tk widgets
 
   variables.var    <- tclVar()
-  records.var      <- tclVar("processed")
+  records.var      <- tclVar("raw")
   head.names.var   <- tclVar(0)
   head.units.var   <- tclVar(0)
   head.fmts.var    <- tclVar(0)
@@ -171,9 +172,9 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
   # Frame 1, sample entry
 
   if (file.type == "text")
-    txt <- "Select variables and records to export"
+    txt <- "Select variables and data records"
   else
-    txt <- "Select variables to export"
+    txt <- "Select variables"
   frame1 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5, text=txt)
 
   frame1.lst.1.1 <- tklistbox(frame1, selectmode="extended", activestyle="none",
@@ -191,9 +192,9 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
                               command=function() SelectVariables("none"))
   frame1.lab.2.4 <- ttklabel(frame1, text="Records:")
   frame1.rad.2.5 <- ttkradiobutton(frame1, variable=records.var,
-                                   value="processed", text="Processed")
+                                   value="raw", text="raw")
   frame1.rad.2.6 <- ttkradiobutton(frame1, variable=records.var,
-                                   value="all", text="All")
+                                   value="processed", text="processed")
 
   tkgrid(frame1.lst.1.1, "x", "x", "x", "x", "x", frame1.ysc.1.7)
   tkgrid(frame1.but.2.1, frame1.but.2.2, "x", frame1.lab.2.4,
@@ -202,6 +203,7 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
   tkgrid.configure(frame1.lst.1.1, sticky="nsew", columnspan=6)
   tkgrid.configure(frame1.ysc.1.7, sticky="ns")
   tkgrid.configure(frame1.but.2.1, padx=c(0, 4))
+  tkgrid.configure(frame1.rad.2.5, frame1.rad.2.6, padx=c(6, 0))
 
   tkgrid.columnconfigure(frame1, 2, weight=1, minsize=15)
   tkgrid.rowconfigure(frame1, 0, weight=1)
@@ -213,13 +215,13 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
     # Frame 2, header lines
 
     frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
-                            text="Select header lines to include")
+                            text="Include header lines")
     frame2.chk.1.1 <- ttkcheckbutton(frame2, variable=head.names.var,
                                      text="Variable names")
     frame2.chk.1.2 <- ttkcheckbutton(frame2, variable=head.units.var,
                                      text="Measurement units")
     frame2.chk.1.3 <- ttkcheckbutton(frame2, variable=head.fmts.var,
-                                     text="Formats")
+                                     text="Conversion formats")
 
     tkgrid(frame2.chk.1.1, frame2.chk.1.2, frame2.chk.1.3)
     tkgrid.configure(frame2.chk.1.2, padx=15)
@@ -231,7 +233,7 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
     # Frame 3, field seperator
 
     frame3 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
-                            text="Select a field seperator")
+                            text="Select field seperator")
 
     frame3.ent.2.4 <- ttkentry(frame3, width=7, textvariable=sep.other.var,
                                state="readonly")
@@ -274,7 +276,7 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
   frame4.but.1.3 <- ttkbutton(frame4, width=8, text="Browse",
                               command=GetDataFile)
 
-  txt <- "Compress file using gzip; extension 'gz' added to file name."
+  txt <- "Compress file using gzip; extension 'gz' added to file name"
   frame4.chk.2.2 <- ttkcheckbutton(frame4, variable=compress.var, text=txt,
                                    command=ToggleExtension)
 
