@@ -212,6 +212,7 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   # Construct character matrix from data frame
   
   d <- rbind(c("", cols), cbind(row.names(d), as.matrix(d)))
+  d <- cbind(d, rep("", nrow(d)))
 
   # Assign variables linked to Tk widgets
 
@@ -291,11 +292,12 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
 
   tkgrid.configure(frame1.ent.1.2, frame1.ent.2.2, padx=c(0, 2))
 
-  tkgrid.configure(frame1.lab.1.1, frame1.lab.2.1, padx=c(0, 2), sticky="e")
+  tkgrid.configure(frame1.lab.1.1, frame1.lab.2.1, padx=c(0, 2), sticky="w")
   tkgrid.configure(frame1.but.1.3, padx=c(0, 2))
 
   tkgrid.configure(frame1.but.2.3, columnspan=2, sticky="we")
-  tkgrid.configure(frame1.chk.1.5, frame1.chk.1.6, padx=c(4, 0))
+  tkgrid.configure(frame1.chk.1.5, padx=c(12, 0))
+  tkgrid.configure(frame1.chk.1.6, padx=c(4, 0))
   tkgrid.configure(frame1.chk.1.7, padx=c(4, 10))
 
   tkpack(frame1, side="bottom", anchor="nw", padx=c(10, 0))
@@ -305,7 +307,7 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   frame2 <- ttkframe(tt, relief="flat", padding=0, borderwidth=0)
 
   .Tcl("option add *Table.font {CourierNew 9}")
-  frame2.tbl <- tkwidget(frame2, "table", rows=m + 1, cols=n + 1,
+  frame2.tbl <- tkwidget(frame2, "table", rows=m + 1, cols=n + 2,
                          colwidth=-2, rowheight=1, state="disabled",
                          height=height + 1, width=width + 1,
                          ipadx=5, ipady=1, wrap=0,
@@ -342,8 +344,8 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   tktag.configure(frame2.tbl, "active", background="#EAEEFE", relief="")
   tktag.configure(frame2.tbl, "sel", background="#EAEEFE", foreground="black")
 
-  tktag.configure(frame2.tbl, "title", background="white",
-                  foreground="#0000FF", multiline=1, ellipsis="...", wrap=1)
+  tktag.configure(frame2.tbl, "title", background="#D9D9D9",
+                  foreground="black", multiline=1, ellipsis="...", wrap=1)
 
   tcl(frame2.tbl, "tag", "row", "coltitles", 0)
   tktag.configure(frame2.tbl, "coltitles", anchor="center", anchor="n",

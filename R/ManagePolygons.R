@@ -42,7 +42,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
       }
     }
 
-    idxs <- as.integer(tkcurselection(frame1.lst)) + 1
+    idxs <- as.integer(tkcurselection(frame1.lst)) + 1L
 
     tcl(frame2.cvs, "delete", "all")
     xran <<- NULL
@@ -67,30 +67,43 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
     yran <<- extendrange(yran, f=0.02)
 
     cmd <- tclvalue(rb.var)
-    polys.base <<- polys[[idxs[1]]]
-    for (idx in idxs[-1]) {
-      if (cmd == "add") {
-        polys.base <<- union(polys.base, polys[[idx]])
-      } else if (cmd == "sub") {
-        polys.base <<- setdiff(polys.base, polys[[idx]])
-      } else if (cmd == "int") {
-        polys.base <<- intersect(polys.base, polys[[idx]])
+    
+    polys.base <<- NULL
+    if (cmd == "exc") {
+      if (length(idxs) > 1L) {
+        union.polys <- polys[[idxs[1]]]
+        inter.polys <- polys[[idxs[1]]]
+        for (idx in idxs[-1]) {
+          union.polys <- try(union(union.polys, polys[[idx]]), silent=TRUE)
+          inter.polys <- try(intersect(inter.polys, polys[[idx]]), silent=TRUE)
+        }
+        if (!inherits(union.polys, "try-error") && 
+            !inherits(inter.polys, "try-error"))
+          polys.base <<- setdiff(union.polys, inter.polys)
       }
-    }
-    if (cmd == "exc" && length(idxs) > 1) {
-      union.polys <- polys.base
-      inter.polys <- polys.base
-      for (idx in idxs[-1]) {
-        union.polys <- union(union.polys, polys[[idx]])
-        inter.polys <- intersect(inter.polys, polys[[idx]])
-      }
-      polys.base <<- setdiff(union.polys, inter.polys)
-    }
-
-    base.pts <- get.pts(polys.base)
-    if (length(base.pts) == 0) {
-      polys.base <<- NULL
     } else {
+      if (cmd == "add") {
+        fun <- "union"
+      } else if (cmd == "sub") {
+        fun <- "setdiff"
+      } else if (cmd == "int") {
+        fun <- "intersect"
+      }
+      build.polys <- polys[[idxs[1]]]
+      for (idx in idxs[-1]) {
+        build.polys <- try(do.call(fun, list(build.polys, polys[[idx]])), 
+                           silent=TRUE)
+      }
+      if (!inherits(build.polys, "try-error"))
+        polys.base <<- build.polys
+    }
+    
+    if (!is.null(polys.base)) {
+      base.pts <- get.pts(polys.base)
+      if (length(base.pts) == 0) 
+        polys.base <<- NULL
+    }
+    if (!is.null(polys.base)) {
       hole <- NULL
       vert <- 0
       for (ctr in base.pts) {
@@ -107,7 +120,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
       tclvalue(hole.var) <- sum(hole)
       tclvalue(vert.var) <- vert
     }
-
+    
     for (i in idxs)
       DrawPolygon(get.pts(polys[[i]]), tag=names(polys)[i], col.line=col.pal[i])
   }
@@ -559,20 +572,20 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   frame3b <- ttklabelframe(frame3, relief="flat", borderwidth=5, padding=5,
                            text="Attributes")
 
-  frame3b.lab.1.1 <- tklabel(frame3b, text="Area")
-  frame3b.lab.2.1 <- tklabel(frame3b, text="Polygons")
-  frame3b.lab.3.1 <- tklabel(frame3b, text="Holes")
-  frame3b.lab.4.1 <- tklabel(frame3b, text="Vertices")
+  frame3b.lab.1.1 <- tklabel(frame3b, text="Polygons")
+  frame3b.lab.2.1 <- tklabel(frame3b, text="Holes")
+  frame3b.lab.3.1 <- tklabel(frame3b, text="Vertices")
+  frame3b.lab.4.1 <- tklabel(frame3b, text="Area")
 
-  frame3b.lab.1.2 <- tklabel(frame3b, text=tclvalue(area.var))
-  frame3b.lab.2.2 <- tklabel(frame3b, text=tclvalue(poly.var))
-  frame3b.lab.3.2 <- tklabel(frame3b, text=tclvalue(hole.var))
-  frame3b.lab.4.2 <- tklabel(frame3b, text=tclvalue(vert.var))
+  frame3b.lab.1.2 <- tklabel(frame3b, text=tclvalue(poly.var))
+  frame3b.lab.2.2 <- tklabel(frame3b, text=tclvalue(hole.var))
+  frame3b.lab.3.2 <- tklabel(frame3b, text=tclvalue(vert.var))
+  frame3b.lab.4.2 <- tklabel(frame3b, text=tclvalue(area.var))
 
-  tkconfigure(frame3b.lab.1.2, textvariable=area.var)
-  tkconfigure(frame3b.lab.2.2, textvariable=poly.var)
-  tkconfigure(frame3b.lab.3.2, textvariable=hole.var)
-  tkconfigure(frame3b.lab.4.2, textvariable=vert.var)
+  tkconfigure(frame3b.lab.1.2, textvariable=poly.var)
+  tkconfigure(frame3b.lab.2.2, textvariable=hole.var)
+  tkconfigure(frame3b.lab.3.2, textvariable=vert.var)
+  tkconfigure(frame3b.lab.4.2, textvariable=area.var)
 
   tkgrid(frame3b.lab.1.1, frame3b.lab.1.2)
   tkgrid(frame3b.lab.2.1, frame3b.lab.2.2)
@@ -580,10 +593,10 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   tkgrid(frame3b.lab.4.1, frame3b.lab.4.2)
 
   tkgrid.configure(frame3b.lab.1.1, frame3b.lab.2.1,
-                   frame3b.lab.3.1, frame3b.lab.4.1, sticky="e")
+                   frame3b.lab.3.1, frame3b.lab.4.1, sticky="w")
 
   tkgrid.configure(frame3b.lab.1.2, frame3b.lab.2.2,
-                   frame3b.lab.3.2, frame3b.lab.4.2, sticky="w", padx=c(5, 0))
+                   frame3b.lab.3.2, frame3b.lab.4.2, sticky="e", padx=c(5, 0))
 
   tcl("grid", "anchor", frame3b, "w")
 

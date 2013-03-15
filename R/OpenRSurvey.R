@@ -638,7 +638,7 @@ OpenRSurvey <- function() {
     vars <- Data("vars")
     cols <- Data("cols")
 
-    state.vars <- list(x="x-axis", y="y-axis", z="z-axis",
+    state.vars <- list(x="x-coordinate", y="y-coordinate", z="z-coordinate",
                        vx="x-vector", vy="y-vector")
     state.vars <- state.vars[names(state.vars) %in% names(vars)]
     state.idxs <- sapply(names(state.vars), function(i) vars[[i]])
@@ -646,10 +646,10 @@ OpenRSurvey <- function() {
     d <- Data("data.pts")[, names(state.vars)]
     
     cols <- cols[state.idxs]
-    nams <- sapply(cols, function(i) ifelse(is.null(i$name),   NA, i$name))
-    unts <- sapply(cols, function(i) ifelse(is.null(i$unit),   NA, i$unit))
+    
+    nams <- sapply(state.vars, function(i) i)
     fmts <- sapply(cols, function(i) ifelse(is.null(i$format), NA, i$format))
-    ViewData(d, nams, unts, fmts, parent=tt)
+    ViewData(d, column.names=nams, column.formats=fmts, parent=tt)
     
     tkconfigure(tt, cursor="arrow")
     tkfocus(tt)
@@ -658,7 +658,9 @@ OpenRSurvey <- function() {
   # Call process data
 
   CallProcessData <- function(interpolate=FALSE) {
-    if (is.null(Data("data.raw"))) {
+    vars <- Data("vars")
+    var.names <- names(vars)
+    if (!all(c("x", "y") %in% var.names) || is.null(Data("data.raw"))) {
       Data("data.pts", NULL)
       Data("data.grd", NULL)
       return()
@@ -670,9 +672,6 @@ OpenRSurvey <- function() {
 
     if (is.null(Data("data.pts"))) {
       cols <- Data("cols")
-      vars <- Data("vars")
-
-      var.names <- names(vars)
 
       Eval <- function(v) {
         if (is.null(v)) NULL else EvalFunction(cols[[v]]$fun, cols)
@@ -1033,11 +1032,11 @@ OpenRSurvey <- function() {
   # Frame 1, variables
 
   frame1 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
-                          text="State variables")
+                          text="Set variables")
 
-  frame1.lab.1.1 <- ttklabel(frame1, text="x-axis")
-  frame1.lab.2.1 <- ttklabel(frame1, text="y-axis")
-  frame1.lab.3.1 <- ttklabel(frame1, text="z-axis")
+  frame1.lab.1.1 <- ttklabel(frame1, text="x-coordinate")
+  frame1.lab.2.1 <- ttklabel(frame1, text="y-coordinate")
+  frame1.lab.3.1 <- ttklabel(frame1, text="z-coordinate")
   frame1.lab.4.1 <- ttklabel(frame1, text="x-vector")
   frame1.lab.5.1 <- ttklabel(frame1, text="y-vector")
 
@@ -1054,7 +1053,7 @@ OpenRSurvey <- function() {
   tkgrid(frame1.lab.5.1, frame1.box.5.2)
 
   tkgrid.configure(frame1.lab.1.1, frame1.lab.2.1, frame1.lab.3.1,
-                   frame1.lab.4.1, frame1.lab.5.1, sticky="e", padx=c(0, 2))
+                   frame1.lab.4.1, frame1.lab.5.1, sticky="w", padx=c(0, 2))
 
   tkgrid.configure(frame1.box.1.2, frame1.box.2.2, frame1.box.3.2,
                    frame1.box.4.2, frame1.box.5.2, sticky="we")
@@ -1068,7 +1067,7 @@ OpenRSurvey <- function() {
   # Frame 2, plotting buttons
 
   frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
-                          text="Plot types")
+                          text="Plot variables")
 
   frame2.but.1.1 <- ttkbutton(frame2, width=10, text="Scatter",
                               command=function() {
