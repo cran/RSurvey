@@ -429,14 +429,14 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   menu.file <- tkmenu(tt, tearoff=0, relief="flat")
   tkadd(top.menu, "cascade", label="File", menu=menu.file, underline=0)
 
-  tkadd(menu.file, "command", label="Open", accelerator="Ctrl+O",
+  tkadd(menu.file, "command", label="Open\u2026", accelerator="Ctrl+O",
         command=ImportPolygon)
-  tkadd(menu.file, "command", label="Save as", accelerator="Ctrl+S",
+  tkadd(menu.file, "command", label="Save as\u2026", accelerator="Ctrl+S",
         command=ExportPolygon)
 
   menu.edit <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="Edit", menu=menu.edit, underline=0)
-  tkadd(menu.edit, "command", label="Rename", accelerator="Ctrl+R",
+  tkadd(menu.edit, "command", label="Rename\u2026", accelerator="Ctrl+R",
         command=RenamePolygon)
   tkadd(menu.edit, "command", label="Delete", accelerator="Del",
         command=ClearPolygon)
@@ -468,43 +468,45 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   # Frame 0, ok and cancel buttons, and size grip
 
   frame0 <- ttkframe(tt, relief="flat")
-
-  frame0.but.1 <- ttkbutton(frame0, width=2, image=GetBitmapImage("up"),
-                            command=function() ArrangePolygon("backward"))
-  frame0.but.2 <- ttkbutton(frame0, width=2, image=GetBitmapImage("top"),
-                            command=function() ArrangePolygon("back"))
-  frame0.but.3 <- ttkbutton(frame0, width=2, image=GetBitmapImage("bottom"),
-                            command=function() ArrangePolygon("front"))
-  frame0.but.4 <- ttkbutton(frame0, width=2, image=GetBitmapImage("down"),
-                            command=function() ArrangePolygon("forward"))
-  frame0.but.5 <- ttkbutton(frame0, width=2, image=GetBitmapImage("delete"),
-                            command=ClearPolygon)
-
-  frame0.but.7 <- ttkbutton(frame0, width=12, text="OK",
-                            command=function() SavePolygon("ok"))
-  frame0.but.8 <- ttkbutton(frame0, width=12, text="Apply",
-                            command=function() SavePolygon("apply"))
-  frame0.but.9 <- ttkbutton(frame0, width=12, text="Cancel",
-                            command=function() tclvalue(tt.done.var) <- 1L)
-
-  frame0.grp.10 <- ttksizegrip(frame0)
+  
+  frame0.but.1  <- ttkbutton(frame0, width=2, image=GetBitmapImage("top"),
+                             command=function() ArrangePolygon("back"))
+  frame0.but.2  <- ttkbutton(frame0, width=2, image=GetBitmapImage("up"),
+                             command=function() ArrangePolygon("backward"))
+  frame0.but.3  <- ttkbutton(frame0, width=2, image=GetBitmapImage("down"),
+                             command=function() ArrangePolygon("forward"))
+  frame0.but.4  <- ttkbutton(frame0, width=2, image=GetBitmapImage("bottom"),
+                             command=function() ArrangePolygon("front"))
+  frame0.but.5  <- ttkbutton(frame0, width=2, image=GetBitmapImage("delete"),
+                             command=ClearPolygon)
+  
+  frame0.but.7  <- ttkbutton(frame0, width=12, text="OK",
+                             command=function() SavePolygon("ok"))
+  frame0.but.8  <- ttkbutton(frame0, width=12, text="Cancel",
+                             command=function() tclvalue(tt.done.var) <- 1L)
+  frame0.but.9  <- ttkbutton(frame0, width=12, text="Apply",
+                             command=function() SavePolygon("apply"))
+  frame0.but.10 <- ttkbutton(frame0, width=12, text="Help",
+                             command=function() {
+                               print(help("ManagePolygons", package="RSurvey"))
+                             })
+  frame0.grp.11 <- ttksizegrip(frame0)
 
   tkgrid(frame0.but.1, frame0.but.2, frame0.but.3, frame0.but.4, frame0.but.5,
-         "x", frame0.but.7, frame0.but.8, frame0.but.9, frame0.grp.10)
-
+         "x", frame0.but.7, frame0.but.8, frame0.but.9, frame0.but.10, 
+         frame0.grp.11)
 
   tkgrid.columnconfigure(frame0, 5, weight=1)
-
   tkgrid.configure(frame0.but.1, frame0.but.2, frame0.but.3, frame0.but.4,
                    frame0.but.5, sticky="n", padx=c(0, 2), pady=c(4, 0))
   tkgrid.configure(frame0.but.1, padx=c(10, 2))
-  tkgrid.configure(frame0.but.5, padx=c(5, 0))
-  tkgrid.configure(frame0.but.7, frame0.but.8, frame0.but.9,
-                   padx=c(0, 4), pady=c(15, 10))
-  tkgrid.configure(frame0.but.9, columnspan=2, padx=c(0, 10))
-  tkgrid.configure(frame0.grp.10, sticky="se")
+  tkgrid.configure(frame0.but.5, padx=c(20, 0))
+  tkgrid.configure(frame0.but.7, frame0.but.8, frame0.but.9, frame0.but.10,
+                   padx=c(4, 0), pady=c(15, 10))
+  tkgrid.configure(frame0.but.10, columnspan=2, padx=c(4, 10))
+  tkgrid.configure(frame0.grp.11, sticky="se")
 
-  tkraise(frame0.but.9, frame0.grp.10)
+  tkraise(frame0.but.10, frame0.grp.11)
 
   tkpack(frame0, fill="x", side="bottom", anchor="e")
 
@@ -517,7 +519,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   frame1 <- ttkframe(pw, relief="flat")
 
   frame1.lst <- tklistbox(frame1, selectmode="extended", activestyle="none",
-                          relief="flat", borderwidth=5, width=20,
+                          relief="flat", borderwidth=5, width=25,
                           exportselection=FALSE, listvariable=list.var,
                           highlightthickness=0)
   frame1.ysc <- ttkscrollbar(frame1, orient="vertical")

@@ -88,9 +88,8 @@ ImportData <- function(parent=NULL) {
       return(d)
 
     } else {
-      hds <- as.logical(c(as.integer(tclvalue(names.var)),
-                          as.integer(tclvalue(units.var)),
-                          as.integer(tclvalue(decis.var))))
+      hds <- as.logical(c(as.integer(tclvalue(decis.var)),
+                          as.integer(tclvalue(names.var))))
 
       RaiseWarning(tt)
       if (!is.null(Data("cols"))) {
@@ -147,9 +146,9 @@ ImportData <- function(parent=NULL) {
     for(j in 1:ncol(d))
       sapply(1:nrow(d), function(i)
         table.var[[i - 1, j - 1]] <- as.tclObj(d[i, j], drop=TRUE))
-
+    
     for (i in 1:ncol(d)) {
-      len <- max(nchar(gsub("\t", "    ", d[1:nrows, i])), na.omit=TRUE) + 3
+      len <- max(nchar(gsub("\t", "    ", d[1:nrows, i])), na.omit=TRUE) + 1
       if (len < 7)
         len <- 7
       tcl(frame4.tbl, "width", i - 1, len)
@@ -251,17 +250,14 @@ ImportData <- function(parent=NULL) {
     tcl(frame4.tbl, "clear", "tags")
     tcl(frame4.tbl, "tag", "row", "h1", 0)
     tcl(frame4.tbl, "tag", "row", "h2", 1)
-    tcl(frame4.tbl, "tag", "row", "h3", 2)
 
-    logic <- as.logical(as.integer(c(tclvalue(names.var), tclvalue(units.var),
-                                     tclvalue(decis.var))))
-    headCol <- c("#FFD0D4", "#FFFEDE", "#EBFFC6")[logic]
-    if (length(headCol) < 3)
-      headCol[(length(headCol) + 1):3] <- "white"
+    logic <- as.logical(as.integer(c(tclvalue(decis.var), tclvalue(names.var))))
+    headCol <- c("#EBFFC6", "#FFD0D4")[logic]
+    if (length(headCol) < 2)
+      headCol[(length(headCol) + 1):2] <- "white"
 
     tktag.configure(frame4.tbl, "h1", background=headCol[1])
     tktag.configure(frame4.tbl, "h2", background=headCol[2])
-    tktag.configure(frame4.tbl, "h3", background=headCol[3])
   }
 
   # Determine the tables maximum row and column
@@ -313,10 +309,9 @@ ImportData <- function(parent=NULL) {
   # Assign variables linked to Tk widgets
 
   table.var <- tclArray()
-
-  names.var  <- tclVar(0)
-  units.var  <- tclVar(0)
+  
   decis.var  <- tclVar(0)
+  names.var  <- tclVar(0)
   skip.var   <- tclVar(0)
   nrow.var   <- tclVar()
   source.var <- tclVar()
@@ -326,9 +321,8 @@ ImportData <- function(parent=NULL) {
   # Set header variables
 
   if (!is.null(Data("table.headers"))) {
-    tclvalue(names.var) <- Data("table.headers")[1]
-    tclvalue(units.var) <- Data("table.headers")[2]
-    tclvalue(decis.var) <- Data("table.headers")[3]
+    tclvalue(decis.var) <- Data("table.headers")[1]
+    tclvalue(names.var) <- Data("table.headers")[2]
   }
 
   # Open GUI
@@ -350,30 +344,35 @@ ImportData <- function(parent=NULL) {
 
   frame0 <- ttkframe(tt, relief="flat")
 
-  frame0.but.1 <- ttkbutton(frame0, width=12, text="Paste",
+  frame0.but.1 <- ttkbutton(frame0, width=8, text="Paste",
                             command=PasteData)
-  frame0.but.2 <- ttkbutton(frame0, width=12, text="Clear",
+  frame0.but.2 <- ttkbutton(frame0, width=8, text="Clear",
                             command=ClearData)
   frame0.but.4 <- ttkbutton(frame0, width=12, text="Load",
                             command=function() ReadFile(FALSE))
   frame0.but.5 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
+  frame0.but.6 <- ttkbutton(frame0, width=12, text="Help",
+                            command=function() {
+                              print(help("ImportData", package="RSurvey"))
+                            })
+  frame0.grp.7 <- ttksizegrip(frame0)
 
-  frame0.grp.6 <- ttksizegrip(frame0)
-
-  tkgrid(frame0.but.1, frame0.but.2, "x", frame0.but.4, frame0.but.5,
-         frame0.grp.6)
+  tkgrid(frame0.but.1, frame0.but.2, "x", frame0.but.4, frame0.but.5, 
+         frame0.but.6, frame0.grp.7)
 
   tkgrid.columnconfigure(frame0, 2, weight=1)
 
   tkgrid.configure(frame0.but.1, frame0.but.2,
                    sticky="n", padx=c(0, 4), pady=c(4, 0))
   tkgrid.configure(frame0.but.1, padx=c(10, 4))
-  tkgrid.configure(frame0.but.4, frame0.but.5, padx=c(0, 4), pady=c(15, 10))
-  tkgrid.configure(frame0.but.5, columnspan=2, padx=c(0, 10))
-  tkgrid.configure(frame0.grp.6, sticky="se")
+  
+  tkgrid.configure(frame0.but.4, frame0.but.5, frame0.but.6, padx=c(0, 4), pady=c(15, 10))
+  tkgrid.configure(frame0.but.6, columnspan=2, padx=c(0, 10))
+  
+  tkgrid.configure(frame0.grp.7, sticky="se")
 
-  tkraise(frame0.but.5, frame0.grp.6)
+  tkraise(frame0.but.6, frame0.grp.7)
 
   tkpack(frame0, fill="x", side="bottom", anchor="e")
 
@@ -409,21 +408,16 @@ ImportData <- function(parent=NULL) {
   frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
                           text="Header lines")
 
-  txt <- "Names of the variables"
-  frame2.chk.1.1 <- ttkcheckbutton(frame2, variable=names.var,
-                                   command=SetTags, text=txt)
-  txt <- paste("Measurement units of the variables, programmatic manipulation",
-               "not supported")
-  frame2.chk.2.1 <- ttkcheckbutton(frame2, variable=units.var,
-                                   command=SetTags, text=txt)
   txt <- paste("Conversion specification formats of the variables,",
                "for example, '%10.6f' or '%Y-%m-%d %H:%M'")
-  frame2.chk.3.1 <- ttkcheckbutton(frame2, variable=decis.var,
+  frame2.chk.1.1 <- ttkcheckbutton(frame2, variable=decis.var,
+                                   command=SetTags, text=txt)
+  txt <- "Names of the variables, that is, column names in the data table"
+  frame2.chk.2.1 <- ttkcheckbutton(frame2, variable=names.var,
                                    command=SetTags, text=txt)
 
   tkgrid(frame2.chk.1.1, pady=1, sticky="w")
   tkgrid(frame2.chk.2.1, pady=1, sticky="w")
-  tkgrid(frame2.chk.3.1, pady=1, sticky="w")
 
   tkpack(frame2, anchor="w", fill="x", padx=10, pady=10)
 
@@ -496,7 +490,7 @@ ImportData <- function(parent=NULL) {
                          colstretchmode="none", rowstretchmode="none",
                          anchor="nw", drawmode="single", rowseparator="\n",
                          colseparator="\t", selectmode="extended",
-                         insertofftime=0,
+                         insertofftime=0, highlightthickness=0,
                          xscrollcommand=function(...) tkset(frame4.xsc,...),
                          yscrollcommand=function(...) tkset(frame4.ysc,...))
 
@@ -514,8 +508,6 @@ ImportData <- function(parent=NULL) {
 
   tktag.configure(frame4.tbl, "active", background="#EAEEFE", relief="")
   tktag.configure(frame4.tbl, "sel", background="#EAEEFE", foreground="black")
-
-  tkconfigure(frame4.tbl, borderwidth=0, highlightthickness=0)
 
   tkgrid.columnconfigure(frame4, 0, weight=1)
   tkgrid.rowconfigure(frame4, 0, weight=1)

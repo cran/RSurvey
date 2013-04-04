@@ -9,14 +9,14 @@ Reads table formatted data from a connection and creates a data frame from it.
 }
 
 \usage{
-ReadData(con, headers = c(FALSE, FALSE, FALSE), sep = "\t",
+ReadData(con, headers = c(FALSE, FALSE), sep = "\t",
          quote = "\"'", nrows = -1, na.strings = c("", "NA"),
          skip = 0, comment.char = "#", encoding = getOption("encoding"))
 }
 
 \arguments{
 \item{con}{connection; a \code{\link{connection}} object.}
-\item{headers}{logical; a vector of length 3 that indicates whether the
+\item{headers}{logical; a vector of length 2 that indicates whether the
   data table contains header lines: see \sQuote{Details}.}
 \item{sep}{character; the field separator string. Values on each line of the
   file are separated by this string.}
@@ -42,13 +42,13 @@ The imported data table requires at least two numeric variables.
 
 \details{
 This function is the primary method for importing table formatted data from
-a text file. The \code{headers} argument, a logical vector of length 3,
-indicates whether the file contains the names, measurement units, and conversion
-specification formats of the variables as its initial lines. For example,
-\code{headers = c(TRUE, FALSE, TRUE)} indicates that the first and second
-lines contain the names and formats of variables, respectively; with
-measurement units excluded. If \code{headers = c(FALSE, FALSE, FALSE)},
-the default, no header information is contained within the file.
+a text file. The \code{headers} argument, a logical vector of length 2,
+indicates whether the file contains the  conversion specification formats and 
+names of the variables as its initial lines. For example,
+\code{headers = c(FALSE, TRUE)} indicates that the first 
+line contains the names of variables, and no formats are included. 
+If \code{headers = c(FALSE, FALSE)}, the default, no header information is 
+contained within the file.
 
 Formats are the character representation of object types
 used to: identify column classes prior to reading in data,
@@ -68,13 +68,13 @@ rows to read in.
 }
 
 \value{
-Returns a list with the following components:
-\item{dat}{data.frame; a data table with headers and comments removed.}
+Sets the following components in \code{\link{Data}}:
+\item{data.raw}{data.frame; a data table with headers and comments removed.}
 \item{cols}{list; length equal to the current number of data variables.
   Each component in \code{cols} is linked to a specific variable,
   see \code{\link{ManageData}}.}
 \item{vars}{list; an initial guess of the state variables. Integer components
-  \code{x}, \code{y}, \code{z}, and \code{t} specify the index number in
+  \code{x}, \code{y}, and \code{z} specify the index number in
   \code{cols} that correspond to the respective state variable.}
 }
 
@@ -87,7 +87,7 @@ Returns a list with the following components:
 \examples{
 f <- system.file("extdata/DataExample.txt", package = "RSurvey")
 con <- file(f, open = "r", encoding = "latin1")
-ans <- ReadData(con, headers = c(TRUE, TRUE, TRUE))
+ans <- ReadData(con, headers = c(TRUE, TRUE))
 close(con)
 }
 

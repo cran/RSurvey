@@ -1,6 +1,6 @@
 WriteFile <- function(file.type="text", file.name=NULL, col.ids=NULL,
-                      headers=c(FALSE, FALSE, FALSE), sep="\t",
-                      is.processed=TRUE, is.compressed=FALSE,
+                      is.processed=TRUE, headers=c(FALSE, FALSE), 
+                      sep="\t", is.compressed=FALSE, 
                       encoding=getOption("encoding")) {
   # Exports post-processed data to a file.
 
@@ -8,7 +8,7 @@ WriteFile <- function(file.type="text", file.name=NULL, col.ids=NULL,
 
   if (file.type == "shape") {
     is.pkg <- "rgdal" %in% .packages(all.available=TRUE) &&
-              require(rgdal, quietly=FALSE)
+              require(rgdal)
     if (!is.pkg)
       stop("package rgdal required for shapefile support")
   }
@@ -73,13 +73,6 @@ WriteFile <- function(file.type="text", file.name=NULL, col.ids=NULL,
   col.ids  <- sapply(col.idxs, function(i) cols[[i]]$id)
   col.funs <- sapply(col.idxs, function(i) cols[[i]]$fun)
   col.nams <- sapply(col.idxs, function(i) cols[[i]]$name)
-  col.unts <- sapply(col.idxs,
-                     function(i) {
-                       rtn <- cols[[i]]$unit
-                       if (is.null(rtn))
-                         rtn <- NA
-                       rtn
-                     })
   col.fmts <- sapply(col.idxs,
                      function(i) {
                        rtn <- cols[[i]]$format
@@ -167,16 +160,13 @@ WriteFile <- function(file.type="text", file.name=NULL, col.ids=NULL,
       n <- ncol(d)
       h <- as.data.frame(matrix(NA, nrow=m, ncol=n))
       i <- 1L
+      
       if (headers[1]) {
-        h[i, ] <- col.nams
-        i <- i + 1L
-      }
-      if (headers[2]) {
-        h[i, ] <- col.unts
-        i <- i + 1L
-      }
-      if (headers[3])
         h[i, ] <- col.fmts
+        i <- i + 1L
+      }
+      if (headers[2])
+        h[i, ] <- col.nams
 
       write.table(h, file=con, append=FALSE, quote=FALSE, row.names=FALSE,
                   col.names=FALSE, sep=sep)

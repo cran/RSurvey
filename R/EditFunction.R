@@ -5,8 +5,60 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
 
   # Additional functions (subroutines)
 
-  # Rebuild list box based on selected class type to show
+  # Save function
+  SaveFunction <- function() {
+    txt <- as.character(tclvalue(tkget(frame2.txt.2.1, "1.0", "end-1c")))
+    if (txt == "") {
+      rtn <<- list(fun="")
+    } else {
+      fun <- txt
+      pattern <- paste("\"", ids, "\"", sep="")
+      replacement <- paste("DATA[[", 1:length(ids), "]]", sep="")
+      for (i in seq(along=ids))
+        fun <- gsub(pattern[i], replacement[i], fun, fixed=TRUE)
+      fun <- paste("function(DATA) {", fun, "}", sep="")
+      
+      fun <- try(parse(text=fun), silent=TRUE)
+      if (inherits(fun, "try-error")) {
+        msg <- "There's a problem with function syntax, try revising."
+        tkmessageBox(icon="error", message=msg, detail=fun, title="Error",
+                     type="ok", parent=tt)
+        return()
+      }
+      obj <- EvalFunction(txt, cols)
+      if (inherits(obj, "try-error")) {
+        msg <- "Function results in error during evaluation, try revising."
+        tkmessageBox(icon="error", message=msg, detail=obj, title="Error",
+                     type="ok", parent=tt)
+        return()
+      }
+      
+      if (!is.null(value.length) && length(obj) != value.length) {
+        msg <- paste("Evaluated function must be of length ", value.length, 
+                     ", try revising.", sep="")
+        dtl <- paste("Resulting object is currently of length ", length(obj), 
+                     ".", sep="")
+        tkmessageBox(icon="error", message=msg, detail=dtl, title="Error",
+                     type="ok", parent=tt)
+        return()
+      }
+      
+      if (!is.null(value.class) && !inherits(obj, value.class)) {
+        msg <- paste("A query must result in an object of class \"", value.class, 
+                     "\". The evaluated function is an object of class \"", 
+                     class(obj), "\", please revise.", sep="")
+        tkmessageBox(icon="error", message=msg, title="Error", type="ok", 
+                     parent=tt)
+        return()
+      }
+      
+      rtn <<- list(fun=txt, class=class(obj)[1], summary=SummarizeData(obj), 
+                   sample=na.omit(obj)[1])
+    }
+    tclvalue(tt.done.var) <- 1
+  }
 
+  # Rebuild list box based on selected class type to show
   RebuildList <- function() {
     idx <- as.integer(tcl(frame1.box.3.1, "current"))
     show.ids <- ids
@@ -18,14 +70,17 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
       tcl("lappend", variable.var, show.ids[i])
 
     tkselection.clear(frame1.lst.2.1, 0, "end")
+    
+    tclvalue(value.var) <- ""
+    
+    tkconfigure(frame1.but.5.1, state="disabled")
     tkfocus(frame2.txt.2.1)
   }
 
   # Insert character string into text box
-
   InsertString <- function(txt, sel="<variable>") {
     tcl(frame2.txt.2.1, "edit", "separator")
-    seltxt <- as.character(tktag.ranges(frame2.txt.2.1, 'sel'))
+    seltxt <- as.character(tktag.ranges(frame2.txt.2.1, "sel"))
     if (length(seltxt) > 1)
       tcl(frame2.txt.2.1, "delete", seltxt[1], seltxt[2])
 
@@ -50,14 +105,13 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
         char <- c(match.idx, match.idx + match.len) + cur.char - 1
         sel0 <- paste(cur.line, char[1], sep=".")
         sel1 <- paste(cur.line, char[2], sep=".")
-        tktag.add(frame2.txt.2.1, 'sel', sel0, sel1)
+        tktag.add(frame2.txt.2.1, "sel", sel0, sel1)
         tkmark.set(frame2.txt.2.1, "insert", sel1)
       }
     }
   }
 
   # Insert variable into text box
-
   InsertVar <- function() {
     idx <- as.integer(tkcurselection(frame1.lst.2.1))
     if (length(idx) == 0)
@@ -67,61 +121,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
     InsertString(txt)
   }
 
-  # Save function
-
-  SaveFunction <- function() {
-    txt <- as.character(tclvalue(tkget(frame2.txt.2.1, '1.0', 'end-1c')))
-    if (txt == "") {
-      new.fun <<- ""
-    } else {
-      fun <- txt
-      pattern <- paste("\"", ids, "\"", sep="")
-      replacement <- paste("DATA[[", 1:length(ids), "]]", sep="")
-      for (i in seq(along=ids))
-        fun <- gsub(pattern[i], replacement[i], fun, fixed=TRUE)
-      fun <- paste("function(DATA) {", fun, "}", sep="")
-      
-      fun <- try(parse(text=fun), silent=TRUE)
-      if (inherits(fun, "try-error")) {
-        msg <- "There's a problem with function syntax, try revising."
-        tkmessageBox(icon="error", message=msg, detail=fun, title="Error",
-                     type="ok", parent=tt)
-        return()
-      }
-      val <- EvalFunction(txt, cols)
-      if (inherits(val, "try-error")) {
-        msg <- "Function results in error during evaluation, try revising."
-        tkmessageBox(icon="error", message=msg, detail=val, title="Error",
-                     type="ok", parent=tt)
-        return()
-      }
-      
-      if (!is.null(value.length) && length(val) != value.length) {
-        msg <- paste("Evaluated function must be of length ", value.length, 
-                     ", try revising.", sep="")
-        dtl <- paste("Resulting object is currently of length ", length(val), 
-                     ".", sep="")
-        tkmessageBox(icon="error", message=msg, detail=dtl, title="Error",
-                     type="ok", parent=tt)
-        return()
-      }
-      
-      if (!is.null(value.class) && !inherits(val, value.class)) {
-        msg <- paste("A query must result in an object of class \"", value.class, 
-                     "\". The evaluated function is an object of class \"", 
-                     class(val), "\", please revise.", sep="")
-        tkmessageBox(icon="error", message=msg, title="Error", type="ok", 
-                     parent=tt)
-        return()
-      }
-      
-      new.fun <<- txt
-    }
-    tclvalue(tt.done.var) <- 1
-  }
-
   # Call date and time format editor
-
   CallFormatDateTime <- function() {
     spec <- FormatDateTime(parent=tt)
     tkfocus(frame2.txt.2.1)
@@ -130,7 +130,6 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   }
 
   # Text edit functions
-
   EditUndo <- function() {
     tkfocus(frame2.txt.2.1)
     tcl(frame2.txt.2.1, "edit", "undo")
@@ -157,20 +156,19 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   }
   
   # Clear all
-  
   ClearAll <- function() {
     tcl(frame2.txt.2.1, "delete", "1.0", "end")
     tkfocus(frame2.txt.2.1)
   }
   
   # Show unique values
-  
   ShowUniqueValues <- function() {
     idx <- as.integer(tkcurselection(frame1.lst.2.1))
     if (length(idx) == 0)
       return()
-    else
-      idx <- idx + 1L
+    id <- as.character(tkget(frame1.lst.2.1, idx, idx))
+    idx <- which(vapply(cols, function(i) i$id, "") == id)
+    
     var.fmt <- cols[[idx]]$format
     
     tkconfigure(tt, cursor="watch")
@@ -200,6 +198,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
       if (inherits(var.vals.txt, "try-error"))
         var.vals.txt <- format(var.vals)
     }
+    var.vals.txt <- gsub("^\\s+|\\s+$", "", var.vals.txt)
     
     tclvalue(value.var) <- ""
     for (i in seq(along=var.vals.txt))
@@ -211,42 +210,39 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   }
   
   # Change variable selection
-  
   ChangeVar <- function() {
     tclvalue(value.var) <- ""
+    idx <- as.integer(tkcurselection(frame1.lst.2.1))
+    if (length(idx) == 0)
+      return()
     tkconfigure(frame1.but.5.1, state="normal")
   }
   
   # Insert value into text box
-  
   InsertValue <- function() {
     idx <- as.integer(tkcurselection(frame1.lst.2.1))
     if (length(idx) == 0)
       return()
-    else
-      idx <- idx + 1L
+    id <- as.character(tkget(frame1.lst.2.1, idx, idx))
+    idx <- which(vapply(cols, function(i) i$id, "") == id)
     var.fmt <- cols[[idx]]$format
     var.class <- cols[[idx]]$class
-    
     idx <- as.integer(tkcurselection(frame1.lst.4.1))
     if (length(idx) == 0)
       return()
     val <- as.character(tkget(frame1.lst.4.1, idx, idx))
-    
     if (var.class == "factor" && is.na(suppressWarnings(as.numeric(val))))
       var.class <- "character"
-    
     if (var.class == "POSIXct") {
       txt <- paste("as.POSIXct(\"", val, "\", format = \"", var.fmt, "\")", 
                    sep="")
+    } else if (var.class == "integer" && val != "NA") {
+      txt <- paste(val, "L", sep="")
+    } else if (var.class == "character" && val != "NA") {
+      txt <- paste("\"", val, "\"", sep="")
     } else {
-      val <- gsub("^\\s+|\\s+$", "", val)
-      if (var.class == "character" && val != "NA") 
-        txt <- paste("\"", val, "\"", sep="")
-      else
-        txt <- val
+      txt <- val
     }
-    
     InsertString(txt)
   }
 
@@ -258,10 +254,10 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   } else {
     old.fun <- cols[[as.integer(index)]]$fun
   }
-  new.fun <- NULL
-
-  cls <- sapply(cols, function(i) i$class)
-  ids <- sapply(cols, function(i) i$id)
+  rtn <- NULL
+  
+  ids <- vapply(cols, function(i) i$id, "")
+  cls <- vapply(cols, function(i) i$class, "")
   if (!is.null(index)) {
     edit.fun.id <- ids[index]
     ids <- ids[-index]
@@ -269,13 +265,11 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   }
 
   # Class types
-
   classes <- c("numeric", "integer", "POSIXct", "logical",
                "character", "factor")
   classes <- classes[classes %in% cls]
 
   # Assign variables linked to Tk widgets
-
   variable.var <- tclVar()
   for (i in seq(along=ids))
     tcl("lappend", variable.var, ids[i]) # must be unique
@@ -296,7 +290,6 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   tktitle(tt) <- win.title
 
   # Top menu
-
   top.menu <- tkmenu(tt, tearoff=0)
 
   # Project menu
@@ -399,7 +392,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   
   menu.tool <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="Tool", menu=menu.tool, underline=0)
-  tkadd(menu.tool, "command", label="Build format for date-time object",
+  tkadd(menu.tool, "command", label="Build format for date-time object\u2026",
         command=CallFormatDateTime)
 
   # Finalize top menu
@@ -414,18 +407,23 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
                             command=SaveFunction)
   frame0.but.3 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
-  frame0.grp.4 <- ttksizegrip(frame0)
+  frame0.but.4 <- ttkbutton(frame0, width=12, text="Help",
+                            command=function() {
+                              print(help("EditFunction", package="RSurvey"))
+                            }) 
+  frame0.grp.5 <- ttksizegrip(frame0)
 
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.grp.4)
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, frame0.grp.5)
 
   tkgrid.columnconfigure(frame0, 0, weight=1)
 
-  tkgrid.configure(frame0.but.2, frame0.but.3, padx=c(0, 4), pady=c(15, 10))
-  tkgrid.configure(frame0.but.3, columnspan=2, padx=c(0, 10))
+  tkgrid.configure(frame0.but.2, frame0.but.3, frame0.but.4, 
+                   padx=c(0, 4), pady=c(15, 10))
+  tkgrid.configure(frame0.but.4, columnspan=2, padx=c(0, 10))
 
-  tkgrid.configure(frame0.grp.4, sticky="se")
+  tkgrid.configure(frame0.grp.5, sticky="se")
 
-  tkraise(frame0.but.3, frame0.grp.4)
+  tkraise(frame0.but.4, frame0.grp.5)
 
   tkpack(frame0, fill="x", side="bottom", anchor="e")
 
@@ -488,7 +486,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   frame2 <- tkframe(pw, relief="flat", padx=0, pady=0)
 
   txt <- "Define function"
-  if (!is.null(index))
+  if (!is.null(index) && edit.fun.id != "")
     txt <- paste(txt, " for \"", edit.fun.id, "\"", sep="")
   frame2.lab.1.1 <- ttklabel(frame2, text=txt, foreground="#414042")
   
@@ -589,5 +587,5 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   tkdestroy(tt)
   tclServiceMode(TRUE)
 
-  new.fun
+  rtn
 }

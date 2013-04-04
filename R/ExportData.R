@@ -13,15 +13,14 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
 
     tkconfigure(tt, cursor="watch")
     if (file.type == "text") {
-      is.processed <- as.character(tclvalue(records.var)) == "processed"
-      headers <- c(as.logical(as.integer(tclvalue(head.names.var))),
-                   as.logical(as.integer(tclvalue(head.units.var))),
-                   as.logical(as.integer(tclvalue(head.fmts.var))))
+      is.processed <- as.logical(as.integer(tclvalue(records.var)))
+      headers <- c(as.logical(as.integer(tclvalue(head.fmts.var))),
+                   as.logical(as.integer(tclvalue(head.names.var))))
       sep <- as.character(tclvalue(sep.var))
       if (sep == "other")
         sep <- as.character(tclvalue(sep.other.var))
       is.compressed <- as.logical(as.integer(tclvalue(compress.var)))
-      WriteFile(file.type, file.name, col.ids, headers, sep, is.processed,
+      WriteFile(file.type, file.name, col.ids, is.processed, headers, sep,
                 is.compressed)
     } else {
       WriteFile(file.type, file.name, col.ids)
@@ -34,10 +33,17 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
 
   SelectVariables <- function(sel) {
     n <- length(col.ids) - 1L
-    if (sel == "all")
+    if (sel == "all") {
       tkselection.set(frame1.lst.1.1, 0, n)
-    else
+    } else if (sel == "none") {
       tkselection.clear(frame1.lst.1.1, 0, n)
+    } else {
+      idxs <- 0:n
+      sel <- as.integer(tkcurselection(frame1.lst.1.1))
+      tkselection.clear(frame1.lst.1.1, 0, n)
+      for (i in idxs[!(idxs %in% sel)])
+        tkselection.set(frame1.lst.1.1, i)
+    }
     ToggleExport()
   }
 
@@ -120,12 +126,14 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
   # Assign variables linked to Tk widgets
 
   variables.var    <- tclVar()
-  records.var      <- tclVar("raw")
-  head.names.var   <- tclVar(0)
-  head.units.var   <- tclVar(0)
+  records.var      <- tclVar(0)
   head.fmts.var    <- tclVar(0)
+  head.names.var   <- tclVar(0)
   sep.var          <- tclVar("\t")
   sep.other.var    <- tclVar()
+  sort.on.var      <- tclVar()
+  na.last.var      <- tclVar(1)
+  decreasing.var   <- tclVar(0)
   file.var         <- tclVar()
   compress.var     <- tclVar(0)
   tt.done.var      <- tclVar(0)
@@ -157,15 +165,21 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
                             command=ExportToFile)
   frame0.but.3 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
-  frame0.grp.4 <- ttksizegrip(frame0)
+  
+  frame0.but.4 <- ttkbutton(frame0, width=12, text="Help",
+                            command=function() {
+                              print(help("ExportData", package="RSurvey"))
+                            })
+  frame0.grp.5 <- ttksizegrip(frame0)
 
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.grp.4)
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, frame0.grp.5)
   tkgrid.columnconfigure(frame0, 0, weight=1)
-  tkgrid.configure(frame0.but.2, frame0.but.3, padx=c(0, 4), pady=c(4, 10))
-  tkgrid.configure(frame0.but.3, columnspan=2, padx=c(0, 10))
-  tkgrid.configure(frame0.grp.4, sticky="se")
+  tkgrid.configure(frame0.but.2, frame0.but.3, frame0.but.4, 
+                   padx=c(0, 4), pady=c(4, 10))
+  tkgrid.configure(frame0.but.4, columnspan=2, padx=c(0, 10))
+  tkgrid.configure(frame0.grp.5, sticky="se")
 
-  tkraise(frame0.but.3, frame0.grp.4)
+  tkraise(frame0.but.4, frame0.grp.5)
 
   tkpack(frame0, fill="x", side="bottom", anchor="e")
 
@@ -178,34 +192,33 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
   frame1 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5, text=txt)
 
   frame1.lst.1.1 <- tklistbox(frame1, selectmode="extended", activestyle="none",
-                              relief="flat", borderwidth=5, width=50, height=4,
+                              relief="flat", borderwidth=5, width=10, height=4,
                               exportselection=FALSE, listvariable=variables.var,
                               highlightthickness=0)
-  frame1.ysc.1.7 <- ttkscrollbar(frame1, orient="vertical")
+  frame1.ysc.1.6 <- ttkscrollbar(frame1, orient="vertical")
   tkconfigure(frame1.lst.1.1, background="white",
-              yscrollcommand=paste(.Tk.ID(frame1.ysc.1.7), "set"))
-  tkconfigure(frame1.ysc.1.7, command=paste(.Tk.ID(frame1.lst.1.1), "yview"))
+              yscrollcommand=paste(.Tk.ID(frame1.ysc.1.6), "set"))
+  tkconfigure(frame1.ysc.1.6, command=paste(.Tk.ID(frame1.lst.1.1), "yview"))
 
-  frame1.but.2.1 <- ttkbutton(frame1, width=12, text="Select All",
+  frame1.but.2.1 <- ttkbutton(frame1, width=8, text="All",
                               command=function() SelectVariables("all"))
-  frame1.but.2.2 <- ttkbutton(frame1, width=12, text="Select None",
+  frame1.but.2.2 <- ttkbutton(frame1, width=8, text="None",
                               command=function() SelectVariables("none"))
-  frame1.lab.2.4 <- ttklabel(frame1, text="Records:")
-  frame1.rad.2.5 <- ttkradiobutton(frame1, variable=records.var,
-                                   value="raw", text="raw")
-  frame1.rad.2.6 <- ttkradiobutton(frame1, variable=records.var,
-                                   value="processed", text="processed")
+  frame1.but.2.3 <- ttkbutton(frame1, width=8, text="Inverse",
+                              command=function() SelectVariables("inverse"))
+  frame1.chk.2.4 <- ttkcheckbutton(frame1, variable=records.var,
+                                   text="Include processed records only")
 
-  tkgrid(frame1.lst.1.1, "x", "x", "x", "x", "x", frame1.ysc.1.7)
-  tkgrid(frame1.but.2.1, frame1.but.2.2, "x", frame1.lab.2.4,
-         frame1.rad.2.5, frame1.rad.2.6, "x", pady=c(4, 0))
+  tkgrid(frame1.lst.1.1, "x", "x", "x", "x", frame1.ysc.1.6)
+  tkgrid(frame1.but.2.1, frame1.but.2.2, frame1.but.2.3, frame1.chk.2.4, 
+         "x", "x", pady=c(4, 0))
 
-  tkgrid.configure(frame1.lst.1.1, sticky="nsew", columnspan=6)
-  tkgrid.configure(frame1.ysc.1.7, sticky="ns")
-  tkgrid.configure(frame1.but.2.1, padx=c(0, 4))
-  tkgrid.configure(frame1.rad.2.5, frame1.rad.2.6, padx=c(6, 0))
+  tkgrid.configure(frame1.lst.1.1, sticky="nsew", columnspan=5)
+  tkgrid.configure(frame1.ysc.1.6, sticky="ns")
+  tkgrid.configure(frame1.but.2.1, frame1.but.2.2, padx=c(0, 4))
+  tkgrid.configure(frame1.chk.2.4, padx=c(25, 0))
 
-  tkgrid.columnconfigure(frame1, 2, weight=1, minsize=15)
+  tkgrid.columnconfigure(frame1, 4, weight=1, minsize=0)
   tkgrid.rowconfigure(frame1, 0, weight=1)
 
   tkpack(frame1, fill="both", expand=TRUE, side="top", padx=10, pady=10)
@@ -216,17 +229,13 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
 
     frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
                             text="Include header lines")
-    frame2.chk.1.1 <- ttkcheckbutton(frame2, variable=head.names.var,
-                                     text="Variable names")
-    frame2.chk.1.2 <- ttkcheckbutton(frame2, variable=head.units.var,
-                                     text="Measurement units")
-    frame2.chk.1.3 <- ttkcheckbutton(frame2, variable=head.fmts.var,
-                                     text="Conversion formats")
+    frame2.chk.1.1 <- ttkcheckbutton(frame2, variable=head.fmts.var,
+                                     text="Conversion specification formats")
+    frame2.chk.1.2 <- ttkcheckbutton(frame2, variable=head.names.var,
+                                     text="Names of the variables")
 
-    tkgrid(frame2.chk.1.1, frame2.chk.1.2, frame2.chk.1.3)
-    tkgrid.configure(frame2.chk.1.2, padx=15)
-
-    tcl("grid", "anchor", frame2, "center")
+    tkgrid(frame2.chk.1.1, frame2.chk.1.2)
+    tkgrid.configure(frame2.chk.1.1, padx=c(15, 15))
 
     tkpack(frame2, fill="x", padx=10, pady=c(0, 10))
 
@@ -259,11 +268,12 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
     tkgrid(frame3.rad.1.1, frame3.rad.1.2, frame3.rad.1.3, "x", sticky="w")
     tkgrid(frame3.rad.2.1, frame3.rad.2.2, frame3.rad.2.3, frame3.ent.2.4,
            sticky="w")
-
+    
+    
+    tkgrid.configure(frame3.rad.1.1, frame3.rad.2.1, padx=c(15, 0))
+    
     tkgrid.configure(frame3.rad.1.3, columnspan=2)
     tkgrid.configure(frame3.ent.2.4, padx=c(2, 0))
-
-    tcl("grid", "anchor", frame3, "center")
 
     tkpack(frame3, fill="x", padx=10, pady=c(0, 10))
   }
@@ -291,11 +301,8 @@ ExportData <- function(col.ids, file.type="text", parent=NULL) {
   # Bind events
 
   tclServiceMode(TRUE)
-
   tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1)
-
   tkbind(frame1.lst.1.1, "<<ListboxSelect>>", ToggleExport)
-
   tkbind(frame4.ent.1.1, "<KeyRelease>", ToggleExport)
 
   # GUI control

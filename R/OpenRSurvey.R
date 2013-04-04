@@ -183,15 +183,15 @@ OpenRSurvey <- function() {
     vars <- list()
 
     if (idx.x > 0)
-      vars$x <- idxs.n[idx.x]
+      vars$x[1] <- idxs.n[idx.x]
     if (idx.y > 0)
-      vars$y <- idxs.n[idx.y]
+      vars$y[1] <- idxs.n[idx.y]
     if (idx.z > 0)
-      vars$z <- idxs.n[idx.z]
+      vars$z[1] <- idxs.n[idx.z]
     if (idx.vx > 0)
-      vars$vx <- idxs.n[idx.vx]
+      vars$vx[1] <- idxs.n[idx.vx]
     if (idx.vy > 0)
-      vars$vy <- idxs.n[idx.vy]
+      vars$vy[1] <- idxs.n[idx.vy]
 
     if (!identical(vars, Data("vars"))) {
       Data("vars", vars)
@@ -204,9 +204,6 @@ OpenRSurvey <- function() {
   # Manage data
 
   CallManageData <- function() {
-    if (is.null(Data("data.raw")))
-      return()
-    
     ans <- ManageData(Data("cols"), Data("vars"), tt)
     if (!is.null(ans)) {
       Data("cols", ans$cols)
@@ -219,12 +216,12 @@ OpenRSurvey <- function() {
   # Export data
 
   CallExportData <- function(file.type) {
-    if (is.null(Data("data.raw")))
+    if (is.null(Data("cols")))
       return()
 
     is.coordinate <- !is.null(Data("vars")$x) & !is.null(Data("vars")$y)
     if (!is.coordinate & file.type %in% c("shape", "grid"))
-      stop("Spatial coordinates missing")
+      return()
 
     if (file.type == "grid") {
       CallProcessData(interpolate=TRUE)
@@ -279,11 +276,7 @@ OpenRSurvey <- function() {
   # About package
 
   AboutPackage <- function() {
-    if ("package:RSurvey" %in% search())
-      path <- system.file("DESCRIPTION", package="RSurvey")
-    else
-      path <- file.path(getwd(), "DESCRIPTION")
-    msg <- paste(readLines(path, n=-1L), collapse="\n")
+    msg <- paste(readLines(about.path, n=-1L), collapse="\n")
     tkmessageBox(icon="info", message=msg, title="About", parent=tt)
   }
 
@@ -345,7 +338,7 @@ OpenRSurvey <- function() {
   ConstructPolygon <- function(type) {
     if (is.null(Data("data.raw")))
       return()
-    msg <- paste("After the plot has been created, use the mouse to identify",
+    msg <- paste("After the graph has been created, use the mouse to identify",
                  "the vertices of the polygon. The identification process can",
                  "be terminated by clicking the second button and selecting",
                  "[Stop] from the menu, or from the [Stop] menu on the",
@@ -360,7 +353,7 @@ OpenRSurvey <- function() {
 
   # Autocrop polygon
 
-  CallAutocropPolygon <- function() {
+  CallAutocropRegion <- function() {
     if (is.null(Data("data.raw")))
       return()
     CallProcessData()
@@ -378,9 +371,9 @@ OpenRSurvey <- function() {
     cex.pts <- Data("cex.pts")
     rkey    <- Data("rkey")
 
-    ply.new <- AutocropPolygon(d, tt, xlab=xlab, ylab=ylab, zlab=zlab,
-                               asp=asp, csi=csi, width=width, nlevels=nlevels,
-                               cex.pts=cex.pts, rkey=rkey)
+    ply.new <- AutocropRegion(d, tt, xlab=xlab, ylab=ylab, zlab=zlab,
+                              asp=asp, csi=csi, width=width, nlevels=nlevels,
+                              cex.pts=cex.pts, rkey=rkey)
 
     if (inherits(ply.new, "gpc.poly")) {
       ply <- list()
@@ -599,23 +592,6 @@ OpenRSurvey <- function() {
     tkfocus(tt)
   }
 
-  # Open HTML help for R functions
-
-  OpenHTMLHelp <- function() {
-    if (!("RSurvey" %in% .packages(all.available=TRUE)))
-      stop("requires installed RSurvey package", call.=FALSE)
-    if (tools:::httpdPort == 0L)
-      tools::startDynamicHelp()
-    if (tools:::httpdPort > 0L) {
-      url <- paste("http://127.0.0.1:", tools:::httpdPort,
-                   "/library/RSurvey/html/00Index.html", sep="")
-      browseURL(url, browser=getOption("browser"))
-    } else {
-      stop("requires the HTTP server to be running", call.=FALSE)
-    }
-    invisible()
-  }
-
   # Set the height of (default-sized) characters in inches.
 
   SetCsi <- function() {
@@ -630,27 +606,24 @@ OpenRSurvey <- function() {
 
   CallViewData <- function() {
     CallProcessData()
+    
     if (is.null(Data("data.pts")))
       return()
 
-    tkconfigure(tt, cursor="watch")
-
     vars <- Data("vars")
     cols <- Data("cols")
-
-    state.vars <- list(x="x-coordinate", y="y-coordinate", z="z-coordinate",
-                       vx="x-vector", vy="y-vector")
-    state.vars <- state.vars[names(state.vars) %in% names(vars)]
-    state.idxs <- sapply(names(state.vars), function(i) vars[[i]])
     
-    d <- Data("data.pts")[, names(state.vars)]
+    lst <- list(x="x-coordinate", y="y-coordinate", z="z-coordinate",
+                vx="x-vector", vy="y-vector")
     
-    cols <- cols[state.idxs]
+    d <- Data("data.pts")
+    nams <- vapply(names(d), function(i) lst[[i]], "")
     
-    nams <- sapply(state.vars, function(i) i)
-    fmts <- sapply(cols, function(i) ifelse(is.null(i$format), NA, i$format))
-    ViewData(d, column.names=nams, column.formats=fmts, parent=tt)
+    fmts <- vapply(names(d), function(i) cols[[vars[[i]]]]$format, "")
+    fmts[fmts == ""] <- NA
     
+    tkconfigure(tt, cursor="watch")
+    ViewData(d, col.names=nams, col.formats=fmts, parent=tt)
     tkconfigure(tt, cursor="arrow")
     tkfocus(tt)
   }
@@ -660,7 +633,7 @@ OpenRSurvey <- function() {
   CallProcessData <- function(interpolate=FALSE) {
     vars <- Data("vars")
     var.names <- names(vars)
-    if (!all(c("x", "y") %in% var.names) || is.null(Data("data.raw"))) {
+    if (!all(c("x", "y") %in% var.names)) {
       Data("data.pts", NULL)
       Data("data.grd", NULL)
       return()
@@ -738,14 +711,14 @@ OpenRSurvey <- function() {
     
     cols <- Data("cols")
     old.fun <- Data("query.fun")
-    new.fun <- EditFunction(cols, fun=old.fun, value.length=n,
-                            value.class="logical", 
-                            win.title="Edit Query", parent=tt)
-    if (is.null(new.fun))
+    f <- EditFunction(cols, fun=old.fun, value.length=n, value.class="logical", 
+                      win.title="Edit Query", parent=tt)
+    if (is.null(f))
       return()
-    if (new.fun == "")
-      new.fun <- NULL
-    Data("query.fun", new.fun)
+    if (f$fun == "")
+      Data("query.fun", NULL)
+    else
+      Data("query.fun", f$fun)
     Data("data.pts", NULL)
     Data("data.grd", NULL)
   }
@@ -763,12 +736,7 @@ OpenRSurvey <- function() {
   
   # Main program
 
-  # Load required R packages
-
-  LoadPackages()
-
   # Warn if using Windows OS and running in MDI mode
-
   if (.Platform$OS.type == "windows" && getIdentification() == "RGui")
     message("\n\n    You are running R in MDI mode which *may* interfere\n",
             "    with the functionality of the graphical user interface.\n",
@@ -776,33 +744,30 @@ OpenRSurvey <- function() {
             "    set in the command line or by clicking in the Menu:\n",
             "    Edit - GUI Preferences: SDI, then Save and restart R.\n\n")
 
-  # Establish working directory
-
-  if ("package:RSurvey" %in% search())
-    path <- system.file("RSurvey-ex", package="RSurvey")
-  else
-    path <- getwd()
-
+  # Establish default directories and load required packages
+  path <- getwd()
+  if ("package:RSurvey" %in% search()) {
+    image.path <- system.file("images", package="RSurvey")
+    about.path <- system.file("DESCRIPTION", package="RSurvey")
+  } else {
+    image.path <- file.path(path, "inst", "images")
+    about.path <- file.path(path, "DESCRIPTION")
+    r.path <- file.path(path, "R")
+    LoadPackages()
+  }
   if (is.null(Data("default.dir")))
     Data("default.dir", path)
-
-  if ("package:RSurvey" %in% search())
-    image.path <- system.file("images", package="RSurvey")
-  else
-    image.path <- file.path(path, "inst", "images")
-
+  
   # Set options
-
   SetCsi()
   options(digits.secs=3)
+  options(help_type="html")
   shown.construct.polygon.msgbox <- TRUE
 
   # Assign variables linked to Tk entry widgets
-
   tt.done.var <- tclVar(0)
 
   # Package version number
-
   f <- "DESCRIPTION"
   if ("package:RSurvey" %in% search())
     f <- system.file("DESCRIPTION", package="RSurvey")
@@ -810,7 +775,6 @@ OpenRSurvey <- function() {
   Data("ver", paste("RSurvey", ver))
 
   # Open GUI
-
   tclServiceMode(FALSE)
   tt <- tktoplevel()
   tkwm.geometry(tt, Data("win.loc"))
@@ -818,7 +782,6 @@ OpenRSurvey <- function() {
   tkwm.resizable(tt, 1, 0)
 
   # Top menu
-
   top.menu <- tkmenu(tt, tearoff=0)
 
   # File menu
@@ -828,34 +791,40 @@ OpenRSurvey <- function() {
 
   tkadd(menu.file, "command", label="New project", accelerator="Ctrl+N",
         command=ClearObjs)
-  tkadd(menu.file, "command", label="Open project", accelerator="Ctrl+O",
+  tkadd(menu.file, "command", label="Open project\u2026", accelerator="Ctrl+O",
         command=OpenProj)
   tkadd(menu.file, "command", label="Save project", accelerator="Ctrl+S",
         command=SaveProj)
-  tkadd(menu.file, "command", label="Save project as",
+  tkadd(menu.file, "command", label="Save project as\u2026",
         accelerator="Shift+Ctrl+S", command=SaveProjAs)
 
   tkadd(menu.file, "separator")
-  tkadd(menu.file, "command", label="Import data",
+  
+  menu.file.import <- tkmenu(tt, tearoff=0)
+  tkadd(menu.file.import, "command", label="Text file\u2026",
         command=CallImportData)
-
+# tkadd(menu.file.import, "command", label="R data set\u2026",
+#       command=function() print("notyet"))
+  tkadd(menu.file, "cascade", label="Import point data from", 
+        menu=menu.file.import)
+  
   menu.file.export <- tkmenu(tt, tearoff=0)
-  tkadd(menu.file.export, "command", label="Text file",
+  tkadd(menu.file.export, "command", label="Text file\u2026",
         command=function() CallExportData("text"))
-  tkadd(menu.file.export, "command", label="Shapefile",
+  tkadd(menu.file.export, "command", label="Shapefile\u2026",
         command=function() CallExportData("shape"))
-  tkadd(menu.file, "cascade", label="Export point data as", menu=menu.file.export)
-
-  tkadd(menu.file, "command", label="Export grid data as",
+  tkadd(menu.file, "cascade", label="Export point data as", 
+        menu=menu.file.export)
+  tkadd(menu.file, "command", label="Export grid data as\u2026",
         command=function() CallExportData("grid"))
 
   tkadd(menu.file, "separator")
   menu.file.save <- tkmenu(tt, tearoff=0)
-  tkadd(menu.file.save, "command", label="R graphic", accelerator="Ctrl+R",
+  tkadd(menu.file.save, "command", label="R graphic\u2026", accelerator="Ctrl+R",
         command=SaveRDevice)
-  tkadd(menu.file.save, "command", label="RGL graphic",
+  tkadd(menu.file.save, "command", label="RGL graphic\u2026",
         command=SaveRGLDevice)
-  tkadd(menu.file, "cascade", label="Save plot from", menu=menu.file.save)
+  tkadd(menu.file, "cascade", label="Save graph from", menu=menu.file.save)
 
   tkadd(menu.file, "separator")
   tkadd(menu.file, "command", label="Exit",
@@ -866,22 +835,41 @@ OpenRSurvey <- function() {
   menu.edit <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="Edit", menu=menu.edit, underline=0)
 
-  tkadd(menu.edit, "command", label="Manage data",
+  tkadd(menu.edit, "command", label="Manage data\u2026",
         command=CallManageData)
-  tkadd(menu.edit, "command", label="View data",
-        command=CallViewData)
   
   tkadd(menu.edit, "separator")
-  tkadd(menu.edit, "command", label="Edit query",
+  tkadd(menu.edit, "command", label="Edit query\u2026",
         command=BuildQuery)
   tkadd(menu.edit, "command", label="Clear query",
         command=ClearQuery)
-  
+
   tkadd(menu.edit, "separator")
-  tkadd(menu.edit, "command", label="Preferences",
+  tkadd(menu.edit, "command", label="Set sort order\u2026",
+        command=function() {
+          col.ids <- sapply(Data("cols"), function(i) i$id)
+          sort.on.old <- Data(c("vars", "sort.on"))
+          sort.on.new <- SetSortOrder(col.ids, sort.on.old, parent=tt)
+          if (!identical(sort.on.old, sort.on.new)) {
+            Data(c("vars", "sort.on"), sort.on.new)
+            Data("data.pts", NULL)
+            Data("data.grd", NULL)
+          }
+        })
+  tkadd(menu.edit, "command", label="Clear sort order",
+        command=function() {
+          Data(c("vars", "sort.on"), NULL)
+        })
+
+  tkadd(menu.edit, "separator")
+  tkadd(menu.edit, "command", label="Interpolation preferences",
         command=function() {
           SetPreferences(tt)
         })
+  
+  tkadd(menu.edit, "separator")
+  tkadd(menu.edit, "command", label="View processed data",
+        command=CallViewData)
 
   # Polygon menu
 
@@ -889,10 +877,10 @@ OpenRSurvey <- function() {
 
   tkadd(top.menu, "cascade", label="Polygon", menu=menu.poly, underline=0)
 
-  tkadd(menu.poly, "command", label="Manage polygons",
+  tkadd(menu.poly, "command", label="Manage polygons\u2026",
         command=CallManagePolygons)
   tkadd(menu.poly, "separator")
-  tkadd(menu.poly, "command", label="Set polygon limits",
+  tkadd(menu.poly, "command", label="Set polygon limits\u2026",
         command=CallSetPolygonLimits)
   tkadd(menu.poly, "command", label="Clear polygon limits",
         command=function() {
@@ -913,25 +901,56 @@ OpenRSurvey <- function() {
           ConstructPolygon(type="l")
         })
   tkadd(menu.poly, "cascade", label="Build", menu=menu.poly.con)
-  tkadd(menu.poly, "command", label="Autocrop region",
-        command=CallAutocropPolygon)
+  tkadd(menu.poly, "command", label="Autocrop region\u2026",
+        command=CallAutocropRegion)
 
-  # Plot menu
+  # Graph menu
 
-  menu.plot <- tkmenu(tt, tearoff=0)
-  tkadd(top.menu, "cascade", label="Plot", menu=menu.plot, underline=0)
-
-  tkadd(menu.plot, "command", label="Configuration",
+  menu.graph <- tkmenu(tt, tearoff=0)
+  tkadd(top.menu, "cascade", label="Graph", menu=menu.graph, underline=0)
+  
+  tkadd(menu.graph, "command", label="Histogram\u2026", 
         command=function() {
-          SetConfiguration(tt)
+          CallProcessData()
+          if (is.null(Data("data.pts")))
+            return()
+          d <- Data("data.pts")
+          d <- d[, names(d) != "sort.on"]
+          lst <- list(x="x-coordinate", y="y-coordinate", z="z-coordinate", 
+                      vx="x-vector", vy="y-vector")
+          var.names <- vapply(names(d), function(i) lst[[i]], "")
+          BuildHistogram(d, var.names=var.names, parent=tt)
         })
-
-  tkadd(menu.plot, "command", label="Set axes limits",
+  tkadd(menu.graph, "command", label="Scatterplot",
+        command=function() {
+          CallPlot2d(type="p")
+        })
+  tkadd(menu.graph, "command", label="2D interpolated map",
+        command=function() {
+          type <- if (Data("img.contour")) "g" else "l"
+          CallPlot2d(type=type)
+        })
+  tkadd(menu.graph, "command", label="3D interpolated map",
+        command=CallPlot3d)
+  
+  tkadd(menu.graph, "separator")
+  tkadd(menu.graph, "command", label="Set axes limits\u2026",
         command=function() {
           lim <- SetAxesLimits(Data("lim.axes"), tt)
           Data("lim.axes", lim)
         })
-  tkadd(menu.plot, "command", label="Choose color palette",
+  tkadd(menu.graph, "command", label="Clear axes limits",
+        command=function() {
+          Data("lim.axes", NULL)
+        })
+  
+  tkadd(menu.graph, "separator")
+  tkadd(menu.graph, "command", label="Configuration",
+        command=function() {
+          SetConfiguration(tt)
+        })
+
+  tkadd(menu.graph, "command", label="Choose color palette\u2026",
         command=function() {
           pal <- colorspace::choose_palette(pal=Data("color.palette"), 
                                             n=Data("nlevels"), parent=tt)
@@ -939,20 +958,39 @@ OpenRSurvey <- function() {
             Data("color.palette", pal)
         })
 
-  tkadd(menu.plot, "separator")
-  tkadd(menu.plot, "command", label="Close all plots", accelerator="Ctrl+F4",
+  tkadd(menu.graph, "separator")
+  tkadd(menu.graph, "command", label="Close all graphs", accelerator="Ctrl+F4",
         command=CloseDevices)
 
   # Help menu
 
   menu.help <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="Help", menu=menu.help, underline=0)
-  tkadd(menu.help, "command", label="R functions (html)",
-        command=OpenHTMLHelp)
+  tkadd(menu.help, "command", label="Help",
+        command=function() {
+          print(help("OpenRSurvey", package="RSurvey"))
+        })
+  tkadd(menu.help, "command", label="Functions",
+        command=function() {
+          help(package="RSurvey")
+        })
+  
+  tkadd(menu.help, "separator")
+  menu.help.rep <- tkmenu(tt, tearoff=0)
+  tkadd(menu.help.rep, "command", label="CRAN",
+        command=function() {
+          browseURL("http://cran.r-project.org/web/packages/RSurvey/")
+        })
+  tkadd(menu.help.rep, "command", label="GitHub",
+        command=function() {
+          browseURL("https://github.com/jfisher-usgs/RSurvey")
+        })
+  tkadd(menu.help, "cascade", label="Repository on  ", menu=menu.help.rep)
+  
   tkadd(menu.help, "separator")
   tkadd(menu.help, "command", label="About",
         command=AboutPackage)
-
+  
   if (!("RSurvey" %in% .packages())) {
       tkadd(menu.help, "separator")
       tkadd(menu.help, "command", label="Restore R session",
@@ -960,8 +998,7 @@ OpenRSurvey <- function() {
               CloseGUI()
               Data("data.pts", NULL)
               Data("data.grd", NULL)
-              RestoreSession(file.path(getwd(), "R"), save.objs="Data",
-                             fun.call="OpenRSurvey")
+              RestoreSession(r.path, save.objs="Data", fun.call="OpenRSurvey")
             })
   }
 
@@ -1067,18 +1104,18 @@ OpenRSurvey <- function() {
   # Frame 2, plotting buttons
 
   frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
-                          text="Plot variables")
+                          text="Graph variables")
 
   frame2.but.1.1 <- ttkbutton(frame2, width=10, text="Scatter",
                               command=function() {
                                 CallPlot2d(type="p")
                               })
-  frame2.but.1.2 <- ttkbutton(frame2, width=10, text="2D Surface",
+  frame2.but.1.2 <- ttkbutton(frame2, width=10, text="2D Map",
                               command=function() {
                                 type <- if (Data("img.contour")) "g" else "l"
                                 CallPlot2d(type=type)
                               })
-  frame2.but.1.3 <- ttkbutton(frame2, width=10, text="3D Surface",
+  frame2.but.1.3 <- ttkbutton(frame2, width=10, text="3D Map",
                               command=CallPlot3d)
 
   tkgrid(frame2.but.1.1, frame2.but.1.2, frame2.but.1.3, pady=c(0, 4))

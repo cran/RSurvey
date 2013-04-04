@@ -1,3 +1,23 @@
+Changes in Version 0.7-4
+  
+  o  Main GUI is lauched automatically when RSurvey is loaded.
+  
+  o  Added View Data for single variable.
+  
+  o  No longer required to have a data set loaded to open the Data Management 
+     GUI.
+  
+  o  Fixed bug with finding unique values in Edit Function GUI.
+  
+  o  The header line specifying variable names now comes before the format 
+     header line. Users need to update header lines in their input text files 
+     to reflect this change.
+    
+  o  Measurement units have been removed. Users need to remove unit headers 
+     from their input text files.
+  
+  o  Added GUI for sorting the processed data set.
+  
 Changes in Version 0.7-3
   
   o  Removed dependency on the 'tripack' package because of its restricted 

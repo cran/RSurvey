@@ -36,12 +36,25 @@ An image of class \code{\link{tclObj}}.
 \code{\link{tkimage.create}}
 }
 
-\examples{
-\donttest{image.obj <- GetBitmapImage("left")
+\examples{\donttest{
+types <- c("left", "right", "up", "down", "top", "bottom", "upleft", "upright", 
+           "downleft", "downright", "next", "previous", "copy", "paste", "find",
+           "delete", "view", "info", "plus", "minus", "print", "histogram")
+fun <- function(k) print(types[k])
 tt <- tktoplevel(padx = 50, pady = 50)
-button <- ttkbutton(tt, width = 2, image = image.obj)
-tkpack(button)
+i <- 0
+j <- 0
+d <- 5
+for (k in seq(along = types)) {
+  img <- paste("img", k, sep = ".")
+  but <- paste("but", k, sep = ".")
+  assign(img, GetBitmapImage(types[k]))
+  assign(but, ttkbutton(tt, width = 2, image = get(img), 
+                        command = local({k <- k; function() fun(k)})))
+  tkgrid(get(but), row = i, column = j, padx = 5, pady = 5)
+  i <- k \%/\% d
+  j <- ifelse(j < d - 1, j + 1, 0) 
 }
-}
+}}
 
 \keyword{misc}

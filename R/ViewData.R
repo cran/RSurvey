@@ -1,17 +1,14 @@
-ViewData <- function(d, column.names=NULL, column.units=NULL,
-                     column.formats=NULL, parent=NULL) {
+ViewData <- function(d, col.names=NULL, col.formats=NULL, parent=NULL) {
   # A GUI for viewing table formatted data.
 
   # Additional functions (subroutines)
 
   # Copy values to clipboard
-
   CopyValues <- function() {
     tcl("tk_tableCopy", frame2.tbl)
   }
 
   # Select all cells
-
   SelectAll <- function() {
     tkselection.set(frame2.tbl, "origin", "end")
   }
@@ -90,31 +87,22 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
     tkxview(frame2.tbl, cell[1, 2] - 1L)
   }
 
-  # Goto line number
-
-  GotoLine <- function() {
-    line.no <- as.integer(tclvalue(line.no.var))
-    if (is.na(line.no))
+  # Goto data record
+  GotoRecord <- function() {
+    rec <- as.character(tclvalue(record.var))
+    if (is.na(rec))
       return()
-    idx <- which(rows %in% line.no)
-    if (length(idx) == 0) {
-      if (line.no > rows[m]) {
-        idx <- m
-        tclvalue(line.no.var) <- rows[m]
-      } else if (line.no < rows[1]) {
-        idx <- 1
-        tclvalue(line.no.var) <- rows[1]
-      } else {
-        return()
-      }
+    idx <- which(row.names %in% rec)
+    if (length(idx) > 0) {
+      tkyview(frame2.tbl, idx[1] - 1L)
     } else {
-      idx <- idx[1]
+      msg <- "Row name (or record number) not found."
+      tkmessageBox(icon="info", message=msg, title="Goto", type="ok",
+                     parent=tt)
     }
-    tkyview(frame2.tbl, idx - 1L)
   }
 
   # Get single cell value for table
-
   GetCellValue <- function(r, c) {
     as.tclObj(d[as.integer(r) + 1L, as.integer(c) + 1L], drop=TRUE)
   }
@@ -123,101 +111,91 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   # Main program
 
   # Check if Tktable is loaded
-
   is.tktable <- !inherits(try(tcl("package", "present", "Tktable"),
                               silent=TRUE), "try-error")
   if (!is.tktable)
     return()
 
   # Initialize search results
-
   matched.cells <- NULL
 
   # Table dimensions
-
   m <- nrow(d)
   n <- ncol(d)
   if (m == 0)
     return()
 
-  # Height and width of viewable table
-
-  height <- if (m > 15) 15 else m
-  width <- if (n > 6) 6 else n
-
-  # Row titles
-
-  rows <- row.names(d)
+  # Number of rows and columns in the viewable table
+  nrows <- if (m > 15) 15 else m
+  ncols <- if (n >  6)  6 else n
 
   # Account for missing arguments
-
-  if (is.null(column.names)) {
-    column.names <- rep("", n)
+  if (is.null(col.names)) {
+    col.names <- colnames(d)
+    if (is.null(col.names) | length(col.names) != n) {
+      col.names <- LETTERS[1:n]
+      if (any(is.na(col.names))) {
+        from <- seq(27, n, by=26)
+        for (i in seq(along=from)) {
+          to <- from[i] + 25
+          if (to > n)
+            to <- n
+          l <- paste(LETTERS[i], LETTERS[1:(to - from[i] + 1L)], sep="")
+          col.names[from[i]:to] <- l
+        }
+      }
+    }
   } else {
-    column.names <- column.names[1:n]
-    column.names[is.na(column.names)] <- ""
+    col.names <- col.names[1:n]
+    col.names[is.na(col.names)] <- ""
+    col.names <- gsub("(^ +)|( +$)", "", col.names)
   }
-
-  if (is.null(column.units))
-    column.units <- rep(NA, n)
+  if (is.null(col.formats))
+    col.formats <- rep(NA, n)
   else
-    column.units <- as.character(column.units[1:n])
-
-  if (is.null(column.formats))
-    column.formats <- rep(NA, n)
+    col.formats <- as.character(col.formats[1:n])
+  
+  if (length(rownames(d)) == m)
+    row.names <- rownames(d)
   else
-    column.formats <- as.character(column.formats[1:n])
-
-  # Build table titles
-
-  cols <- column.names
-  is.not.na <- !is.na(column.units)
-  cols[is.not.na] <- paste(cols[is.not.na], column.units[is.not.na], sep="\n")
+    row.names <- 1:m
+  row.names <- gsub("(^ +)|( +$)", "", as.character(row.names))
 
   # Determine width and height of column 0 and row 0, respectively
-
-  col.0.width <- nchar(max(as.integer(row.names(d)))) + 1
-  row.0.height <- max(sapply(strsplit(cols, "\n"), length))
-
-  # Column classes
-
-  posix.columns <- sapply(d, function(i) inherits(i, c("POSIXct", "POSIXlt")))
-  numeric.columns <- sapply(d, function(i) inherits(i, c("numeric", "integer")))
+  col.0.width  <- max(nchar(row.names)) + 1L
+  row.0.height <- max(vapply(strsplit(col.names, "\n"), length, 0L))
 
   # Format data table and determine column widths
-
   col.width <- NULL
   for (j in 1:n) {
-    if (is.na(column.formats[j])) {
+    if (is.na(col.formats[j])) {
       d[, j] <- format(d[, j])
     } else if (inherits(d[, j], c("POSIXct", "POSIXlt"))) {
-      d[, j] <- format(d[, j], format=column.formats[j])
+      d[, j] <- format(d[, j], format=col.formats[j])
     } else {
-      d[, j] <- try(sprintf(column.formats[j], d[, j]), silent=TRUE)
+      d[, j] <- try(sprintf(col.formats[j], d[, j]), silent=TRUE)
       if (inherits(d[, j], "try-error"))
         d[, j] <- format(d[, j])
     }
-
-    if (cols[j] == "")
+    d[, j] <- gsub("(^ +)|( +$)", "", d[, j])
+    if (col.names[j] == "")
       nchar.title <- 0
     else
-      nchar.title <- max(sapply(strsplit(cols[j], "\n"), function(i) nchar(i)))
-    nchar.data <- nchar(sample(d[,j], height))
-    len <- max(c(nchar.title, nchar.data)) + 3
-    if (len < 10)
-      len <- if (n == 1) 20 else 10
+      nchar.title <- max(vapply(strsplit(col.names[j], "\n"),
+                                function(i) nchar(i), 0L))
+    nchar.data <- max(nchar(d[,j]))
+    len <- max(c(nchar.title, nchar.data)) + 1
+    if (len < 5)
+      len <- if (n == 1) 10 else 5
     col.width[j] <- len
   }
 
-  # Construct character matrix from data frame
-  
-  d <- rbind(c("", cols), cbind(row.names(d), as.matrix(d)))
-  d <- cbind(d, rep("", nrow(d)))
+  # Add titles and row names to character data frame
+  d <- rbind(c("", col.names), cbind(row.names, as.matrix(d)))
 
   # Assign variables linked to Tk widgets
-
   table.var   <- tclArray()
-  line.no.var <- tclVar()
+  record.var <- tclVar()
   pattern.var <- tclVar()
   fixed.var   <- tclVar(1)
   perl.var    <- tclVar(0)
@@ -238,23 +216,38 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   }
 
   tktitle(tt) <- "View Data"
+  
+  # Create menus
+
+  top.menu <- tkmenu(tt, tearoff=0)
+
+  menu.edit <- tkmenu(tt, tearoff=0, relief="flat")
+  tkadd(top.menu, "cascade", label="Edit", menu=menu.edit, underline=0)
+  tkadd(menu.edit, "command", label="Copy", accelerator="Ctrl+C",
+        command=CopyValues)
+  tkadd(menu.edit, "command", label="Select all", accelerator="Ctrl+A",
+        command=SelectAll)
+  
+  tkconfigure(tt, menu=top.menu)
 
   # Frame 0, ok button and size grip
 
   frame0 <- ttkframe(tt, relief="flat")
 
-  frame0.but.2 <- ttkbutton(frame0, width=12, text="Copy",
-                            command=CopyValues)
-  frame0.but.3 <- ttkbutton(frame0, width=12, text="Close",
+  frame0.but.2 <- ttkbutton(frame0, width=12, text="Close",
                             command=function() tclvalue(tt.done.var) <- 1)
+  frame0.but.3 <- ttkbutton(frame0, width=12, text="Help",
+                            command=function() {
+                              print(help("ViewData", package="RSurvey"))
+                            }) 
   frame0.grp.4 <- ttksizegrip(frame0)
 
   tkgrid("x", frame0.but.2, frame0.but.3, frame0.grp.4)
 
   tkgrid.columnconfigure(frame0, 0, weight=1)
-
-  tkgrid.configure(frame0.but.2, frame0.but.3, padx=c(0, 4), pady=c(4, 10))
-  tkgrid.configure(frame0.but.3, columnspan=2, padx=c(0, 10))
+  
+  tkgrid.configure(frame0.but.2, frame0.but.3, pady=10)
+  tkgrid.configure(frame0.but.3, columnspan=2, padx=c(4, 10))
   tkgrid.configure(frame0.grp.4, sticky="se")
 
   tkraise(frame0.but.3, frame0.grp.4)
@@ -266,17 +259,16 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   frame1 <- ttkframe(tt, relief="flat", padding=0, borderwidth=0, height=200)
 
   frame1.lab.1.1 <- ttklabel(frame1, text="Find")
-  frame1.lab.2.1 <- ttklabel(frame1, text="Record")
+  frame1.lab.2.1 <- ttklabel(frame1, text="Row")
 
   frame1.ent.1.2 <- ttkentry(frame1, width=15, textvariable=pattern.var)
-  frame1.ent.2.2 <- ttkentry(frame1, width=15, textvariable=line.no.var)
+  frame1.ent.2.2 <- ttkentry(frame1, width=15, textvariable=record.var)
 
   frame1.but.1.3 <- ttkbutton(frame1, width=2, image=GetBitmapImage("previous"),
                               command=function() Find("prev"))
   frame1.but.1.4 <- ttkbutton(frame1, width=2, image=GetBitmapImage("next"),
                               command=function() Find("next"))
-  frame1.but.2.3 <- ttkbutton(frame1, width=4, text="Goto",
-                              command=GotoLine)
+  frame1.but.2.3 <- ttkbutton(frame1, width=4, text="Goto", command=GotoRecord)
 
   frame1.chk.1.5 <- ttkcheckbutton(frame1, variable=case.var,
                                    text="Ignore case",
@@ -298,7 +290,7 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   tkgrid.configure(frame1.but.2.3, columnspan=2, sticky="we")
   tkgrid.configure(frame1.chk.1.5, padx=c(12, 0))
   tkgrid.configure(frame1.chk.1.6, padx=c(4, 0))
-  tkgrid.configure(frame1.chk.1.7, padx=c(4, 10))
+  tkgrid.configure(frame1.chk.1.7, padx=c(4, 25))
 
   tkpack(frame1, side="bottom", anchor="nw", padx=c(10, 0))
 
@@ -307,19 +299,19 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   frame2 <- ttkframe(tt, relief="flat", padding=0, borderwidth=0)
 
   .Tcl("option add *Table.font {CourierNew 9}")
-  frame2.tbl <- tkwidget(frame2, "table", rows=m + 1, cols=n + 2,
-                         colwidth=-2, rowheight=1, state="disabled",
-                         height=height + 1, width=width + 1,
-                         ipadx=5, ipady=1, wrap=0,
+  frame2.tbl <- tkwidget(frame2, "table", rows=m + 1, cols=n + 1,
+                         colwidth=-2, rowheight=1, state="disable", 
+                         height=nrows + 1, width=ncols + 1,
+                         ipadx=1, wrap=1, justify="right",
                          highlightcolor="gray75", background="white",
                          foreground="black", titlerows=1, titlecols=1,
-                         multiline=0, resizeborders="col", colorigin=0,
+                         multiline=1, resizeborders="col", colorigin=0,
                          bordercursor="sb_h_double_arrow", cursor="plus",
                          colstretchmode="none", rowstretchmode="none",
                          drawmode="single", rowseparator="\n",
-                         colseparator="\t", selectmode="extended",
-                         insertofftime=0, anchor="nw", justify="left",
-                         borderwidth=0, highlightthickness=0, cache=1,
+                         colseparator="\t", selectmode="extended", 
+                         selecttitle=1, insertofftime=0, anchor="e", 
+                         highlightthickness=0, cache=1, 
                          command=function(r, c) GetCellValue(r, c),
                          xscrollcommand=function(...) tkset(frame2.xsc,...),
                          yscrollcommand=function(...) tkset(frame2.ysc,...))
@@ -329,7 +321,7 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   frame2.ysc <- tkscrollbar(frame2, orient="vertical",
                             command=function(...) tkyview(frame2.tbl,...))
 
-  tcl(frame2.tbl, "width", 0, col.0.width)
+  tcl(frame2.tbl,  "width", 0, col.0.width)
   tcl(frame2.tbl, "height", 0, row.0.height)
   for (j in 1:n)
     tcl(frame2.tbl, "width", j, col.width[j])
@@ -344,14 +336,11 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   tktag.configure(frame2.tbl, "active", background="#EAEEFE", relief="")
   tktag.configure(frame2.tbl, "sel", background="#EAEEFE", foreground="black")
 
-  tktag.configure(frame2.tbl, "title", background="#D9D9D9",
-                  foreground="black", multiline=1, ellipsis="...", wrap=1)
+  tktag.configure(frame2.tbl, "title", background="#D9D9D9", foreground="black")
 
   tcl(frame2.tbl, "tag", "row", "coltitles", 0)
-  tktag.configure(frame2.tbl, "coltitles", anchor="center", anchor="n",
-                  justify="center")
+  tktag.configure(frame2.tbl, "coltitles", anchor="center", justify="center")
   tcl(frame2.tbl, "tag", "col", "rowtitles", 0)
-  tktag.configure(frame2.tbl, "rowtitles", anchor="ne", justify="right")
 
   tkgrid.columnconfigure(frame2, 0, weight=1)
   tkgrid.rowconfigure(frame2, 0, weight=1)
@@ -363,23 +352,21 @@ ViewData <- function(d, column.names=NULL, column.units=NULL,
   # Bind events
 
   tclServiceMode(TRUE)
-
+  
+  
   tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1)
 
   tkbind(frame1.ent.1.2, "<KeyRelease>",
          function() {
            matched.cells <<- NULL
          })
-  tkbind(frame1.ent.2.2, "<KeyRelease>",
-         function() {
-           tclvalue(line.no.var) <- CheckEntry("integer", tclvalue(line.no.var))
-         })
-
+  
+  tkbind(tt, "<Control-c>", CopyValues)
   tkbind(tt, "<Control-a>", SelectAll)
   tkbind(frame1.ent.1.2, "<Return>", function() Find("next"))
   tkbind(frame1.ent.1.2, "<Up>", function() Find("prev"))
   tkbind(frame1.ent.1.2, "<Down>", function() Find("next"))
-  tkbind(frame1.ent.2.2, "<Return>", function() GotoLine())
+  tkbind(frame1.ent.2.2, "<Return>", function() GotoRecord())
 
   # GUI control
 

@@ -4,11 +4,11 @@ SetConfiguration <- function(parent=NULL) {
   # Additional functions (subroutines)
 
   UpdatePar <- function() {
-    val <- as.integer(tclvalue(nlevels.var))
-    Data("nlevels", if (is.na(val)) NULL else val)
-
     val <- as.numeric(tclvalue(width.var))
     Data("width", if (is.na(val)) NULL else val)
+    
+    val <- as.integer(tclvalue(nlevels.var))
+    Data("nlevels", if (is.na(val)) NULL else val)
 
     val <- as.numeric(tclvalue(cex.pts.var))
     Data("cex.pts", if (is.na(val)) NULL else val)
@@ -46,8 +46,8 @@ SetConfiguration <- function(parent=NULL) {
 
   # Assign variables linked to Tk widgets
 
-  nlevels.var      <- tclVar()
   width.var        <- tclVar()
+  nlevels.var      <- tclVar()
   cex.pts.var      <- tclVar()
   asp.yx.var       <- tclVar()
   asp.zx.var       <- tclVar()
@@ -65,10 +65,10 @@ SetConfiguration <- function(parent=NULL) {
   ticks.inside.var <- tclVar()
   rm.pnt.line.var  <- tclVar()
 
-  if (!is.null(Data("nlevels")))
-    tclvalue(nlevels.var) <- Data("nlevels")
   if (!is.null(Data("width")))
     tclvalue(width.var) <- Data("width")
+  if (!is.null(Data("nlevels")))
+    tclvalue(nlevels.var) <- Data("nlevels")
   if (!is.null(Data("cex.pts")))
     tclvalue(cex.pts.var) <- Data("cex.pts")
   if (!is.null(Data("asp.yx")))
@@ -121,18 +121,18 @@ SetConfiguration <- function(parent=NULL) {
   # Frame 0 contains ok and cancel buttons
 
   frame0 <- ttkframe(tt, relief="flat")
-
-  frame0.but.1 <- ttkbutton(frame0, width=12, text="OK",
-                            command=UpdatePar)
-  frame0.but.2 <- ttkbutton(frame0, width=12, text="Cancel",
+  frame0.but.2 <- ttkbutton(frame0, width=12, text="OK", command=UpdatePar)
+  frame0.but.3 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
-
-  tkgrid(frame0.but.1, frame0.but.2, pady=c(5, 10))
-
-  tkgrid.configure(frame0.but.1, sticky="e", padx=c(0, 4))
-  tkgrid.configure(frame0.but.2, sticky="w", padx=c(0, 10), rowspan=2)
-
-  tkpack(frame0, side="bottom", anchor="e")
+  frame0.but.4 <- ttkbutton(frame0, width=12, text="Help",
+                            command=function() {
+                              print(help("SetConfiguration", package="RSurvey"))
+                            })
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, 
+         sticky="se", pady=10, padx=c(4, 0))
+  tkgrid.columnconfigure(frame0, 0, weight=1)
+  tkgrid.configure(frame0.but.4, padx=c(4, 10))
+  tkpack(frame0, fill="x", side="bottom", anchor="e")
 
   # Paned window
 
@@ -142,9 +142,9 @@ SetConfiguration <- function(parent=NULL) {
 
   frame1 <- ttkframe(pw, relief="flat", borderwidth=0, padding=10)
 
-  txt <- "Approximate number of contour levels"
-  frame1.lab.1.1 <- ttklabel(frame1, text=txt)
   txt <- "Width of plotting window canvas, in inches"
+  frame1.lab.1.1 <- ttklabel(frame1, text=txt)
+  txt <- "Approximate number of contour levels"
   frame1.lab.2.1 <- ttklabel(frame1, text=txt)
   txt <- "Scaling for point symbols"
   frame1.lab.3.1 <- ttklabel(frame1, text=txt)
@@ -159,8 +159,8 @@ SetConfiguration <- function(parent=NULL) {
   txt <- "Increment for sequence of arrows in y direction"
   frame1.lab.8.1 <- ttklabel(frame1, text=txt)
 
-  frame1.ent.1.2 <- ttkentry(frame1, width=8, textvariable=nlevels.var)
-  frame1.ent.2.2 <- ttkentry(frame1, width=8, textvariable=width.var)
+  frame1.ent.1.2 <- ttkentry(frame1, width=8, textvariable=width.var)
+  frame1.ent.2.2 <- ttkentry(frame1, width=8, textvariable=nlevels.var)
   frame1.ent.3.2 <- ttkentry(frame1, width=8, textvariable=cex.pts.var)
   frame1.ent.4.2 <- ttkentry(frame1, width=8, textvariable=asp.yx.var)
   frame1.ent.5.2 <- ttkentry(frame1, width=8, textvariable=asp.zx.var)
@@ -168,7 +168,7 @@ SetConfiguration <- function(parent=NULL) {
   frame1.ent.7.2 <- ttkentry(frame1, width=8, textvariable=vxby.var)
   frame1.ent.8.2 <- ttkentry(frame1, width=8, textvariable=vyby.var)
 
-  tkgrid(frame1.lab.1.1, frame1.ent.1.2, pady=c(0, 4))
+  tkgrid(frame1.lab.1.1, frame1.ent.1.2, pady=c(15, 4))
   tkgrid(frame1.lab.2.1, frame1.ent.2.2, pady=c(0, 4))
   tkgrid(frame1.lab.3.1, frame1.ent.3.2, pady=c(0, 4))
   tkgrid(frame1.lab.4.1, frame1.ent.4.2, pady=c(0, 4))
@@ -200,12 +200,12 @@ SetConfiguration <- function(parent=NULL) {
   frame2.chk.03.1 <- ttkcheckbutton(frame2, text=txt, variable=img.contour.var)
   txt <- "Show contour lines"
   frame2.chk.04.1 <- ttkcheckbutton(frame2, text=txt, variable=show.lines.var)
-  txt <- "Show points on surface"
+  txt <- "Show points on maps"
   frame2.chk.05.1 <- ttkcheckbutton(frame2, text=txt, variable=show.points.var)
   txt <- "Use uniform arrow lengths"
   frame2.chk.06.1 <- ttkcheckbutton(frame2, text=txt, variable=vuni.var)
 
-  txt <- "Show tickmarks on second axes"
+  txt <- "Show tickmarks on second axis"
   frame2.chk.07.1 <- ttkcheckbutton(frame2, text=txt, variable=show.2.axes.var)
   txt <- "Add minor tickmarks"
   frame2.chk.08.1 <- ttkcheckbutton(frame2, text=txt, variable=minor.ticks.var)
@@ -239,11 +239,11 @@ SetConfiguration <- function(parent=NULL) {
 
   tkbind(frame1.ent.1.2, "<KeyRelease>",
          function() {
-           tclvalue(nlevels.var) <- CheckEntry("integer", tclvalue(nlevels.var))
+           tclvalue(width.var) <- CheckEntry("numeric", tclvalue(width.var))
          })
   tkbind(frame1.ent.2.2, "<KeyRelease>",
          function() {
-           tclvalue(width.var) <- CheckEntry("numeric", tclvalue(width.var))
+           tclvalue(nlevels.var) <- CheckEntry("integer", tclvalue(nlevels.var))
          })
   tkbind(frame1.ent.3.2, "<KeyRelease>",
          function() {

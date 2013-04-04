@@ -10,9 +10,8 @@ Writes data to a file.
 
 \usage{
 WriteFile(file.type = "text", file.name = NULL, col.ids = NULL,
-          headers = c(FALSE, FALSE, FALSE), sep = "\t",
-          is.processed = TRUE, is.compressed = FALSE,
-          encoding = getOption("encoding"))
+          is.processed = TRUE, headers = c(FALSE, FALSE), 
+          sep = "\t", is.compressed = FALSE, encoding = getOption("encoding"))
 }
 
 \arguments{
@@ -24,12 +23,12 @@ WriteFile(file.type = "text", file.name = NULL, col.ids = NULL,
   be written to.}
 \item{col.ids}{character; a vector of strings identifying the variables to
   include in the exported data table.}
-\item{headers}{logical; a vector of length 3 that indicates whether the
-  data table contains header lines.}
-\item{sep}{character; the field separator string.}
 \item{is.processed}{logical; if \code{TRUE}, only include record numbers in
   the processed data table, see \code{\link{ProcessData}};
   its default is \code{TRUE}.}
+\item{headers}{logical; a vector of length 2 that indicates whether the
+  data table contains header lines.}
+\item{sep}{character; the field separator string.}
 \item{is.compressed}{logical; if \code{TRUE}, the file will be compressed by
   \href{http://www.gzip.org/}{gzip}; its default is \code{FALSE}.}
 \item{encoding}{character; encoding to be assumed for input strings. If the

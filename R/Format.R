@@ -10,7 +10,6 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
       return(TRUE)
     if (substr(fmt, 1L, 1L) != "%")
       return(TRUE)
-
     code <- substr(fmt, nchar(fmt), nchar(fmt))
     if (inherits(sample, "integer")) {
       if (code != "d")
@@ -290,9 +289,14 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
   frame0.but.2 <- ttkbutton(frame0, width=12, text="OK", command=SaveFormat)
   frame0.but.3 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
-  tkgrid(frame0.but.2, frame0.but.3, sticky="se", pady=c(10, 10))
+  frame0.but.4 <- ttkbutton(frame0, width=12, text="Help",
+                            command=function() {
+                              print(help("Format", package="RSurvey"))
+                            })
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, 
+         sticky="se", pady=10, padx=c(4, 0))
   tkgrid.columnconfigure(frame0, 0, weight=1)
-  tkgrid.configure(frame0.but.3, padx=c(4, 10))
+  tkgrid.configure(frame0.but.4, padx=c(4, 10))
   tkpack(frame0, fill="x", side="bottom", anchor="e")
 
 # Frame 1

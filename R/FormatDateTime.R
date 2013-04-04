@@ -34,7 +34,13 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   # Expand or collapse nodes in treeview
 
   ToggleTreeView <- function(open.nodes) {
+    if (open.nodes)
+      img <- img.minus
+    else
+      img <- img.plus
     tclServiceMode(FALSE)
+    tkconfigure(frame0.but.1, image=img, 
+                command=function() ToggleTreeView(!open.nodes))
     tcl(frame1.tre, "item", id.dt, "-open", open.nodes)
     tcl(frame1.tre, "item", id.tm, "-open", open.nodes)
     tcl(frame1.tre, "item", id.yr, "-open", open.nodes)
@@ -89,6 +95,8 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
 
   cur.val <- NA
   new.fmt <- NULL
+  img.plus  <- GetBitmapImage("plus")
+  img.minus <- GetBitmapImage("minus")
 
   # Assign variables linked to Tk widgets
 
@@ -117,25 +125,26 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   # Frame 0, load and cancel buttons, and size grip
 
   frame0 <- ttkframe(tt, relief="flat")
-
+  
   frame0.but.1 <- ttkbutton(frame0, width=2, image=GetBitmapImage("plus"),
                             command=function() ToggleTreeView(TRUE))
-  frame0.but.2 <- ttkbutton(frame0, width=2, image=GetBitmapImage("minus"),
-                            command=function() ToggleTreeView(FALSE))
-  frame0.but.4 <- ttkbutton(frame0, width=12, text="OK", command=SaveFormat)
-  frame0.but.5 <- ttkbutton(frame0, width=12, text="Cancel",
+  frame0.but.3 <- ttkbutton(frame0, width=12, text="OK", command=SaveFormat)
+  frame0.but.4 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
-
+  frame0.but.5 <- ttkbutton(frame0, width=12, text="Help",
+                            command=function() {
+                              print(help("FormatDateTime", package="RSurvey"))
+                            })
   frame0.grp.6 <- ttksizegrip(frame0)
 
-  tkgrid(frame0.but.1, frame0.but.2, "x", frame0.but.4, frame0.but.5,
+  tkgrid(frame0.but.1, "x", frame0.but.3, frame0.but.4, frame0.but.5, 
          frame0.grp.6)
 
-  tkgrid.columnconfigure(frame0, 2, weight=1)
+  tkgrid.columnconfigure(frame0, 1, weight=1)
 
-  tkgrid.configure(frame0.but.1, padx=c(10, 2), pady=4, sticky="n")
-  tkgrid.configure(frame0.but.2, pady=4, sticky="n")
-  tkgrid.configure(frame0.but.4, frame0.but.5, padx=c(0, 4), pady=c(15, 10))
+  tkgrid.configure(frame0.but.1, padx=c(10, 0), pady=4, sticky="n")
+  tkgrid.configure(frame0.but.3, frame0.but.4, frame0.but.5, 
+                   padx=c(0, 4), pady=c(15, 10))
   tkgrid.configure(frame0.but.5, columnspan=2, padx=c(0, 10))
   tkgrid.configure(frame0.grp.6, sticky="se")
 
@@ -285,7 +294,7 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   tkgrid.configure(frame2a.but.8, padx=0)
 
   tcl("grid", "anchor", frame2a, "w")
-  tkgrid.columnconfigure(frame2a, 8, weight=1, minsize=13)
+  tkgrid.columnconfigure(frame2a, 8, weight=1, minsize=0)
   tkpack(frame2a, fill="x", padx=c(5, 0), pady=c(5, 2))
 
   frame2b <- ttklabelframe(frame2, relief="flat", borderwidth=5, padding=5,
@@ -295,7 +304,7 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   tkgrid(frame2b.ent, padx=0, pady=5)
   tkgrid.configure(frame2b.ent, sticky="we")
   tcl("grid", "anchor", frame2b, "w")
-  tkgrid.columnconfigure(frame2b, 0, weight=1, minsize=13)
+  tkgrid.columnconfigure(frame2b, 0, weight=1, minsize=10)
   tkpack(frame2b, fill="x", padx=c(5, 0), pady=c(0, 2))
 
   frame2c <- ttklabelframe(frame2, relief="flat", borderwidth=5, padding=5,
@@ -305,10 +314,9 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   frame2c.lab.1 <- ttklabel(frame2c, foreground=fg, text=fmt)
   frame2c.lab.2 <- ttklabel(frame2c, foreground=fg,
                             text=format(sample, format=fmt))
-  tkgrid(frame2c.lab.1, padx=5, pady=c(5, 1))
-  tkgrid(frame2c.lab.2, padx=5, pady=c(1, 5))
+  tkgrid(frame2c.lab.1, padx=25, pady=c(5, 1))
+  tkgrid(frame2c.lab.2, padx=25, pady=c(1, 5))
   tcl("grid", "anchor", frame2c, "w")
-  tkgrid.columnconfigure(frame2c, 0, weight=1, minsize=13)
   tkpack(frame2c, fill="x", padx=c(5, 0), pady=c(5, 0))
 
   # Layout paned window
@@ -322,7 +330,7 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   tkgrid.columnconfigure(frame1, frame1.tre, weight=1)
 
   tkadd(pw, frame1, weight=2)
-  tkadd(pw, frame2, weight=1)
+  tkadd(pw, frame2, weight=0)
 
   tkpack(pw, fill="both", expand=TRUE, padx=10, pady=c(10, 0))
 
