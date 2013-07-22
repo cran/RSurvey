@@ -1,8 +1,8 @@
-AddAxis <- function(side, lim, ticks.inside=FALSE,
-                    minor.ticks=FALSE, ...) {
-  # Adds an axis to the current plot.
+# Adds an axis to the current plot.
 
-  # Additional functions (subroutines)
+AddAxis <- function(side, lim, ticks.inside=FALSE, minor.ticks=FALSE, ...) {
+
+  ## Additional functions (subroutines)
 
   # Locate minor tickmark locations
 
@@ -43,8 +43,7 @@ AddAxis <- function(side, lim, ticks.inside=FALSE,
     at.minor[!at.minor %in% at.major]
   }
 
-
-  # Main program
+  ## Main program
 
   add.labels <- if (side %in% c(1, 2)) TRUE else FALSE
   las <- if (side %in% c(1, 3)) 1 else 0

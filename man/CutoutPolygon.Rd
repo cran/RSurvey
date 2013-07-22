@@ -2,7 +2,7 @@
 
 \alias{CutoutPolygon}
 
-\title{Determine Grid Points within Polygon}
+\title{Exclude Gridded Data Outside Polygon}
 
 \description{
 This function excludes gridded data located outside a given polygon.
@@ -37,8 +37,6 @@ Returns a list containing the following components:
 }
 
 \examples{
-x11()
-
 ply <- as(cbind(c(2, 8, 9, 6, 3), c(3, 1, 4, 8, 6)), "gpc.poly")
 x <- seq(0, 10, 0.1)
 y <- seq(0, 10, 0.1)

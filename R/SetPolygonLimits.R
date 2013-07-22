@@ -1,11 +1,11 @@
-SetPolygonLimits <- function(poly.names=NULL, data.poly=NULL, crop.poly=NULL, 
-                             parent=NULL) {
-  # A GUI for specifying polygon limits.
+# A GUI for specifying polygon limits.
 
-  # Additional functions (subroutines)
+SetPolygonLimits <- function(poly.names=NULL, data.poly=NULL, crop.poly=NULL,
+                             parent=NULL) {
+
+  ## Additional functions (subroutines)
 
   # Save new polygons
-
   SaveNames <- function() {
     box1 <- as.character(tclvalue(data.var))
     if(box1 == "")
@@ -17,8 +17,7 @@ SetPolygonLimits <- function(poly.names=NULL, data.poly=NULL, crop.poly=NULL,
     tclvalue(tt.done.var) <- 1
   }
 
-
-  # Main program
+  ## Main program
 
   poly.names <- c("", poly.names)
   if (!is.null(data.poly) && !data.poly %in% poly.names)
@@ -44,8 +43,8 @@ SetPolygonLimits <- function(poly.names=NULL, data.poly=NULL, crop.poly=NULL,
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
-                            "+", as.integer(geo[3]) + 25, sep=""))
+    tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
+                             "+", as.integer(geo[3]) + 25))
   }
 
   tktitle(tt) <- "Polygon Limits"
@@ -64,7 +63,7 @@ SetPolygonLimits <- function(poly.names=NULL, data.poly=NULL, crop.poly=NULL,
                             command=function() {
                               print(help("SetPolygonLimits", package="RSurvey"))
                             })
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, 
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4,
          sticky="se", pady=10, padx=c(4, 0))
   tkgrid.columnconfigure(frame0, 0, weight=1)
   tkgrid.configure(frame0.but.4, padx=c(4, 10))
@@ -79,7 +78,7 @@ SetPolygonLimits <- function(poly.names=NULL, data.poly=NULL, crop.poly=NULL,
 
   vals <- poly.names
   if (length(vals) == 1)
-    vals <- paste("{", vals, "}", sep="")
+    vals <- paste0("{", vals, "}")
 
   frame1.box.1.2 <- ttkcombobox(frame1, state="readonly",
                                 textvariable=data.var, values=vals)
@@ -92,7 +91,7 @@ SetPolygonLimits <- function(poly.names=NULL, data.poly=NULL, crop.poly=NULL,
   if (!is.null(crop.poly))
     tcl(frame1.box.2.2, "current", match(crop.poly, poly.names) - 1)
 
-  tkgrid(frame1.lab.1.1, frame1.box.1.2, pady=c(20, 4))
+  tkgrid(frame1.lab.1.1, frame1.box.1.2, pady=c(20, 10))
   tkgrid(frame1.lab.2.1, frame1.box.2.2, pady=c(0, 10))
 
   tkgrid.configure(frame1.lab.1.1, frame1.lab.2.1, sticky="w")
@@ -117,11 +116,7 @@ SetPolygonLimits <- function(poly.names=NULL, data.poly=NULL, crop.poly=NULL,
   tclServiceMode(FALSE)
   tkgrab.release(tt)
   tkdestroy(tt)
-
-  if (!is.null(parent))
-    tkfocus(parent)
-
   tclServiceMode(TRUE)
 
-  rtn
+  return(rtn)
 }

@@ -1,11 +1,20 @@
-FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
-                           fmt=NULL, parent=NULL) {
-  # Build calendar date and time string formats.
+# Build calendar date and time string formats.
 
-  # Additional functions (subroutines)
+FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
+                           parent=NULL) {
+
+  ## Additional functions (subroutines)
+
+  # Save format
+  SaveFormat <- function() {
+    fmt <- as.character(tclvalue(fmt.var))
+    if (fmt == "")
+      fmt <- "%d/%m/%Y %H:%M:%OS"
+    new.fmt <<- fmt
+    tclvalue(tt.done.var) <- 1
+  }
 
   # Selection change in the viewtree
-
   SelectionChange <- function() {
     cur.sel <- tcl(frame1.tre, "selection")
     cur.val <- as.character(tcl(frame1.tre, "item", cur.sel, "-values"))[1]
@@ -15,14 +24,12 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   }
 
   # Update sample date-time entry
-
   UpdateSample <- function() {
     txt <- sub("%$", "", tclvalue(fmt.var))
     tclvalue(sample.var) <- if (txt == "") "" else format(sample, format=txt)
   }
 
   # Add string to format entry
-
   AddString <- function(txt) {
     if (as.logical(tcl(frame2a.ent, "selection", "present")))
       tcl(frame2a.ent, "delete", "sel.first", "sel.last")
@@ -32,14 +39,13 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   }
 
   # Expand or collapse nodes in treeview
-
   ToggleTreeView <- function(open.nodes) {
     if (open.nodes)
       img <- img.minus
     else
       img <- img.plus
     tclServiceMode(FALSE)
-    tkconfigure(frame0.but.1, image=img, 
+    tkconfigure(frame0.but.1, image=img,
                 command=function() ToggleTreeView(!open.nodes))
     tcl(frame1.tre, "item", id.dt, "-open", open.nodes)
     tcl(frame1.tre, "item", id.tm, "-open", open.nodes)
@@ -54,14 +60,12 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   }
 
   # Copy format to clipboard
-
   CopyFormat <- function() {
     txt <- as.character(tclvalue(fmt.var))
     cat(txt, file="clipboard")
   }
 
   # Paste format from clipboard
-
   PasteFormat <- function() {
     cb <- try(scan(file="clipboard", what="character", sep="\n", quiet=TRUE),
               silent=TRUE)
@@ -73,22 +77,13 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   }
 
  # Clear format from entry
-
   ClearFormat <- function() {
     tclvalue(fmt.var) <- ""
     UpdateSample()
     tkfocus(frame2a.ent)
   }
 
-  # Save format
-
-  SaveFormat <- function() {
-    new.fmt <<- as.character(tclvalue(fmt.var))
-    tclvalue(tt.done.var) <- 1
-  }
-
-
-  # Main program
+  ## Main program
 
   if (!inherits(sample, c("POSIXct", "POSIXlt")))
     stop("Sample object must be of class POSIXct or POSIXlt.")
@@ -117,15 +112,15 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
-                            "+", as.integer(geo[3]) + 25, sep=""))
+    tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
+                             "+", as.integer(geo[3]) + 25))
   }
   tktitle(tt) <- "Format Date and Time"
 
   # Frame 0, load and cancel buttons, and size grip
 
   frame0 <- ttkframe(tt, relief="flat")
-  
+
   frame0.but.1 <- ttkbutton(frame0, width=2, image=GetBitmapImage("plus"),
                             command=function() ToggleTreeView(TRUE))
   frame0.but.3 <- ttkbutton(frame0, width=12, text="OK", command=SaveFormat)
@@ -137,13 +132,13 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
                             })
   frame0.grp.6 <- ttksizegrip(frame0)
 
-  tkgrid(frame0.but.1, "x", frame0.but.3, frame0.but.4, frame0.but.5, 
+  tkgrid(frame0.but.1, "x", frame0.but.3, frame0.but.4, frame0.but.5,
          frame0.grp.6)
 
   tkgrid.columnconfigure(frame0, 1, weight=1)
 
   tkgrid.configure(frame0.but.1, padx=c(10, 0), pady=4, sticky="n")
-  tkgrid.configure(frame0.but.3, frame0.but.4, frame0.but.5, 
+  tkgrid.configure(frame0.but.3, frame0.but.4, frame0.but.5,
                    padx=c(0, 4), pady=c(15, 10))
   tkgrid.configure(frame0.but.5, columnspan=2, padx=c(0, 10))
   tkgrid.configure(frame0.grp.6, sticky="se")
@@ -153,7 +148,6 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   tkpack(frame0, fill="x", side="bottom", anchor="e")
 
   # Paned window
-
   pw <- ttkpanedwindow(tt, orient="horizontal")
 
   # Frame 1, treeview for conversion specifications
@@ -167,9 +161,9 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   tkconfigure(frame1.tre, yscrollcommand=paste(.Tk.ID(frame1.ysc), "set"))
   tkconfigure(frame1.ysc, command=paste(.Tk.ID(frame1.tre), "yview"))
 
-  tcl(frame1.tre, "column", "#0", width=200, anchor="center")
-  tcl(frame1.tre, "column", "spec", width=80, minwidth=80, anchor="center")
-  tcl(frame1.tre, "column", "exam", width=100, minwidth=80, anchor="center")
+  tcl(frame1.tre, "column", "#0",   width=230, anchor="center")
+  tcl(frame1.tre, "column", "spec", width=80,  minwidth=80, anchor="center")
+  tcl(frame1.tre, "column", "exam", width=120, minwidth=80, anchor="center")
 
   tcl(frame1.tre, "heading", "#0", text="Select", anchor="w")
   tcl(frame1.tre, "heading", "spec", text="Specification")
@@ -200,8 +194,8 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
 
   tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute second",
            values=c("%H:%M:%S", format(sample, format="%H:%M:%S")))
-  tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute second",
-           values=c("%H:%M:%OS", format(sample, format="%H:%M:%OS")))
+  tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute fractional-second",
+           values=c("%H:%M:%OS3", format(sample, format="%H:%M:%OS3")))
   tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute",
            values=c("%I:%M %p", format(sample, format="%I:%M %p")))
 
@@ -244,8 +238,14 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   tkinsert(frame1.tre, id.sc, "end", tags="bg", text="second (00-61)",
            values=c("%S", format(sample, format="%S")))
   tkinsert(frame1.tre, id.sc, "end",  tags="bg",
-           text="second with decimal places",
-           values=c("%OS", format(sample, format="%OS")))
+           text="decisecond precision",
+           values=c("%OS1", format(sample, format="%OS1")))
+  tkinsert(frame1.tre, id.sc, "end",  tags="bg",
+           text="centisecond precision",
+           values=c("%OS2", format(sample, format="%OS2")))
+  tkinsert(frame1.tre, id.sc, "end",  tags="bg",
+           text="millisecond precision",
+           values=c("%OS3", format(sample, format="%OS3")))
 
   tkinsert(frame1.tre, id.wk, "end", tags="bg",
            text="week of the year (00-53), US",
@@ -259,7 +259,7 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   # Frame 2
 
   frame2 <- ttkframe(pw, relief="flat")
-  
+
   frame2a <- ttklabelframe(frame2, relief="flat", borderwidth=5, padding=5,
                            text="Conversion specification format")
 
@@ -355,5 +355,5 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"),
   tkdestroy(tt)
   tclServiceMode(TRUE)
 
-  new.fmt
+  return(new.fmt)
 }

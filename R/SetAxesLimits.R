@@ -1,7 +1,8 @@
-SetAxesLimits <- function(lim=NULL, parent=NULL) {
-  # A GUI for specifying data and axis limits.
+# A GUI for specifying data and axis limits.
 
-  # Additional functions (subroutines)
+SetAxesLimits <- function(lim=NULL, parent=NULL) {
+
+  ## Additional functions (subroutines)
 
   # Update limits
 
@@ -51,8 +52,7 @@ SetAxesLimits <- function(lim=NULL, parent=NULL) {
     new <<- d
   }
 
-
-  # Main program
+  ## Main program
 
   new <- lim
 
@@ -99,8 +99,8 @@ SetAxesLimits <- function(lim=NULL, parent=NULL) {
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
-                            "+", as.integer(geo[3]) + 25, sep=""))
+    tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
+                             "+", as.integer(geo[3]) + 25))
   }
   tktitle(tt) <- "Axes Limits"
   tkwm.resizable(tt, 1, 0)
@@ -116,7 +116,7 @@ SetAxesLimits <- function(lim=NULL, parent=NULL) {
                             command=function() {
                               print(help("SetAxesLimits", package="RSurvey"))
                             })
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, 
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4,
          sticky="se", pady=10, padx=c(4, 0))
   tkgrid.columnconfigure(frame0, 0, weight=1)
   tkgrid.configure(frame0.but.4, padx=c(4, 10))
@@ -297,7 +297,6 @@ SetAxesLimits <- function(lim=NULL, parent=NULL) {
 
   tkfocus(tt)
   tkgrab(tt)
-
   tkwait.variable(tt.done.var)
 
   tclServiceMode(FALSE)
@@ -305,5 +304,5 @@ SetAxesLimits <- function(lim=NULL, parent=NULL) {
   tkdestroy(tt)
   tclServiceMode(TRUE)
 
-  new
+  return(new)
 }

@@ -1,5 +1,6 @@
+# This function excludes gridded data lying outside of a given polygon.
+
 CutoutPolygon <- function(dat, ply=NULL) {
-  # This function excludes gridded data lying outside of a given polygon.
 
   if (inherits(dat, "matrix")) {
     new.dat <- list(x=unique(dat[, 1]), y=unique(dat[, 2]), z=NULL)
@@ -26,7 +27,7 @@ CutoutPolygon <- function(dat, ply=NULL) {
     dat$z <- pnt.in.ply
 
   d <- get.pts(ply)
-  holes <- sapply(d, function(x) x$hole)
+  holes <- vapply(d, function(x) x$hole, TRUE)
   d <- append(d[!holes], d[holes])
 
   for (i in seq(along=d)) {
@@ -61,5 +62,5 @@ CutoutPolygon <- function(dat, ply=NULL) {
   dat$y <- dat$y[!(cols %in% rm.cols)]
   dat$z <- dat$z[!(rows %in% rm.rows), !(cols %in% rm.cols)]
 
-  dat
+  return(dat)
 }

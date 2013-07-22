@@ -16,7 +16,7 @@ Data(option, value, which.attr = NULL, clear.proj = FALSE, clear.data = FALSE,
 \arguments{
 \item{option}{character; the parameter name, see \sQuote{Parameters}.}
 \item{value}{a parameter value specified for \code{option} (optional).}
-\item{which.attr}{character, a non-empty character string specifying which 
+\item{which.attr}{character, a non-empty character string specifying which
                   attribute is to be accessed (optional).}
 \item{clear.proj}{logical; if \code{TRUE} basic \acronym{GUI} preferences will
   be saved and all other data removed; its default is \code{FALSE}.}
@@ -27,7 +27,7 @@ Data(option, value, which.attr = NULL, clear.proj = FALSE, clear.data = FALSE,
 
 \section{Data}{
 Imported raw data is saved to the data frame \code{data.raw},
-see \code{\link{ReadData}}. Processed point data is saved to the data frame
+see \code{\link{ImportData}}. Processed point data is saved to the data frame
 \code{data.pts} and interpolated surface data is saved to the list
 \code{data.grd}, see \code{\link{ProcessData}}.
 }

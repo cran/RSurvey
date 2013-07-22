@@ -2,7 +2,7 @@
 
 \alias{CheckEntry}
 
-\title{Content Control within Entry Widget}
+\title{Control Content in Entry Widget}
 
 \description{
 Content control for character strings based on an expected data type.
@@ -18,7 +18,7 @@ CheckEntry(ent.typ, ent.str = "")
 }
 
 \details{
-The entry types include: \var{real}, \var{integer},
+The entry types include: \var{real}, \var{integer}, \var{logical},
 \var{hour}, \var{minute}, \var{second}, and \var{date}.
 }
 

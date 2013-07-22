@@ -1,15 +1,15 @@
-\name{ManageData}
+\name{ManageVariables}
 
-\alias{ManageData}
+\alias{ManageVariables}
 
-\title{Manage Data}
+\title{Manage Variables}
 
 \description{
-A \acronym{GUI} for managing, querying, and formatting data.
+A \acronym{GUI} for managing variables in the data table.
 }
 
 \usage{
-ManageData(cols, vars, parent = NULL)
+ManageVariables(cols, vars, parent = NULL)
 }
 
 \arguments{
@@ -23,7 +23,7 @@ This \acronym{GUI} lets you:
 (1) specify the names and format of variables;
 (2) add new variables based on user defined functions,
     see \code{\link{EditFunction}};
-(3) display data in a spreadsheat, see \code{\link{ViewData}}; and
+(3) display data in a spreadsheat, see \code{\link{EditData}}; and
 (4) remove and (or) reorder variables in the data table.
 }
 
@@ -42,7 +42,7 @@ to a specific variable, and contains the following components:
   for variables directly linked to data columns in \code{data.raw}.}
 \item{class}{character; the data class of the vector object.}
 \item{summary}{list; a summary of the variables descriptive statistics (see
-  \code{\link{SummarizeData}}).}
+  \code{\link{SummarizeVariable}}).}
 \item{comments}{character; user comments.}
 The \code{vars} object is a list with components:
 \item{x, y, z, vx, vy, sort.on}{integer; the index number of the corresponding
@@ -54,7 +54,7 @@ The \code{vars} object is a list with components:
 
 \examples{
 \donttest{data(project)
-ManageData(project$cols, project$vars)}
+ManageVariables(project$cols, project$vars)}
 }
 
 \keyword{misc}

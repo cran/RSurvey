@@ -1,15 +1,14 @@
+# A GUI for managing and manipulating polygons; based on the rgeos package.
+
 ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
                            parent=NULL) {
-  # A GUI for managing and manipulating polygons;
-  # based on the rgeos package.
 
-  # Additional functions (subroutines)
+  ## Additional functions (subroutines)
 
   # Save polygon
-
   SavePolygon <- function(type) {
     if (length(polys) > 0) {
-      polys <- polys[sapply(polys, function(i) inherits(i, "gpc.poly"))]
+      polys <- polys[vapply(polys, function(i) inherits(i, "gpc.poly"), TRUE)]
       if (!data.poly %in% names(polys))
         data.poly <- NULL
       if (!crop.poly %in% names(polys))
@@ -21,7 +20,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
       rtn <<- list()
     }
     if (type == "ok")
-      tclvalue(tt.done.var) <- 1L
+      tclvalue(tt.done.var) <- 1
   }
 
   # Plot polygon
@@ -29,7 +28,6 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   PlotPolygon <- function() {
 
     # Draw polygon in canvas
-
     DrawPolygon <- function(contours, tag="", col.line="", col.fill="") {
       for (cnt in contours) {
         pts <- Xy2mn(cnt$x, cnt$y)
@@ -67,7 +65,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
     yran <<- extendrange(yran, f=0.02)
 
     cmd <- tclvalue(rb.var)
-    
+
     polys.base <<- NULL
     if (cmd == "exc") {
       if (length(idxs) > 1L) {
@@ -77,7 +75,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
           union.polys <- try(union(union.polys, polys[[idx]]), silent=TRUE)
           inter.polys <- try(intersect(inter.polys, polys[[idx]]), silent=TRUE)
         }
-        if (!inherits(union.polys, "try-error") && 
+        if (!inherits(union.polys, "try-error") &&
             !inherits(inter.polys, "try-error"))
           polys.base <<- setdiff(union.polys, inter.polys)
       }
@@ -91,16 +89,16 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
       }
       build.polys <- polys[[idxs[1]]]
       for (idx in idxs[-1]) {
-        build.polys <- try(do.call(fun, list(build.polys, polys[[idx]])), 
+        build.polys <- try(do.call(fun, list(build.polys, polys[[idx]])),
                            silent=TRUE)
       }
       if (!inherits(build.polys, "try-error"))
         polys.base <<- build.polys
     }
-    
+
     if (!is.null(polys.base)) {
       base.pts <- get.pts(polys.base)
-      if (length(base.pts) == 0) 
+      if (length(base.pts) == 0)
         polys.base <<- NULL
     }
     if (!is.null(polys.base)) {
@@ -120,29 +118,26 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
       tclvalue(hole.var) <- sum(hole)
       tclvalue(vert.var) <- vert
     }
-    
+
     for (i in idxs)
       DrawPolygon(get.pts(polys[[i]]), tag=names(polys)[i], col.line=col.pal[i])
   }
 
   # Transform coordinates from real to canvas
-
   Xy2mn <- function(x, y) {
     m <- w * ((x - xran[1]) / diff(xran))
     n <- h - (h * ((y - yran[1]) / diff(yran)))
-    list(m=m, n=n)
+    return(list(m=m, n=n))
   }
 
   # Transform coordinates from canvas to real
-
   Mn2xy <- function(m, n) {
     x <- (m * diff(xran) + w * xran[1]) / w
     y <- (h * yran[1] - (n - h) * diff(yran)) / h
-    list(x=x, y=y)
+    return(list(x=x, y=y))
   }
 
   # Scale objects in canvas based on canvas size
-
   ScaleCanvas <- function() {
     w0 <- w
     h0 <- h
@@ -152,7 +147,6 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   }
 
   # Update pointer coordinates
-
   MouseMotion <- function(x, y) {
     if (!is.null(xran)) {
       pnt <- Mn2xy(as.numeric(x), as.numeric(y))
@@ -161,23 +155,21 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   }
 
   # Remove pointer coordinates after leaving canvas
-
   MouseLeave <- function() {
     tclvalue(xy.var) <- ""
   }
 
   # Name polygon
-
   NamePolygon <- function(old=NULL, nam=NA){
     if (is.na(nam))
       nam <- "New Polygon"
     i <- 1
     hold.nam <- nam
     while (nam %in% old) {
-      nam <- paste(hold.nam, " (", i, ")", sep="")
+      nam <- paste0(hold.nam, " (", i, ")")
       i <- i + 1
     }
-    nam
+    return(nam)
   }
 
   # Rename polygon
@@ -213,26 +205,20 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   }
 
   # Save new polygon
-
   SaveNewPolygon <- function() {
     if (is.null(polys.base))
       return()
-
     nam <- NamePolygon(old=names(polys))
     polys[[nam]] <<- polys.base
-
     tcl("lappend", list.var, nam)
-
     idx <- length(polys) - 1
     tkselection.clear(frame1.lst, 0, idx)
     tkselection.set(frame1.lst, idx, idx)
-
     tclvalue(rb.var) <- "add"
     PlotPolygon()
   }
 
   # Select polygon
-
   SelectPolygon <- function(type) {
     n <- length(polys)
     if (n == 0)
@@ -253,7 +239,6 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   }
 
   # Arrange polygon
-
   ArrangePolygon <- function(type) {
     idxs <- as.integer(tkcurselection(frame1.lst)) + 1
     if (length(idxs) == 0)
@@ -302,7 +287,6 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   }
 
   # Clear polygon
-
   ClearPolygon <- function() {
     idxs <- as.integer(tkcurselection(frame1.lst)) + 1
     if (length(idxs) == 0)
@@ -322,7 +306,6 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   }
 
   # Import polygon
-
   ImportPolygon <- function() {
     f <- GetFile(cmd="Open", exts=c("ply"), win.title="Open Polygon File(s)",
                  multi=TRUE, parent=tt)
@@ -348,15 +331,14 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   }
 
   # Export polygon
-
   ExportPolygon <- function() {
     idxs <- as.integer(tkcurselection(frame1.lst)) + 1
     if (length(idxs) == 0)
       return()
-
     for (i in idxs) {
       f <- GetFile(cmd="Save As", exts="ply", win.title="Save Polygon As",
-                   initialfile=names(polys)[i], defaultextension="ply", parent=tt)
+                   initialfile=names(polys)[i], defaultextension="ply",
+                   parent=tt)
       if (is.null(f))
         next
       write.polyfile(polys[[i]], f)
@@ -364,8 +346,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
     tkfocus(tt)
   }
 
-
-  # Main program
+  ## Main program
 
   rtn <- NULL
 
@@ -381,13 +362,13 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
                substr(rainbow(100), 1, 7))
 
   polys.base <- NULL
-  
-  if (is.null(polys)) 
+
+  if (is.null(polys))
     polys <- list()
-  
+
   data.poly <- attr(polys, "data.poly")
   crop.poly <- attr(polys, "crop.poly")
-  
+
   if (is.null(data.poly))
     data.poly <- NA
   if (is.null(crop.poly))
@@ -416,8 +397,8 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
-                            "+", as.integer(geo[3]) + 25, sep=""))
+    tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
+                             "+", as.integer(geo[3]) + 25))
   }
 
   tktitle(tt) <- "Manage Polygons"
@@ -429,23 +410,23 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   menu.file <- tkmenu(tt, tearoff=0, relief="flat")
   tkadd(top.menu, "cascade", label="File", menu=menu.file, underline=0)
 
-  tkadd(menu.file, "command", label="Open\u2026", accelerator="Ctrl+O",
+  tkadd(menu.file, "command", label="Open\u2026", accelerator="Ctrl+o",
         command=ImportPolygon)
-  tkadd(menu.file, "command", label="Save as\u2026", accelerator="Ctrl+S",
+  tkadd(menu.file, "command", label="Save as\u2026", accelerator="Ctrl+s",
         command=ExportPolygon)
 
   menu.edit <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="Edit", menu=menu.edit, underline=0)
-  tkadd(menu.edit, "command", label="Rename\u2026", accelerator="Ctrl+R",
+  tkadd(menu.edit, "command", label="Rename\u2026", accelerator="Ctrl+r",
         command=RenamePolygon)
-  tkadd(menu.edit, "command", label="Delete", accelerator="Del",
+  tkadd(menu.edit, "command", label="Delete", accelerator="Delete",
         command=ClearPolygon)
 
   menu.select <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="Select", menu=menu.select, underline=0)
-  tkadd(menu.select, "command", label="All", accelerator="Ctrl+A",
+  tkadd(menu.select, "command", label="All", accelerator="Ctrl+a",
         command=function() SelectPolygon("all"))
-  tkadd(menu.select, "command", label="Deselect", accelerator="Shift+Ctrl+A",
+  tkadd(menu.select, "command", label="Deselect", accelerator="Shift+Ctrl+a",
         command=function() SelectPolygon("none"))
   tkadd(menu.select, "command", label="Inverse",
         command=function() SelectPolygon("inverse"))
@@ -468,7 +449,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   # Frame 0, ok and cancel buttons, and size grip
 
   frame0 <- ttkframe(tt, relief="flat")
-  
+
   frame0.but.1  <- ttkbutton(frame0, width=2, image=GetBitmapImage("top"),
                              command=function() ArrangePolygon("back"))
   frame0.but.2  <- ttkbutton(frame0, width=2, image=GetBitmapImage("up"),
@@ -479,11 +460,11 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
                              command=function() ArrangePolygon("front"))
   frame0.but.5  <- ttkbutton(frame0, width=2, image=GetBitmapImage("delete"),
                              command=ClearPolygon)
-  
+
   frame0.but.7  <- ttkbutton(frame0, width=12, text="OK",
                              command=function() SavePolygon("ok"))
   frame0.but.8  <- ttkbutton(frame0, width=12, text="Cancel",
-                             command=function() tclvalue(tt.done.var) <- 1L)
+                             command=function() tclvalue(tt.done.var) <- 1)
   frame0.but.9  <- ttkbutton(frame0, width=12, text="Apply",
                              command=function() SavePolygon("apply"))
   frame0.but.10 <- ttkbutton(frame0, width=12, text="Help",
@@ -493,7 +474,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   frame0.grp.11 <- ttksizegrip(frame0)
 
   tkgrid(frame0.but.1, frame0.but.2, frame0.but.3, frame0.but.4, frame0.but.5,
-         "x", frame0.but.7, frame0.but.8, frame0.but.9, frame0.but.10, 
+         "x", frame0.but.7, frame0.but.8, frame0.but.9, frame0.but.10,
          frame0.grp.11)
 
   tkgrid.columnconfigure(frame0, 5, weight=1)
@@ -511,7 +492,6 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   tkpack(frame0, fill="x", side="bottom", anchor="e")
 
   # Paned window
-
   pw <- ttkpanedwindow(tt, orient="horizontal")
 
   # Frame 1
@@ -632,7 +612,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
 
   tclServiceMode(TRUE)
 
-  tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1L)
+  tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1)
 
   tkbind(frame2.cvs, "<Motion>", function(x, y) MouseMotion(x, y))
   tkbind(frame2.cvs, "<Leave>", MouseLeave)
@@ -658,12 +638,10 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   # GUI control
 
   ScaleCanvas()
+  PlotPolygon()
 
   tkfocus(tt)
   tkgrab(tt)
-
-  PlotPolygon()
-
   tkwait.variable(tt.done.var)
 
   tclServiceMode(FALSE)
@@ -671,5 +649,5 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   tkdestroy(tt)
   tclServiceMode(TRUE)
 
-  rtn
+  return(rtn)
 }

@@ -1,7 +1,8 @@
-SetPreferences <- function(parent=NULL) {
-  # A GUI for specifying the interpolation parameters.
+# A GUI for specifying the interpolation parameters.
 
-  # Additional functions (subroutines)
+SetPreferences <- function(parent=NULL) {
+
+  ## Additional functions (subroutines)
 
   # Update parameter values
 
@@ -12,7 +13,7 @@ SetPreferences <- function(parent=NULL) {
 
     grid.res <- list(x=as.numeric(tclvalue(grid.dx.var)),
                      y=as.numeric(tclvalue(grid.dy.var)))
-    if (all(sapply(grid.res, function(i) is.na(i))))
+    if (all(vapply(grid.res, function(i) is.na(i), TRUE)))
       Data("grid.res", NULL)
     else
       Data("grid.res", grid.res)
@@ -20,7 +21,7 @@ SetPreferences <- function(parent=NULL) {
     grid.mba <- list(n=as.integer(tclvalue(mba.n.var)),
                      m=as.integer(tclvalue(mba.m.var)),
                      h=as.integer(tclvalue(mba.h.var)))
-    if (all(sapply(grid.mba, function(i) is.na(i))))
+    if (all(vapply(grid.mba, function(i) is.na(i), TRUE)))
       Data("grid.mba", NULL)
     else
       Data("grid.mba", grid.mba)
@@ -33,8 +34,7 @@ SetPreferences <- function(parent=NULL) {
     tclvalue(tt.done.var) <- 1
   }
 
-
-  # Main program
+  ## Main program
 
   # Assign the variables linked to Tk widgets
 
@@ -67,8 +67,8 @@ SetPreferences <- function(parent=NULL) {
   if (!is.null(parent)) {
       tkwm.transient(tt, parent)
       geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-      tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
-                              "+", as.integer(geo[3]) + 25, sep=""))
+      tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
+                               "+", as.integer(geo[3]) + 25))
   }
   tktitle(tt) <- "Preferences"
 
@@ -82,12 +82,12 @@ SetPreferences <- function(parent=NULL) {
                             command=UpdatePar)
   frame0.but.3 <- ttkbutton(frame0, width=12, text="Cancel",
                             command=function() tclvalue(tt.done.var) <- 1)
-  
+
   frame0.but.4 <- ttkbutton(frame0, width=12, text="Help",
                             command=function() {
                               print(help("SetPreferences", package="RSurvey"))
                             })
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, 
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4,
          pady=c(15, 10), padx=c(4, 0))
   tkgrid.columnconfigure(frame0, 0, weight=1)
   tkgrid.configure(frame0.but.4, padx=c(4, 10))
@@ -135,7 +135,7 @@ SetPreferences <- function(parent=NULL) {
   tkgrid(frame2.lab.2.1, frame2.ent.2.2, pady=c(0, 4))
   tkgrid(frame2.lab.3.1, frame2.ent.3.2)
 
-  tkgrid.configure(frame2.lab.1.1, frame2.lab.2.1, frame2.lab.3.1, sticky="w", 
+  tkgrid.configure(frame2.lab.1.1, frame2.lab.2.1, frame2.lab.3.1, sticky="w",
                    padx=c(0, 2))
   tkgrid.configure(frame2.ent.1.2, frame2.ent.2.2, frame2.ent.3.2, sticky="we")
 

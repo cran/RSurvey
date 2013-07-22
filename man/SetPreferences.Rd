@@ -2,7 +2,7 @@
 
 \alias{SetPreferences}
 
-\title{Set Data Preferences}
+\title{Set Preferences}
 
 \description{
 A \acronym{GUI} for specifying the interpolation algorithms input parameters.
@@ -23,8 +23,7 @@ Queries and sets the following components in \code{\link{Data}}:
   giving the initial size of the spline space in the hierarchical
   construction along the \code{x}- and \code{y}-axis, and the
   number of levels in the hierarchical construction;
-  its default is 11.
-}
+  its default is 11.}
 }
 
 \note{

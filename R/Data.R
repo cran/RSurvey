@@ -1,9 +1,10 @@
+# A function used to set or query data and parameters.
+
 Data <- local({
-  # A function used to set or query data and parameters.
 
   # Store data locally
   dat <- list()
-  
+
   # Set default values
   default <- list("nlevels"       = 20,
                   "width"         = 7,
@@ -22,17 +23,15 @@ Data <- local({
                   "rm.pnt.line"   = 0,
                   "grid.res"      = list(x=NA, y=NA),
                   "grid.mba"      = list(n=NA, m=NA, h=11),
-                  "encoding"      = getOption("encoding"),
-                  "color.palette" = colorspace::diverge_hcl
+                  "color.palette" = terrain.colors
               )
 
+  ## Main program
 
-  # Main program
   function(option, value, which.attr=NULL, clear.proj=FALSE, clear.data=FALSE,
            replace.all=NULL) {
 
     # Replace all values
-
     if (is.list(replace.all)) {
       dat <<- replace.all
       return(invisible())
@@ -45,7 +44,7 @@ Data <- local({
         save.params <- c(save.params, "nlevels", "asp.yx", "asp.zx",
                          "vmax", "vxby", "vyby", "rkey", "show.poly",
                          "img.contour", "show.lines", "show.points",
-                         "vuni", "date.fmt", "polys", "project.file",
+                         "vuni", "date.fmt", "polys", "proj.file",
                          "show.2.axes", "minor.ticks", "ticks.inside",
                          "color.palette", "rm.pnt.line")
       save.params <- save.params[save.params %in% names(dat)]
@@ -71,7 +70,7 @@ Data <- local({
             option.new <- c(option.new, option[i])
         }
       }
-    
+
     # Determine numeric indices from character option element
     } else {
       idx <- match(option[1], names(dat))
@@ -91,7 +90,7 @@ Data <- local({
     # Determine number of options
     noption <- length(option)
     noption.new <- length(option.new)
-    
+
     # Return value
     if (missing(value)) {
       if (noption.new < noption) {
@@ -104,6 +103,7 @@ Data <- local({
         return(dat[[option.new]])
       else
         return(attr(dat[[option.new]], which.attr, exact=TRUE))
+
     # Set value
     } else {
       if (noption.new == noption || (noption.new == (noption - 1)

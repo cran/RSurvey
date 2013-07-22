@@ -1,5 +1,6 @@
+# This function restores local objects within the current R session.
+
 RestoreSession <- function(path, save.objs, fun.call) {
-  # This function restores local objects within the current R session.
 
   if (missing(path)) {
     if (exists("Data")) {
@@ -43,7 +44,7 @@ RestoreSession <- function(path, save.objs, fun.call) {
     if (!obj %in% save.objs) {
       ans <- try(source(i), silent=TRUE)
       if (inherits(ans, "try-error"))
-        err.msg <- paste(err.msg, i, "\n", ans, sep="")
+        err.msg <- paste0(err.msg, i, "\n", ans)
       else
         cat(i, "\n")
     }

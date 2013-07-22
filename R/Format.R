@@ -1,7 +1,30 @@
-Format <- function(sample=pi, fmt=NULL, parent=NULL) {
-  # Build C-style string formats.
+# Build C-style string formats.
 
-  # Additional functions (subroutines)
+Format <- function(sample=pi, fmt=NULL, parent=NULL) {
+
+  ## Additional functions (subroutines)
+
+  # Save conversion specification format
+  SaveFormat <- function() {
+    fmt <- as.character(tclvalue(fmt.var))
+    if (as.character(tclvalue(sample.var)) == "") {
+      msg <- paste0("Invalid format '", fmt, "'; please try again.")
+      tkmessageBox(icon="error", message=msg, title="Error", type="ok",
+                   parent=tt)
+    } else {
+      if (fmt == "") {
+        if (inherits(sample, c("character", "logical"))) {
+          fmt <- "%s"
+        } else if (inherits(sample, "numeric")) {
+          fmt <- "%f"
+        } else if (inherits(sample, "integer")) {
+          fmt <- "%d"
+        }
+      }
+      new.fmt <<- fmt
+      tclvalue(tt.done.var) <- 1
+    }
+  }
 
   # Translate format string, return TRUE if custom format
 
@@ -93,7 +116,6 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
   }
 
   # Add string to conversion format entry
-
   AddString <- function(txt) {
     if (as.logical(tcl(frame2.ent.1, "selection", "present")))
       tcl(frame2.ent.1, "delete", "sel.first", "sel.last")
@@ -146,7 +168,6 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
   }
 
   # Update sample value
-
   UpdateSample <- function() {
     fmt <- as.character(tclvalue(fmt.var))
     if (fmt == "") {
@@ -192,24 +213,22 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
         is.scientific <- as.logical(as.integer(tclvalue(scientific.var)))
         letter <- if (is.scientific) "e" else "f"
       }
-      fmt <- paste("%", space, pad, left, sign, width, period, precision,
-                   letter, sep="")
+      fmt <- paste0("%", space, pad, left, sign, width, period, precision,
+                    letter)
     } else {
-      fmt <- paste("%", left, width, "s", sep="")
+      fmt <- paste0("%", left, width, "s")
     }
     tclvalue(fmt.var) <- fmt
     UpdateSample()
   }
 
   # Copy format to clipboard
-
   CopyFormat <- function() {
     txt <- as.character(tclvalue(fmt.var))
     cat(txt, file="clipboard")
   }
 
   # Paste format from clipboard
-
   PasteFormat <- function() {
     cb <- try(scan(file="clipboard", what="character", sep="\n", quiet=TRUE),
               silent=TRUE)
@@ -222,27 +241,12 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
     tkfocus(frame2.ent.1)
   }
 
-  # Save conversion specification format
-
-  SaveFormat <- function() {
-    fmt <- as.character(tclvalue(fmt.var))
-    if (as.character(tclvalue(sample.var)) == "") {
-      msg <- paste("Invalid format '", fmt, "'; please try again.", sep="")
-      tkmessageBox(icon="error", message=msg, title="Error", type="ok",
-                   parent=tt)
-    } else {
-      new.fmt <<- fmt
-      tclvalue(tt.done.var) <- 1
-    }
-  }
-
-
-    # Main program
+  ## Main program
 
   if (!inherits(sample, c("numeric", "integer", "character",
                           "factor", "logical")))
-    stop(paste("Class of sample object is not acceptable:",
-               class(sample), ".", sep=""))
+    stop(paste0("Class of sample object is not acceptable:",
+                class(sample), "."))
 
   new.fmt <- NULL
 
@@ -278,8 +282,8 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
-                            "+", as.integer(geo[3]) + 25, sep=""))
+    tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
+                             "+", as.integer(geo[3]) + 25))
   }
   tktitle(tt) <- "Format"
 
@@ -293,7 +297,7 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
                             command=function() {
                               print(help("Format", package="RSurvey"))
                             })
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, 
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4,
          sticky="se", pady=10, padx=c(4, 0))
   tkgrid.columnconfigure(frame0, 0, weight=1)
   tkgrid.configure(frame0.but.4, padx=c(4, 10))
@@ -326,7 +330,7 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
                                    command=BuildFormat)
 
   if (is.numeric(sample) && !is.integer(sample)) {
-    tkgrid(frame1.lab.1.1, frame1.ent.1.2, frame1.lab.1.3, frame1.ent.1.4, 
+    tkgrid(frame1.lab.1.1, frame1.ent.1.2, frame1.lab.1.3, frame1.ent.1.4,
            pady=c(15, 10))
     tkgrid(frame1.chk.2.1, columnspan=4, sticky="w", padx=c(10, 0))
     tkgrid.configure(frame1.lab.1.3, padx=c(10, 2))
@@ -352,7 +356,7 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
                           text="Conversion specification format")
 
   frame2.ent.1 <- ttkentry(frame2, textvariable=fmt.var, width=30)
-  
+
   frame2a <- ttkframe(frame2, relief="flat", borderwidth=0, padding=0)
 
   frame2a.but.01 <- ttkbutton(frame2a, width=2, text="%",
@@ -380,9 +384,9 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
                              command=CopyFormat)
   frame2a.but.12 <- ttkbutton(frame2a, width=2, image=GetBitmapImage("paste"),
                              command=PasteFormat)
-  
-  frame2a.chk.13 <- ttkcheckbutton(frame2a, text="Custom", variable=custom.var,
-                                   command=ToggleState)
+
+  frame2a.chk.13 <- ttkcheckbutton(frame2a, text="Custom\u2026",
+                                   variable=custom.var, command=ToggleState)
 
   if (is.numeric(sample)) {
     if (is.integer(sample))
@@ -401,7 +405,7 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
     if (is.logical(sample))
       tkgrid(frame2a.but.01, frame2a.but.02, frame2a.but.03, frame2a.but.04,
              frame2a.but.05, frame2a.but.06, frame2a.but.09, frame2a.but.10,
-             frame2a.but.11, frame2a.but.12, frame2a.chk.13, 
+             frame2a.but.11, frame2a.but.12, frame2a.chk.13,
              pady=c(2, 0), padx=c(0, 2))
     else
       tkgrid(frame2a.but.01, frame2a.but.02, frame2a.but.03, frame2a.but.04,
@@ -413,7 +417,7 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
   tkgrid(frame2a, "x", pady=c(2, 0), sticky="w")
   tkgrid.configure(frame2a.but.10, padx=c(0, 10))
   tkgrid.configure(frame2a.chk.13, padx=c(10, 0))
-  
+
   tkgrid.configure(frame2.ent.1, sticky="we", columnspan=2, padx=c(0, 2))
 
   tkgrid.columnconfigure(frame2, 1, weight=1)
@@ -455,5 +459,5 @@ Format <- function(sample=pi, fmt=NULL, parent=NULL) {
   tkdestroy(tt)
   tclServiceMode(TRUE)
 
-  new.fmt
+  return(new.fmt)
 }

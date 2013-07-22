@@ -1,25 +1,53 @@
+Changes in Version 0.7-5
+
+  o  Graphics are now opened in a platform-independent way using the dev.new
+     function.
+
+  o  Function name changes: ViewText to EditText, and ViewData to EditData.
+
+  o  Calendar date and time variables are accurately converted to character
+     strings using the POSIXct2Character function.
+
+  o  Added ability to import, edit, and export comment string.
+
+  o  Added ability to edit raw data in a spreadsheet. Final edits are saved in
+     a change log.
+
+  o  Added GUI for importing data from an R package. R data sets may also be
+     imported from a file.
+
+  o  RSurvey project files are specified using the *.RData file extension. The
+     *.rda extension is reserved for R data files.
+
+  o  Functions ReadFile and WriteFile have been embedded into the ImportData and
+     ExportData functions, respectively.
+
+  o  Additional arguments have been added to the Export Data GUI.
+
+  o  In Import Data GUI, added decimal and encoding arguments and custom entries
+     for separator, NA strings, and comment parameters.
+
 Changes in Version 0.7-4
-  
-  o  Main GUI is lauched automatically when RSurvey is loaded.
-  
+
+  o  Main GUI is launched automatically when RSurvey is loaded.
+
   o  Added View Data for single variable.
-  
-  o  No longer required to have a data set loaded to open the Data Management 
+
+  o  No longer required to have a data set loaded to open the Data Management
      GUI.
-  
+
   o  Fixed bug with finding unique values in Edit Function GUI.
-  
-  o  The header line specifying variable names now comes before the format 
-     header line. Users need to update header lines in their input text files 
+
+  o  The header line specifying variable names now comes before the format
+     header line. Users need to update header lines in their input text files
      to reflect this change.
-    
-  o  Measurement units have been removed. Users need to remove unit headers 
+
+  o  Measurement units have been removed. Users need to remove unit headers
      from their input text files.
-  
+
   o  Added GUI for sorting the processed data set.
-  
+
 Changes in Version 0.7-3
-  
-  o  Removed dependency on the 'tripack' package because of its restricted 
+
+  o  Removed dependency on the 'tripack' package because of its restricted
      license which explicitly forbids commercial use.
-  

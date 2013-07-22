@@ -1,7 +1,8 @@
-Autocrop <- function(mesh, max.len, max.itr=10000) {
-  # Approximate the shape of an area defined by a set of points.
+# Approximate the shape of an area defined by a set of points.
 
-  # Additional functions (subroutines)
+Autocrop <- function(mesh, max.len, max.itr=10000) {
+
+  ## Additional functions (subroutines)
 
   # Return outer elements with arc lengths greater than max.len
 
@@ -49,10 +50,10 @@ Autocrop <- function(mesh, max.len, max.itr=10000) {
     new.tri
   }
 
+  ## Main program
 
-  # Main program
-  
-  require(tripack)
+  if (!require(tripack))
+    stop()
 
   elem.build <- matrix(c(2, 3, 3, 1, 1, 2), nrow=3, ncol=2, byrow=TRUE,
                        dimnames=list(c("arc1", "arc2", "arc3"),
@@ -123,5 +124,5 @@ Autocrop <- function(mesh, max.len, max.itr=10000) {
   x <- mesh$x[sort.arcs]
   y <- mesh$y[sort.arcs]
 
-  as(structure(c(x, y), .Dim=c(length(x), 2)), "gpc.poly")
+  return(as(structure(c(x, y), .Dim=c(length(x), 2)), "gpc.poly"))
 }

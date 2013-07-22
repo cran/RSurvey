@@ -1,10 +1,10 @@
-Rename <- function(names=NULL, cur.name=NULL, win.title=NULL, parent=NULL) {
-  # A GUI for renaming values in a vector of character strings.
+# A GUI for renaming values in a vector of character strings.
 
-  # Additional functions (subroutines)
+Rename <- function(names=NULL, cur.name=NULL, win.title=NULL, parent=NULL) {
+
+  ## Additional functions (subroutines)
 
   # Update entry
-
   UpdateEntry <- function() {
     if (tclvalue(cur.var) != "" && !(tclvalue(new.var) %in% new.names))
       new.names[names %in% tclvalue(cur.var)] <<- tclvalue(new.var)
@@ -13,15 +13,13 @@ Rename <- function(names=NULL, cur.name=NULL, win.title=NULL, parent=NULL) {
   }
 
   # Save renamed values
-
   SaveNames <- function() {
     UpdateEntry()
     rtn.names <<- new.names
     tclvalue(tt.done.var) <- 1
   }
 
-
-  # Main program
+  ## Main program
 
   if (is.null(names))
     return(NULL)
@@ -44,8 +42,8 @@ Rename <- function(names=NULL, cur.name=NULL, win.title=NULL, parent=NULL) {
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
-                            "+", as.integer(geo[3]) + 25, sep=""))
+    tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
+                             "+", as.integer(geo[3]) + 25))
   }
 
   if (!is.null(win.title))
@@ -65,8 +63,8 @@ Rename <- function(names=NULL, cur.name=NULL, win.title=NULL, parent=NULL) {
                             command=function() {
                               print(help("Rename", package="RSurvey"))
                             })
-  
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, 
+
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4,
          sticky="se", pady=c(15, 10), padx=c(4, 0))
   tkgrid.columnconfigure(frame0, 0, weight=1)
   tkgrid.configure(frame0.but.2, padx=c(40, 0))
@@ -81,7 +79,7 @@ Rename <- function(names=NULL, cur.name=NULL, win.title=NULL, parent=NULL) {
   frame1.lab.2 <- ttklabel(frame1, text="New name")
 
   if (length(names) == 1)
-    prep.names <- paste("{", names, "}", sep="")
+    prep.names <- paste0("{", names, "}")
   else
     prep.names <- names
 
@@ -94,7 +92,7 @@ Rename <- function(names=NULL, cur.name=NULL, win.title=NULL, parent=NULL) {
     tcl(frame1.box.1, "current", match(cur.name, names) - 1)
 
   tkgrid(frame1.lab.1, frame1.box.1, pady=0)
-  tkgrid(frame1.lab.2, frame1.ent.1, pady=c(4, 0))
+  tkgrid(frame1.lab.2, frame1.ent.1, pady=c(10, 0))
 
   tkgrid.configure(frame1.lab.1, frame1.lab.2, sticky="w", padx=c(0, 2))
   tkgrid.configure(frame1.box.1, frame1.ent.1, sticky="we")
@@ -122,11 +120,7 @@ Rename <- function(names=NULL, cur.name=NULL, win.title=NULL, parent=NULL) {
   tclServiceMode(FALSE)
   tkgrab.release(tt)
   tkdestroy(tt)
-
-  if (!is.null(parent))
-    tkfocus(parent)
-
   tclServiceMode(TRUE)
 
-  rtn.names
+  return(rtn.names)
 }

@@ -2,7 +2,7 @@
 
 \alias{LoadPackages}
 
-\title{Load Required Packages for RSurvey}
+\title{Load Required and Suggested Packages}
 
 \description{
 This function installs \R packages required by \pkg{RSurvey}.
@@ -13,12 +13,7 @@ using an existing network connection.
 }
 
 \usage{
-LoadPackages(repo = "http://cran.r-project.org")
-}
-
-\arguments{
-\item{repo}{character; the base \acronym{URL} of the repositories to use for
-  package installation.}
+LoadPackages()
 }
 
 \author{J.C. Fisher}

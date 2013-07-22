@@ -1,3 +1,6 @@
+# Draws a scatter plot with arrows or contour plot with arrows. A key showing
+# how the colors map to state variable values is shown to the right of the plot.
+
 Plot2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
                    xlim=NULL, ylim=NULL, zlim=NULL, xlab=NULL,
                    ylab=NULL, zlab=NULL, asp=NA, csi=NA, width=7,
@@ -6,9 +9,6 @@ Plot2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
                    vxby=NULL, vyby=NULL, axis.side=1:2,
                    minor.ticks=FALSE, ticks.inside=FALSE,
                    add.contour.lines=FALSE, rm.pnt.line=FALSE) {
-  # Draws a scatter plot with arrows or contour plot with arrows. A key showing
-  # how the colors map to state variable values is shown to the right of the
-  # plot.
 
   # Account for missing arguments
 
@@ -75,8 +75,8 @@ Plot2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
     asp <- NA
 
   if (is.null(csi) || is.na(csi)) {
-    x11(pointsize=pointsize)
-    csi <- par("csi") # height of characters and width of margin line (in)
+    dev.new(pointsize=pointsize)
+    csi <- par("csi")  # height of characters and width of margin line (in)
     dev.off()
   }
 
@@ -128,8 +128,8 @@ Plot2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
     if (!is.na(ymax))
       j <- j & y <= ymax
 
-    rows.na <- sapply(1:nrow(z), function(idx) !all(is.na(z[idx, ])))
-    cols.na <- sapply(1:ncol(z), function(idx) !all(is.na(z[, idx])))
+    rows.na <- vapply(1:nrow(z), function(idx) !all(is.na(z[idx, ])), TRUE)
+    cols.na <- vapply(1:ncol(z), function(idx) !all(is.na(z[, idx])), TRUE)
 
     if (nrow(z) < length(x))
       i <- i & (c(FALSE, rows.na) | c(rows.na, FALSE))
@@ -207,22 +207,21 @@ Plot2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
   } else {
     mar.plot   <- c(4, 3.75, 2, 0.75)
     mar.legend <- c(4, 0.00, 2, 4.25)
-    legend.width <- (1 + mar.legend[2] + mar.legend[4]) * csi # width (in)
+    legend.width <- (1 + mar.legend[2] + mar.legend[4]) * csi  # width (in)
   }
   if (is.na(asp)) {
     height <- width
   } else {
-    xmar <- (mar.plot[2] + mar.plot[4]) * csi # plot margin width (in)
-    ymar <- (mar.plot[1] + mar.plot[3]) * csi # plot margin height (in)
-    xin <- width - xmar - legend.width # plot width (in)
-    yin <- xin * diff(ylim) / diff(xlim) * asp # plot height (in)
-    height <- yin + ymar # canvas height (in)
+    xmar <- (mar.plot[2] + mar.plot[4]) * csi  # plot margin width (in)
+    ymar <- (mar.plot[1] + mar.plot[3]) * csi  # plot margin height (in)
+    xin <- width - xmar - legend.width  # plot width (in)
+    yin <- xin * diff(ylim) / diff(xlim) * asp  # plot height (in)
+    height <- yin + ymar  # canvas height (in)
   }
 
-  x11(width=width, height=height, pointsize=pointsize)
+  dev.new(width=width, height=height, pointsize=pointsize)
 
   # Set line width
-
   lwd <- 0.5 * (96 / (6 * 12))
 
   # Draw legend
@@ -280,7 +279,6 @@ Plot2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
   title(ylab=ylab, cex.main=0.9, cex.lab=0.9, line=2.0)
 
   # Plot interpolated surface
-
   if (type == "l") {
     if (!is.double(z))
       storage.mode(z) <- "double"
@@ -291,7 +289,6 @@ Plot2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
   }
 
   # Plot contour lines
-
   if (add.contour.lines && type %in% c("l", "g")) {
       lwd <- 0.5 * (96 / (6 * 12))
       contour(x=x, y=y, z=z, col="#999999", lty="solid",
@@ -362,7 +359,6 @@ Plot2d <- function(x=NULL, y=NULL, z=NULL, vx=NULL, vy=NULL, type="p",
   }
 
   # Plot points
-
   if (type == "p") {
     if (is.null(z) | is.matrix(z)) {
       points(x, y, pch=21, cex=cex.pts, col="black", bg="white", lwd=lwd)

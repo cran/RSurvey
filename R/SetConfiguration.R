@@ -1,12 +1,13 @@
-SetConfiguration <- function(parent=NULL) {
-  # A GUI for specifying window geometry and universal plotting parameters.
+# A GUI for specifying window geometry and universal plotting parameters.
 
-  # Additional functions (subroutines)
+SetConfiguration <- function(parent=NULL) {
+
+  ## Additional functions (subroutines)
 
   UpdatePar <- function() {
     val <- as.numeric(tclvalue(width.var))
     Data("width", if (is.na(val)) NULL else val)
-    
+
     val <- as.integer(tclvalue(nlevels.var))
     Data("nlevels", if (is.na(val)) NULL else val)
 
@@ -42,7 +43,7 @@ SetConfiguration <- function(parent=NULL) {
     tclvalue(tt.done.var) <- 1
   }
 
-  # Main program
+  ## Main program
 
   # Assign variables linked to Tk widgets
 
@@ -111,8 +112,8 @@ SetConfiguration <- function(parent=NULL) {
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
-                            "+", as.integer(geo[3]) + 25, sep=""))
+    tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
+                             "+", as.integer(geo[3]) + 25))
   }
   tktitle(tt) <- "Configuration"
 
@@ -128,7 +129,7 @@ SetConfiguration <- function(parent=NULL) {
                             command=function() {
                               print(help("SetConfiguration", package="RSurvey"))
                             })
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, 
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4,
          sticky="se", pady=10, padx=c(4, 0))
   tkgrid.columnconfigure(frame0, 0, weight=1)
   tkgrid.configure(frame0.but.4, padx=c(4, 10))
@@ -183,7 +184,7 @@ SetConfiguration <- function(parent=NULL) {
                    sticky="w")
   tkgrid.configure(frame1.ent.1.2, frame1.ent.2.2, frame1.ent.3.2,
                    frame1.ent.4.2, frame1.ent.5.2, frame1.ent.6.2,
-                   frame1.ent.7.2, frame1.ent.8.2, padx=c(2, 15), 
+                   frame1.ent.7.2, frame1.ent.8.2, padx=c(2, 15),
                    sticky="we")
 
   tkgrid.columnconfigure(frame1, 1, weight=1, minsize=6)
@@ -226,7 +227,6 @@ SetConfiguration <- function(parent=NULL) {
   tkgrid(frame2.chk.10.1, sticky="w")
 
   # Final layout
-
   tkgrid(frame1, frame2, sticky="nswe")
   tkgrid.columnconfigure(pw, 0, weight=2)
   tkpack(pw, fill="x", expand=TRUE)

@@ -2,10 +2,10 @@
 
 \alias{EvalFunction}
 
-\title{Evaluates an \R Statement}
+\title{Parse and Evaluate an RSurvey Expression}
 
 \description{
-Evaluates a character string representation of an \R statement.
+Parses and evaluates a character string representation of an RSurvey expression.
 }
 
 \usage{
@@ -15,14 +15,11 @@ EvalFunction(txt, cols)
 \arguments{
 \item{txt}{character; a string representation of an \R function;
   see \sQuote{Details}.}
-\item{cols}{list; see \code{\link{ManageData}}.}
+\item{cols}{list; see \code{\link{ManageVariables}}.}
 }
 
 \value{
-The result of evaluating the \code{txt} object after the appropriate
-substitutions have been made.
-\code{Inf}, \code{-Inf}, and \code{NaN} values are converted to \code{NA} in
-numeric vectors.
+The result of evaluating the text epression.
 }
 
 \seealso{

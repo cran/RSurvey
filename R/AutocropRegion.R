@@ -1,7 +1,8 @@
-AutocropRegion <- function(d, parent=NULL, ...) {
-  # A GUI for specify input parameters for the Autocrop function.
+# A GUI for specify input parameters for the Autocrop function.
 
-  # Additional functions (subroutines)
+AutocropRegion <- function(d, parent=NULL, ...) {
+
+  ## Additional functions (subroutines)
 
   # Save polygon and exit GUI
 
@@ -44,33 +45,26 @@ AutocropRegion <- function(d, parent=NULL, ...) {
   }
 
   # Draw base plot and points
-
   DrawBasePlot <- function() {
     do.call(Plot2d, append(list(x=d, type="p"), list(...)))
     dev <<- dev.cur()
   }
 
   # Refresh plot
-
   RefreshPlot <- function() {
     if (is.null(dev))
       return()
-
     dev.off(which=dev)
     DrawBasePlot()
-
     dev <<- dev.cur()
     ply <<- NULL
     old.ply <<- NULL
   }
 
+  ## Main program
 
-  # Main program
-  
-  is.pkg <- "tripack" %in% .packages(all.available=TRUE) &&
-            require(tripack)
-  if (!is.pkg)
-    stop("package tripack required for the AutocropRegion function")
+  if (!require(tripack))
+    stop()
 
   # Initialize parameters
 
@@ -83,11 +77,9 @@ AutocropRegion <- function(d, parent=NULL, ...) {
   old.ply <- NULL
 
   # Construct mesh
-
   mesh <- tripack::tri.mesh(d$x, d$y, duplicate="remove")
 
   # Convex hull and maximum outer arc length
-
   hull <- convex.hull(mesh)
   x1 <- hull$x
   y1 <- hull$y
@@ -96,19 +88,17 @@ AutocropRegion <- function(d, parent=NULL, ...) {
   default.len <- max(sqrt((x2 - x1)^2 + (y2 - y1)^2))
 
   # Assign the variables linked to Tk widgets
-
   max.len.var <- tclVar(format(default.len))
   tt.done.var <- tclVar(0)
 
   # Open GUI
-
   tclServiceMode(FALSE)
   tt <- tktoplevel(padx=0, pady=0)
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste("+", as.integer(geo[2]) + 25,
-                            "+", as.integer(geo[3]) + 25, sep=""))
+    tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
+                             "+", as.integer(geo[3]) + 25))
   }
   tktitle(tt) <- "Autocrop Region"
   tkwm.resizable(tt, 1, 0)
@@ -116,7 +106,7 @@ AutocropRegion <- function(d, parent=NULL, ...) {
   # Frame 0 contains buttons
 
   frame0 <- ttkframe(tt, relief="flat")
-  
+
   frame0.but.2 <- ttkbutton(frame0, width=10, text="Build",
                             command=DrawPolygon)
   frame0.but.3 <- ttkbutton(frame0, width=10, text="Refresh",
@@ -130,9 +120,9 @@ AutocropRegion <- function(d, parent=NULL, ...) {
                               print(help("Autocrop", package="RSurvey"))
                             })
 
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, frame0.but.5, 
+  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4, frame0.but.5,
          frame0.but.6, pady=c(15, 10), padx=c(4, 0))
-  
+
   tkgrid.columnconfigure(frame0, 0, weight=1)
   tkgrid.configure(frame0.but.2, padx=c(10, 0))
   tkgrid.configure(frame0.but.6, padx=c(4, 10))
@@ -170,7 +160,6 @@ AutocropRegion <- function(d, parent=NULL, ...) {
 
   tkfocus(tt)
   tkgrab(tt)
-
   tkwait.variable(tt.done.var)
 
   tclServiceMode(FALSE)
@@ -178,5 +167,5 @@ AutocropRegion <- function(d, parent=NULL, ...) {
   tkdestroy(tt)
   tclServiceMode(TRUE)
 
-  rtn
+  return(rtn)
 }
