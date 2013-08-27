@@ -7,14 +7,15 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
   # Calculate and plot histogram
 
   CalcHist <- function(draw.plot=TRUE) {
+    tclServiceMode(FALSE)
+    on.exit(tclServiceMode(TRUE))
+
     idx <- as.integer(tcl(frame1.box.1.2, "current")) + 1L
-    x <- d[, idx]
-    xlab <- var.names[idx]
+    xlab <- as.character(var.names[idx])
 
     type <- as.integer(tclvalue(breaks.var))
     if (type == 1L) {
-      idx <- as.integer(tcl(frame2.box.2.1, "current")) + 1L
-      breaks <- fun.names[idx]
+      breaks <- fun.names[as.integer(tcl(frame2.box.2.1, "current")) + 1L]
     } else if (type == 2L) {
       breaks <- as.integer(tclvalue(single.var))
     } else if (type == 3L) {
@@ -24,23 +25,17 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
       breaks <- num.split[!is.na(num.split)]
       if (length(breaks) == 0)
         return()
-    } else if (type == 4L) {
-      seq.from <- as.numeric(tclvalue(from.var))
-      seq.to   <- as.numeric(tclvalue(to.var))
-      seq.by   <- as.numeric(tclvalue(by.var))
-      if (any(is.na(c(seq.from, seq.to, seq.by))))
-        return()
-      breaks <- try(seq(seq.from, seq.to, seq.by), silent=TRUE)
-      if (inherits(breaks, "try-error"))
-        return()
     }
 
     right <- as.logical(as.integer(tclvalue(right.var)))
     freq <- as.logical(as.integer(tclvalue(freq.var)))
-
-    obj <- try(hist(x, breaks=breaks, right=right, plot=FALSE))
-    if (inherits(obj, "try-error"))
+    obj <- try(hist(d[[idx]], breaks=breaks, right=right, plot=FALSE), silent=TRUE)
+    if (inherits(obj, "try-error")) {
+      msg <- "Unable to construct historgram."
+      tkmessageBox(icon="error", message=msg, detail=obj, title="Error",
+                   type="ok", parent=tt)
       return()
+    }
 
     if (draw.plot) {
       if (dev.cur() == dev) {
@@ -48,18 +43,11 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
         par(mar=c(5, 5, 2, 2) + 0.1)
       }
       plot(obj, col="light grey", freq=freq, main=NULL, xlab=xlab)
-
     } else {
       obj$xname <- xlab
-      n <- max(vapply(obj, length, 0L))
-      for (i in names(obj)) {
-        obj[[i]] <- format(obj[[i]])
-        length(obj[[i]]) <- n
-        obj[[i]][is.na(obj[[i]])] <- ""
-      }
-      obj <- as.data.frame(do.call(cbind, obj))
-      EditData(obj, col.names=names(obj), read.only=TRUE,
-               win.title="Histogram Data", parent=tt)
+      txt <- paste(c(capture.output(obj), ""), collapse="\n")
+      EditText(txt, read.only=TRUE, win.title="Histogram Data",
+               is.fixed.width.font=TRUE, parent=tt)
     }
   }
 
@@ -82,11 +70,13 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
   # Toggle state on break options
 
   ToggleState <- function() {
+    tclServiceMode(FALSE)
+    on.exit(tclServiceMode(TRUE))
+
     type <- as.integer(tclvalue(breaks.var))
     states <- rep(FALSE, 4)
     states[type] <- TRUE
 
-    tclServiceMode(FALSE)
     s <- if (states[1]) "readonly" else "disabled"
     tkconfigure(frame2.box.2.1, state=s)
     s <- if (states[2]) "!disabled" else "disabled"
@@ -95,14 +85,6 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
     tkconfigure(frame2.ent.4.3, state=s)
     s <- if (states[3]) "normal" else "disabled"
     tkconfigure(frame2.ent.6.1, state=s)
-    s <- if (states[4]) "normal" else "disabled"
-    tkconfigure(frame2.lab.8.1,  state=s)
-    tkconfigure(frame2.lab.9.1,  state=s)
-    tkconfigure(frame2.lab.10.1, state=s)
-    tkconfigure(frame2.ent.8.2,  state=s)
-    tkconfigure(frame2.ent.9.2,  state=s)
-    tkconfigure(frame2.ent.10.2, state=s)
-    tclServiceMode(TRUE)
 
     if (states[1]) {
       tkfocus(frame2.box.2.1)
@@ -110,8 +92,6 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
       tkfocus(frame2.ent.4.3)
     } else if (states[3]) {
       tkfocus(frame2.ent.6.1)
-    } else if (states[4]) {
-      tkfocus(frame2.ent.8.2)
     }
 
     PlotHist()
@@ -121,31 +101,40 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
 
   # Check input arguments
 
-  if (!is.matrix(d) & !is.data.frame(d) & !is.vector(d))
+  if (inherits(d, c("data.frame", "matrix"))) {
+    d <- as.list(d)
+  } else if (!is.list(d) && is.null(dim(d))) {
+    d <- list(d)
+  }
+  if (!is.list(d) || length(d) == 0L)
     stop()
-  if (is.vector(d))
-    d <- as.matrix(d)
+
+  is.num <- which(vapply(d, function(i) inherits(i, c("numeric", "integer")),
+                         TRUE))
+  d <- d[is.num]
+  if (length(d) == 0L)
+    stop()
 
   if (is.null(var.names)) {
-    var.names <- colnames(d)
+    var.names <- names(d)
     if (is.null(var.names))
-      var.names <- paste0("Unknown (", 1:ncol(d), ")")
+      var.names <- paste0("Unknown (", length(d), ")")
   }
 
   if (is.character(var.default)) {
     var.default <- which(var.default == var.names)
-    if (length(var.default) == 0 || !var.default %in% 1:ncol(d))
+    if (length(var.default) == 0)
       var.default <- 1L
   }
-  if (!is.integer(var.default) || !var.default %in% 1:ncol(d))
+  if (!is.integer(var.default) && !var.default %in% var.names)
     stop()
 
   # Set limits and default value
-  maxs <- as.vector(apply(d, 2, function(i) length(unique(i))))
+  maxs <- vapply(d, function(i) length(unique(i)), 0L)
   maxs[maxs > 100] <- 100
   maxs[maxs <  10] <-  10
-  defs <- as.vector(apply(d, 2, function(i) length(hist(i, plot=FALSE)$breaks)))
-  xdef <- (defs[var.default] - 1) / (maxs[var.default] - 1)
+  defs <- vapply(d, function(i) length(hist(i, plot=FALSE)$breaks), 0L)
+  xdef <- (defs[var.default] - 1L) / (maxs[var.default] - 1L)
 
   # Initialize device
   dev <- dev.cur()
@@ -157,11 +146,7 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
   breaks.var <- tclVar(1L)
   single.var <- tclVar(defs[var.default])
   scale.var <- tclVar(xdef)
-
   vector.var <- tclVar()
-  from.var <- tclVar()
-  to.var <- tclVar()
-  by.var <- tclVar()
   right.var <- tclVar(TRUE)
   freq.var <- tclVar(TRUE)
 
@@ -189,17 +174,18 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
                             command=function() CalcHist(draw.plot=FALSE))
   frame0.but.2 <- ttkbutton(frame0, width=12, text="Plot",
                             command=function() CalcHist())
-  frame0.but.3 <- ttkbutton(frame0, width=12, text="Close",
+  frame0.but.4 <- ttkbutton(frame0, width=12, text="Close",
                             command=function() tclvalue(tt.done.var) <- 1)
-  frame0.but.4 <- ttkbutton(frame0, width=12, text="Help",
+  frame0.but.5 <- ttkbutton(frame0, width=12, text="Help",
                             command=function() {
                               print(help("BuildHistogram", package="RSurvey"))
                             })
-  tkgrid(frame0.but.1, frame0.but.2, frame0.but.3, frame0.but.4,
-         pady=10, padx=c(0, 4))
-  tkgrid.configure(frame0.but.4, padx=c(0, 10))
-
-  tkpack(frame0, side="bottom", anchor="e")
+  tkgrid(frame0.but.1, frame0.but.2, "x", frame0.but.4, frame0.but.5, pady=10)
+  tkgrid.configure(frame0.but.1, padx=c(10, 4))
+  tkgrid.configure(frame0.but.5, padx=c(4, 10))
+  
+  tkgrid.columnconfigure(frame0, 2, weight=1, minsize=15)
+  tkpack(frame0, fill="x", expand=TRUE, side="bottom", anchor="e")
 
   # Frame 1
 
@@ -216,7 +202,7 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
   tcl(frame1.box.1.2, "current", var.default - 1L)
 
   tkgrid.columnconfigure(frame1, 1, weight=1, minsize=25)
-  tkpack(frame1, fill="x", expand=TRUE, ipadx=0, ipady=0, padx=10, pady=5)
+  tkpack(frame1, fill="x", expand=TRUE, padx=10, pady=5)
 
   # Frame 2
 
@@ -244,18 +230,7 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
   frame2.rbt.5.1 <- ttkradiobutton(frame2, variable=breaks.var, value=3L,
                                   text=txt, command=ToggleState)
   frame2.ent.6.1 <- ttkentry(frame2, width=15, textvariable=vector.var)
-
-  txt <- "A sequence giving the breakpoints between cells"
-  frame2.rbt.7.1 <- ttkradiobutton(frame2, variable=breaks.var, value=4L,
-                                  text=txt, command=ToggleState)
-
-  frame2.lab.8.1  <- ttklabel(frame2, text="Starting value")
-  frame2.lab.9.1  <- ttklabel(frame2, text="Ending value")
-  frame2.lab.10.1 <- ttklabel(frame2, text="Increment")
-
-  frame2.ent.8.2  <- ttkentry(frame2, width=10, textvariable=from.var)
-  frame2.ent.9.2  <- ttkentry(frame2, width=10, textvariable=to.var)
-  frame2.ent.10.2 <- ttkentry(frame2, width=10, textvariable=by.var)
+  
 
   tkgrid(frame2.rbt.1.1, sticky="w", columnspan=3)
   tkgrid(frame2.box.2.1, padx=c(20, 0), pady=c(0, 10), sticky="we",
@@ -263,29 +238,16 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
   tkgrid(frame2.rbt.3.1, sticky="w", columnspan=3)
   tkgrid(frame2.scl.4.1, "x", frame2.ent.4.3, pady=c(0, 5), sticky="we")
   tkgrid(frame2.rbt.5.1, sticky="w", columnspan=3)
-  tkgrid(frame2.ent.6.1, padx=c(20, 0), pady=c(0, 10), sticky="we",
+  tkgrid(frame2.ent.6.1, padx=c(20, 0), pady=c(0, 5), sticky="we",
          columnspan=3)
-  tkgrid(frame2.rbt.7.1, sticky="w", columnspan=3)
-  tkgrid(frame2.lab.8.1, frame2.ent.8.2)
-  tkgrid(frame2.lab.9.1, frame2.ent.9.2)
-  tkgrid(frame2.lab.10.1, frame2.ent.10.2)
-
+  
   tkgrid.configure(frame2.scl.4.1, columnspan=2, padx=c(20, 4))
-  tkgrid.configure(frame2.lab.8.1, frame2.lab.9.1, frame2.lab.10.1,
-                   padx=c(40, 4), sticky="w")
-  tkgrid.configure(frame2.ent.8.2, frame2.ent.9.2, frame2.ent.10.2,
-                   columnspan=2, sticky="we")
-  tkgrid.configure(frame2.ent.9.2, pady=2)
-  tkgrid.configure(frame2.ent.8.2, frame2.ent.9.2, frame2.ent.10.2,
-                   padx=c(0,150))
 
   tkgrid.columnconfigure(frame2, 1, weight=1, minsize=50)
-  tkpack(frame2, fill="x", expand=TRUE, ipadx=0, ipady=0, padx=10, pady=5)
+  tkpack(frame2, fill="x", expand=TRUE, padx=10, pady=5)
 
   # Frame 3
-
   frame3 <- ttkframe(tt, relief="flat")
-
   txt <- "The histogram cells are right-closed (left-open) intervals"
   frame3.chk.1 <- ttkcheckbutton(frame3, text=txt, variable=right.var,
                                  command=PlotHist)
@@ -293,7 +255,6 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
   tkpack(frame3, fill="x", expand=TRUE, padx=20, pady=5)
 
   # Frame 4
-
   frame4 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
                           text="Axis scaling")
   frame4.rbt.1.1 <- ttkradiobutton(frame4, variable=freq.var, value=TRUE,
@@ -304,7 +265,7 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
                                    command=PlotHist)
   tkgrid(frame4.rbt.1.1, frame4.rbt.1.2)
   tkgrid.configure(frame4.rbt.1.1, padx=c(0, 10))
-  tkpack(frame4, fill="x", expand=TRUE, ipadx=0, ipady=0, padx=10, pady=5)
+  tkpack(frame4, fill="x", expand=TRUE, padx=10, pady=5)
 
   # Bind events
 
@@ -331,18 +292,6 @@ BuildHistogram <- function(d, var.names=NULL, var.default=1L, parent=NULL) {
            tclvalue(single.var) <- ent
            tclvalue(scale.var) <- (as.integer(ent) - 1) / (maxs[idx] - 1)
            PlotHist()
-         })
-  tkbind(frame2.ent.8.2, "<KeyRelease>",
-         function() {
-           tclvalue(from.var) <- CheckEntry("numeric", tclvalue(from.var))
-         })
-  tkbind(frame2.ent.9.2, "<KeyRelease>",
-         function() {
-           tclvalue(to.var) <- CheckEntry("numeric", tclvalue(to.var))
-         })
-  tkbind(frame2.ent.10.2, "<KeyRelease>",
-         function() {
-           tclvalue(by.var) <- CheckEntry("numeric", tclvalue(by.var))
          })
 
   tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1)

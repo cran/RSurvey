@@ -1,4 +1,4 @@
-# This function loads R packages required by RSurvey. If a required
+# This function loads R packages suggested by RSurvey. If a suggested
 # package is unavailable on the local computer an attempt is made to
 # acquire the package from CRAN using an existing network connection.
 
@@ -9,6 +9,9 @@ LoadPackages <- function() {
   # Install missing packages from CRAN mirror
   InstallPackages <- function() {
     tkconfigure(tt, cursor="watch")
+    on.exit(tkconfigure(tt, cursor="arrow"))
+    tclServiceMode(FALSE)
+    on.exit(tclServiceMode(TRUE), add=TRUE)
     idx <- which(cran.mirrors$Name %in% as.character(tclvalue(repo.var)))
     repo <- cran.mirrors$URL[idx]
     contriburl <- contrib.url(repos=repo, type=getOption("pkgType"))
@@ -23,28 +26,18 @@ LoadPackages <- function() {
                     "\n\nWould you like to try a different CRAN mirror?")
       ans <- tkmessageBox(icon="question", message=msg, title="CRAN",
                           type="yesno", parent=tt)
-      if (tolower(substr(ans, 1, 1)) == "y") {
-        tkconfigure(tt, cursor="arrow")
+      if (tolower(substr(ans, 1, 1)) == "y")
         return()
-      }
     }
-    if (length(available.pkgs) > 0) {
-      tclServiceMode(FALSE)
+    if (length(available.pkgs) > 0)
       install.packages(available.pkgs, repos=repo, quiet=TRUE)
-      tclServiceMode(TRUE)
-    }
     tclvalue(tt.done.var) <- 1
   }
 
   ## Main program
 
-  if (!require("tcltk"))
-    stop("tcltk required")
-
-  # Establish required and suggested packages
-  require.pkgs <- c("sp", "rgeos", "rgl", "MBA")
-  suggest.pkgs <- c("rgdal", "tripack", "colorspace", "dichromat")
-  pkgs <- c(require.pkgs, suggest.pkgs)
+  # Suggested packages
+  pkgs <- c("rgdal", "tripack", "colorspace", "dichromat", "rgl")
 
   # Account for missing packages
 
@@ -121,16 +114,12 @@ LoadPackages <- function() {
 
   # Load packages into current session
   for (pkg in pkgs) {
-    is.pkg.suggested <- pkg %in% suggest.pkgs
     is.pkg.loaded <- suppressWarnings(require(pkg, character.only=TRUE,
-                                      warn.conflicts=!is.pkg.suggested,
-                                      quietly=is.pkg.suggested))
+                                              warn.conflicts=FALSE,
+                                              quietly=TRUE))
     if (is.pkg.loaded)
       next
-    if (is.pkg.suggested)
-      warning(paste("unable to load suggested package:", pkg))
-    else
-      stop(paste("unable to load required package:", pkg))
+    warning(paste("unable to load suggested package:", pkg))
   }
 
   # Warn if Tktable is unavailable

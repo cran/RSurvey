@@ -20,9 +20,9 @@ EditText <- function(txt, read.only=FALSE, win.title="View Text",
       msg <- paste("This action will delete existing console text.",
                    "Would you like to continue?", sep="\n")
       ans <- as.character(tkmessageBox(icon="question", message=msg,
-                                       title="Warning", type="okcancel",
+                                       title="Warning", type="yesno",
                                        parent=tt))
-      if (ans == "ok")
+      if (ans == "yes")
         ClearConsole()
       else
         return()
@@ -93,17 +93,7 @@ EditText <- function(txt, read.only=FALSE, win.title="View Text",
   }
 
   # Determine the width of the text window
-  if (read.only) {
-    if (n > 88) {
-      txt.width <- 90
-    } else if (n < 48) {
-      txt.width <- 50
-    } else {
-      txt.width <- n + 2
-    }
-  } else {
-    txt.width <- 90
-  }
+  txt.width <- 80
 
   # Determine font type
   if (is.fixed.width.font)
@@ -179,7 +169,7 @@ EditText <- function(txt, read.only=FALSE, win.title="View Text",
 
   # Frame 0, ok and cancel buttons
 
-  frame0 <- tkframe(tt, relief="flat", padx=0, pady=0)
+  frame0 <- tkframe(tt, relief="flat")
 
   if (read.only) {
     frame0.but.1.2 <- "x"
@@ -206,7 +196,7 @@ EditText <- function(txt, read.only=FALSE, win.title="View Text",
 
   # Frame 1, text window
 
-  frame1 <- tkframe(tt, relief="flat", padx=0, pady=0)
+  frame1 <- tkframe(tt, relief="flat")
 
   frame1.txt.1.1 <- tktext(frame1, bg="white", font=font.type, padx=2,
                            pady=2, width=txt.width, height=20, undo=1,
@@ -223,7 +213,7 @@ EditText <- function(txt, read.only=FALSE, win.title="View Text",
   tkconfigure(frame1.ysc.1.2, command=paste(.Tk.ID(frame1.txt.1.1), "yview"))
 
   tkgrid(frame1.txt.1.1, frame1.ysc.1.2)
-  tkgrid.configure(frame1.txt.1.1, padx=0, pady=0, sticky="nswe")
+  tkgrid.configure(frame1.txt.1.1, sticky="nswe")
   tkgrid.configure(frame1.ysc.1.2, sticky="ns")
 
   if (!read.only || (read.only & n > 120)) {

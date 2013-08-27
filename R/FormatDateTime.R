@@ -1,6 +1,6 @@
 # Build calendar date and time string formats.
 
-FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
+FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt="",
                            parent=NULL) {
 
   ## Additional functions (subroutines)
@@ -8,8 +8,6 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
   # Save format
   SaveFormat <- function() {
     fmt <- as.character(tclvalue(fmt.var))
-    if (fmt == "")
-      fmt <- "%d/%m/%Y %H:%M:%OS"
     new.fmt <<- fmt
     tclvalue(tt.done.var) <- 1
   }
@@ -25,8 +23,8 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
 
   # Update sample date-time entry
   UpdateSample <- function() {
-    txt <- sub("%$", "", tclvalue(fmt.var))
-    tclvalue(sample.var) <- if (txt == "") "" else format(sample, format=txt)
+    fmt <- sub("%$", "", tclvalue(fmt.var))
+    tclvalue(sample.var) <- format(sample, format=fmt)
   }
 
   # Add string to format entry
@@ -40,11 +38,12 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
 
   # Expand or collapse nodes in treeview
   ToggleTreeView <- function(open.nodes) {
+    tclServiceMode(FALSE)
+    on.exit(tclServiceMode(TRUE))
     if (open.nodes)
       img <- img.minus
     else
       img <- img.plus
-    tclServiceMode(FALSE)
     tkconfigure(frame0.but.1, image=img,
                 command=function() ToggleTreeView(!open.nodes))
     tcl(frame1.tre, "item", id.dt, "-open", open.nodes)
@@ -56,7 +55,6 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
     tcl(frame1.tre, "item", id.mn, "-open", open.nodes)
     tcl(frame1.tre, "item", id.sc, "-open", open.nodes)
     tcl(frame1.tre, "item", id.wk, "-open", open.nodes)
-    tclServiceMode(TRUE)
   }
 
   # Copy format to clipboard
@@ -85,9 +83,12 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
 
   ## Main program
 
-  if (!inherits(sample, c("POSIXct", "POSIXlt")))
-    stop("Sample object must be of class POSIXct or POSIXlt.")
-
+  if (!inherits(sample, c("POSIXt", "Date")))
+    stop("Sample object must be of class POSIXt or Date.")
+  if (!is.character(fmt))
+    stop("format argument must be of class character")
+  is.posixt <- inherits(sample, "POSIXt")
+  
   cur.val <- NA
   new.fmt <- NULL
   img.plus  <- GetBitmapImage("plus")
@@ -96,13 +97,10 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
   # Assign variables linked to Tk widgets
 
   sample.var <- tclVar()
-  fmt.var <- tclVar()
-  if (!is.null(fmt) && is.character(fmt)) {
-     tclvalue(fmt.var) <- fmt
-     UpdateSample()
-  }
-
+  fmt.var <- tclVar(fmt)
   tt.done.var <- tclVar(0)
+
+  UpdateSample()
 
   # Open GUI
 
@@ -115,7 +113,7 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
     tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
                              "+", as.integer(geo[3]) + 25))
   }
-  tktitle(tt) <- "Format Date and Time"
+  tktitle(tt) <- ifelse(is.posixt, "Format Date and Time", "Format Date")
 
   # Frame 0, load and cancel buttons, and size grip
 
@@ -170,15 +168,10 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
   tcl(frame1.tre, "heading", "exam", text="Example")
 
   id.dt <- tkinsert(frame1.tre, "", "end", tags="bg", text="date")
-  id.tm <- tkinsert(frame1.tre, "", "end", tags="bg", text="time")
   id.yr <- tkinsert(frame1.tre, "", "end", tags="bg", text="year")
   id.mo <- tkinsert(frame1.tre, "", "end", tags="bg", text="month")
-  id.dy <- tkinsert(frame1.tre, "", "end", tags="bg", text="day")
-  id.hr <- tkinsert(frame1.tre, "", "end", tags="bg", text="hour")
-  id.mn <- tkinsert(frame1.tre, "", "end", tags="bg", text="minute")
-  id.sc <- tkinsert(frame1.tre, "", "end", tags="bg", text="second")
   id.wk <- tkinsert(frame1.tre, "", "end", tags="bg", text="week")
-
+  id.dy <- tkinsert(frame1.tre, "", "end", tags="bg", text="day")
   tkinsert(frame1.tre, id.dt, "end", tags="bg", text="month day year",
            values=c("%m/%d/%Y", format(sample, format="%m/%d/%Y")))
   tkinsert(frame1.tre, id.dt, "end", tags="bg", text="month day year",
@@ -191,27 +184,23 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
            values=c("%A %B %d", format(sample, format="%A %B %d")))
   tkinsert(frame1.tre, id.dt, "end", tags="bg", text="weekday month day",
            values=c("%a %b %d", format(sample, format="%a %b %d")))
-
-  tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute second",
-           values=c("%H:%M:%S", format(sample, format="%H:%M:%S")))
-  tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute fractional-second",
-           values=c("%H:%M:%OS3", format(sample, format="%H:%M:%OS3")))
-  tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute",
-           values=c("%I:%M %p", format(sample, format="%I:%M %p")))
-
   tkinsert(frame1.tre, id.yr, "end", tags="bg",
            text="year without century (00-99)",
            values=c("%y", format(sample, format="%y")))
   tkinsert(frame1.tre, id.yr, "end", tags="bg", text="year with century",
            values=c("%Y", format(sample, format="%Y")))
-
   tkinsert(frame1.tre, id.mo, "end", tags="bg", text="month (01-12)",
            values=c("%m", format(sample, format="%m")))
   tkinsert(frame1.tre, id.mo, "end", tags="bg", text="abbreviated month name",
            values=c("%b", format(sample, format="%b")))
   tkinsert(frame1.tre, id.mo, "end", tags="bg", text="full month name",
            values=c("%B", format(sample, format="%B")))
-
+  tkinsert(frame1.tre, id.wk, "end", tags="bg",
+           text="week of the year (00-53), US",
+           values=c("%U", format(sample, format="%U")))
+  tkinsert(frame1.tre, id.wk, "end", tags="bg",
+           text="week of the year (00-53), UK",
+           values=c("%W", format(sample, format="%W")))
   tkinsert(frame1.tre, id.dy, "end", tags="bg", text="day of the month (01-31)",
            values=c("%d", format(sample, format="%d")))
   tkinsert(frame1.tre, id.dy, "end", tags="bg",
@@ -220,39 +209,42 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
   tkinsert(frame1.tre, id.dy, "end",  tags="bg",
            text="weekday (0-6, Sunday is 0)",
            values=c("%w", format(sample, format="%w")))
-
   tkinsert(frame1.tre, id.dy, "end", tags="bg", text="abbreviated weekday name",
            values=c("%a", format(sample, format="%a")))
   tkinsert(frame1.tre, id.dy, "end", tags="bg", text="full weekday name",
            values=c("%A", format(sample, format="%A")))
-  tkinsert(frame1.tre, id.hr, "end", tags="bg", text="hours (00-23)",
-           values=c("%H", format(sample, format="%H")))
-  tkinsert(frame1.tre, id.hr, "end", tags="bg", text="hours (01-12)",
-           values=c("%I", format(sample, format="%I")))
-  tkinsert(frame1.tre, id.hr, "end", tags="bg", text="AM/PM indicator",
-           values=c("%p", format(sample, format="%p")))
 
-  tkinsert(frame1.tre, id.mn, "end", tags="bg", text="minute (00-59)",
-           values=c("%M", format(sample, format="%M")))
-
-  tkinsert(frame1.tre, id.sc, "end", tags="bg", text="second (00-61)",
-           values=c("%S", format(sample, format="%S")))
-  tkinsert(frame1.tre, id.sc, "end",  tags="bg",
-           text="decisecond precision",
-           values=c("%OS1", format(sample, format="%OS1")))
-  tkinsert(frame1.tre, id.sc, "end",  tags="bg",
-           text="centisecond precision",
-           values=c("%OS2", format(sample, format="%OS2")))
-  tkinsert(frame1.tre, id.sc, "end",  tags="bg",
-           text="millisecond precision",
-           values=c("%OS3", format(sample, format="%OS3")))
-
-  tkinsert(frame1.tre, id.wk, "end", tags="bg",
-           text="week of the year (00-53), US",
-           values=c("%U", format(sample, format="%U")))
-  tkinsert(frame1.tre, id.wk, "end", tags="bg",
-           text="week of the year (00-53), UK",
-           values=c("%W", format(sample, format="%W")))
+  if (is.posixt) {
+    id.tm <- tkinsert(frame1.tre, "", "end", tags="bg", text="time")
+    id.hr <- tkinsert(frame1.tre, "", "end", tags="bg", text="hour")
+    id.mn <- tkinsert(frame1.tre, "", "end", tags="bg", text="minute")
+    id.sc <- tkinsert(frame1.tre, "", "end", tags="bg", text="second")
+    tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute second",
+             values=c("%H:%M:%S", format(sample, format="%H:%M:%S")))
+    tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute fractional-second",
+             values=c("%H:%M:%OS3", format(sample, format="%H:%M:%OS3")))
+    tkinsert(frame1.tre, id.tm, "end", tags="bg", text="hour minute",
+             values=c("%I:%M %p", format(sample, format="%I:%M %p")))
+    tkinsert(frame1.tre, id.hr, "end", tags="bg", text="hours (00-23)",
+             values=c("%H", format(sample, format="%H")))
+    tkinsert(frame1.tre, id.hr, "end", tags="bg", text="hours (01-12)",
+             values=c("%I", format(sample, format="%I")))
+    tkinsert(frame1.tre, id.hr, "end", tags="bg", text="AM/PM indicator",
+             values=c("%p", format(sample, format="%p")))
+    tkinsert(frame1.tre, id.mn, "end", tags="bg", text="minute (00-59)",
+             values=c("%M", format(sample, format="%M")))
+    tkinsert(frame1.tre, id.sc, "end", tags="bg", text="second (00-61)",
+             values=c("%S", format(sample, format="%S")))
+    tkinsert(frame1.tre, id.sc, "end",  tags="bg",
+             text="decisecond precision",
+             values=c("%OS1", format(sample, format="%OS1")))
+    tkinsert(frame1.tre, id.sc, "end",  tags="bg",
+             text="centisecond precision",
+             values=c("%OS2", format(sample, format="%OS2")))
+    tkinsert(frame1.tre, id.sc, "end",  tags="bg",
+             text="millisecond precision",
+             values=c("%OS3", format(sample, format="%OS3")))
+  }
 
   tktag.configure(frame1.tre, "bg", background="white")
 
@@ -291,7 +283,7 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
   tkgrid.configure(frame2a.ent, sticky="we", columnspan=9)
 
   tkgrid.configure(frame2a.but.6, padx=c(5, 2))
-  tkgrid.configure(frame2a.but.8, padx=0)
+  tkgrid.configure(frame2a.but.8)
 
   tcl("grid", "anchor", frame2a, "w")
   tkgrid.columnconfigure(frame2a, 8, weight=1, minsize=0)
@@ -301,7 +293,7 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
                            text="Sample")
   frame2b.ent <- ttkentry(frame2b, textvariable=sample.var, width=30,
                           state="readonly", takefocus=FALSE)
-  tkgrid(frame2b.ent, padx=0, pady=5)
+  tkgrid(frame2b.ent, pady=5)
   tkgrid.configure(frame2b.ent, sticky="we")
   tcl("grid", "anchor", frame2b, "w")
   tkgrid.columnconfigure(frame2b, 0, weight=1, minsize=10)
@@ -310,12 +302,12 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
   frame2c <- ttklabelframe(frame2, relief="flat", borderwidth=5, padding=5,
                            text="Example")
   fg <- "#414042"
-  fmt <- "%Y-%m-%d %H:%M:%S"
+  fmt <- ifelse(is.posixt, "%Y-%m-%d %H:%M:%S", "%Y-%m-%d")
   frame2c.lab.1 <- ttklabel(frame2c, foreground=fg, text=fmt)
   frame2c.lab.2 <- ttklabel(frame2c, foreground=fg,
                             text=format(sample, format=fmt))
-  tkgrid(frame2c.lab.1, padx=25, pady=c(5, 1))
-  tkgrid(frame2c.lab.2, padx=25, pady=c(1, 5))
+  tkgrid(frame2c.lab.1, padx=0, pady=c(5, 1))
+  tkgrid(frame2c.lab.2, padx=0, pady=c(1, 5))
   tcl("grid", "anchor", frame2c, "w")
   tkpack(frame2c, fill="x", padx=c(5, 0), pady=c(5, 0))
 
@@ -323,8 +315,8 @@ FormatDateTime <- function(sample=as.POSIXct("1991-08-25 20:57:08"), fmt=NULL,
 
   tkgrid(frame1.tre, frame1.ysc, frame2)
 
-  tkgrid.configure(frame1.ysc, padx=0, pady=c(20, 0), sticky="nws")
-  tkgrid.configure(frame1.tre, padx=0, pady=0, sticky="news")
+  tkgrid.configure(frame1.ysc, pady=c(20, 0), sticky="nws")
+  tkgrid.configure(frame1.tre, sticky="news")
 
   tkgrid.rowconfigure(frame1, frame1.tre, weight=1)
   tkgrid.columnconfigure(frame1, frame1.tre, weight=1)

@@ -1,6 +1,6 @@
 # A GUI for managing and manipulating data.
 
-ManageVariables <- function(cols, vars, parent=NULL) {
+ManageVariables <- function(cols, vars, query, changelog, parent=NULL) {
 
   ## Additional functions (subroutines)
 
@@ -8,7 +8,7 @@ ManageVariables <- function(cols, vars, parent=NULL) {
   SaveChanges <- function(type) {
     SaveNb()
     if (!identical(cols, old.cols)) {
-      rtn <<- list(cols=cols, vars=vars)
+      rtn <<- list(cols=cols, vars=vars, query=query, changelog=changelog)
       old.cols <<- cols
     }
     if (type == "ok")
@@ -42,7 +42,7 @@ ManageVariables <- function(cols, vars, parent=NULL) {
     tclvalue(list.var) <- tcl("lreplace", tclvalue(list.var),
                               idx - 1, idx - 1, new.id)
 
-    # Update functions
+    # Update variable id's used in functions, query, and changelog
     if (!is.null(old.id)) {
       old.fun <- cols[[idx]]$fun
       str.1 <- paste0("\"", old.id, "\"")
@@ -56,11 +56,10 @@ ManageVariables <- function(cols, vars, parent=NULL) {
         tkinsert(frame2.txt.4.2, "end", new.fun)
         tkconfigure(frame2.txt.4.2, state="disabled")
       }
-      query.fun <- Data("query.fun")
-      if (!is.null(query.fun)) {
-         query.fun <- gsub(str.1, str.2, query.fun, fixed=TRUE)
-         Data("query.fun", query.fun)
-      }
+      if (!is.null(query))
+        query <<- gsub(str.1, str.2, query, fixed=TRUE)
+      if (!is.null(changelog))
+        changelog[changelog[, "variable"] %in% old.id, "variable"] <<- new.id
     }
   }
 
@@ -80,16 +79,12 @@ ManageVariables <- function(cols, vars, parent=NULL) {
     new.fun <- as.character(tclvalue(tkget(frame2.txt.4.2, "1.0", "end-1c")))
     cols[[idx]]$fun <<- new.fun
 
-    # Save summary
-    is.fun <- !identical(old.fun, new.fun)
-    is.fmt <- !identical(old.fmt, new.fmt)
-    if (is.fun) {
+    # Save summary string
+    if (!identical(old.fun, new.fun)) {
       obj <- EvalFunction(new.fun, cols)
-      cols[[idx]]$summary <<- SummarizeVariable(obj, fmt=new.fmt)
-      cols[[idx]]$sample <<- na.omit(obj)[1]
-    } else if (is.fmt) {
-      cols[[idx]]$summary <<- SummarizeVariable(cols[[idx]]$summary,
-                                                fmt=new.fmt)
+      cols[[idx]]$summary <<- paste(c("", capture.output(summary(obj)),
+                                      "", capture.output(str(obj)),
+                                      ""), collapse="\n")
     }
 
     # Save name
@@ -111,24 +106,11 @@ ManageVariables <- function(cols, vars, parent=NULL) {
     # Update class
     tkconfigure(frame2.ent.3.2, state="normal")
     saved.class <- cols[[idx]]$class
-    tclvalue(class.var) <- saved.class
+    tclvalue(class.var) <- paste(saved.class)
     tkconfigure(frame2.ent.3.2, state="readonly")
 
     # Update format
     saved.fmt <- cols[[idx]]$format
-    if (is.null(saved.fmt) || saved.fmt == "") {
-      if (saved.class %in% c("character", "logical", "factor")) {
-        saved.fmt <- "%s"
-      } else if (saved.class == "numeric") {
-        saved.fmt <- "%f"
-      } else if (saved.class == "integer") {
-        saved.fmt <- "%d"
-      } else if (saved.class == c("POSIXlt", "POSIXct")) {
-        saved.fmt <- "%d/%m/%Y %H:%M:%OS"
-      } else {
-        saved.fmt <- ""
-      }
-    }
     tkconfigure(frame2.ent.2.2, state="normal")
     tclvalue(fmt.var) <- saved.fmt
     tkconfigure(frame2.ent.2.2, state="readonly")
@@ -146,7 +128,7 @@ ManageVariables <- function(cols, vars, parent=NULL) {
     # Update summary
     tkconfigure(frame3.txt, state="normal")
     tcl(frame3.txt, "delete", "1.0", "end")
-    sum.str <- cols[[idx]]$summary$String
+    sum.str <- cols[[idx]]$summary
     if (!is.null(sum.str))
       tkinsert(frame3.txt, "end", sum.str)
     tkconfigure(frame3.txt, state="disabled")
@@ -177,6 +159,12 @@ ManageVariables <- function(cols, vars, parent=NULL) {
       return()
 
     var.str <- paste0("\"", cols[[idx]]$id, "\"")
+
+    if (!is.null(query) &&  grepl(var.str, query, fixed=TRUE))
+      query <<- NULL
+    if (!is.null(changelog) &&  grepl(var.str, changelog, fixed=TRUE))
+      changelog <<- NULL
+
     funs.with.var <- grep(var.str, sapply(cols, function(i) i$fun), fixed=TRUE)
     dependent.vars <- funs.with.var[!funs.with.var %in% idx]
 
@@ -195,8 +183,8 @@ ManageVariables <- function(cols, vars, parent=NULL) {
                     "\" corresponds with raw data.\n\n",
                     "Are you sure you want to remove it?")
       ans <- tkmessageBox(icon="question", message=msg, title="Question",
-                          type="okcancel", parent=tt)
-      if (as.character(ans) == "cancel")
+                          type="yesno", parent=tt)
+      if (as.character(ans) == "no")
         return()
     }
 
@@ -247,15 +235,15 @@ ManageVariables <- function(cols, vars, parent=NULL) {
     idx <- length(cols) + 1L
 
     cols[[idx]] <- list(id="", class="")
-    value.length <- cols[[1]]$summary$Count
-    f <- EditFunction(cols, index=idx, value.length=value.length,
-                      win.title="New Variable", parent=tt)
 
+    f <- EditFunction(cols, index=idx, value.length=nrow(Data("data.raw")),
+                      win.title="New Variable", parent=tt)
     if (is.null(f$fun) || f$fun == "")
       return()
 
-    cols[[idx]] <<- list(id="", name="New Variable", class=f$class, index=NA,
-                         fun=f$fun, sample=f$sample, summary=f$summary)
+    cols[[idx]] <<- list(id="", name="New Variable", format="", class=f$class,
+                         index=NA, fun=f$fun, sample=f$sample,
+                         summary=f$summary)
 
     tcl("lappend", list.var, new.name)
     tkselection.clear(frame1.lst, 0, "end")
@@ -275,8 +263,8 @@ ManageVariables <- function(cols, vars, parent=NULL) {
     if (length(idx) == 0)
       return()
 
-    n <- cols[[1]]$summary$Count
-    f <- EditFunction(cols, index=idx, value.length=n, parent=tt)
+    f <- EditFunction(cols, index=idx, value.length=nrow(Data("data.raw")),
+                      parent=tt)
 
     if (is.null(f$fun))
       return()
@@ -291,8 +279,8 @@ ManageVariables <- function(cols, vars, parent=NULL) {
       return()
     }
 
-    if (f$class != cols[[idx]]$class)
-      cols[[idx]]$format <<- NULL
+    if (!identical(f$class, cols[[idx]]$class))
+        cols[[idx]]$format <<- ""
 
     cols[[idx]]$fun     <<- f$fun
     cols[[idx]]$class   <<- f$class
@@ -312,7 +300,7 @@ ManageVariables <- function(cols, vars, parent=NULL) {
     sample.value <- cols[[idx]]$sample
 
     old.fmt <- as.character(tclvalue(fmt.var))
-    if (inherits(sample.value, "POSIXct")) {
+    if (inherits(sample.value, c("POSIXt", "Date"))) {
       new.fmt <- FormatDateTime(sample=sample.value, fmt=old.fmt, parent=tt)
     } else {
       if (is.null(sample.value))
@@ -320,8 +308,10 @@ ManageVariables <- function(cols, vars, parent=NULL) {
       new.fmt <- Format(sample=sample.value, fmt=old.fmt, parent=tt)
     }
 
-    if (!is.null(new.fmt))
-      tclvalue(fmt.var) <- new.fmt
+    if (is.null(new.fmt))
+      new.fmt <- ""
+
+    tclvalue(fmt.var) <- new.fmt
   }
 
   # Arrange variables in listbox
@@ -376,44 +366,51 @@ ManageVariables <- function(cols, vars, parent=NULL) {
 
   # View data for selected variable
 
-  CallEditData <- function(type="dataframe") {
+  CallEditData <- function(type="data.frame") {
+    tkconfigure(tt, cursor="watch")
+    on.exit(tkconfigure(tt, cursor="arrow"))
     idx <- as.integer(tkcurselection(frame1.lst)) + 1L
     if (length(idx) == 0)
       return()
-
-    tkconfigure(tt, cursor="watch")
     SaveNb()
 
-    if (type == "data")
-      idxs <- idx
-    else
-      idxs <- 1:length(cols)
-
-    nams <- vapply(cols, function(i) i$name, "")
+    nams <- vapply(cols, function(i) i$id, "")
     fmts <- vapply(cols, function(i) i$format, "")
     funs <- vapply(cols, function(i) i$fun, "")
 
+    idxs <- if (type == "data") idx else 1L:length(cols)
     d <- as.data.frame(lapply(idxs, function(i) EvalFunction(funs[i], cols)),
                        stringsAsFactors=FALSE)
-    row.names(d) <- row.names(Data("data.raw"))
-
-    EditData(d, nams[idxs], fmts[idxs], read.only=TRUE, win.title="Raw Data",
-             parent=tt)
-    tkconfigure(tt, cursor="arrow")
-    tkfocus(tt)
+    rows.str <- row.names(Data("data.raw"))
+    rows.int <- as.integer(rows.str)
+    is.int <- is.integer(rows.int) && !anyDuplicated(rows.int)
+    row.names(d) <- if (is.int) rows.int else rows.str
+    raw.idxs <- na.omit(vapply(cols, function(i) i$index, 1L))
+    if (all(idxs %in% raw.idxs)) {
+      win.title <- "Raw Data"
+    } else if (all(!idxs %in% raw.idxs)) {
+      win.title <- "Derived Data"
+    } else {
+      win.title <- "Raw and Derived Data"
+    }
+    EditData(d, nams[idxs], fmts[idxs], read.only=TRUE,
+             win.title=win.title, parent=tt)
   }
 
   # Build historgram
 
   CallBuildHistogram <- function() {
+    tkconfigure(tt, cursor="watch")
+    on.exit(tkconfigure(tt, cursor="arrow"))
     SaveNb()
     idx <- as.integer(tkcurselection(frame1.lst)) + 1L
     if (length(idx) == 0)
       return()
 
-    cont.classes <- c("integer", "numeric")
-    idxs <- which(vapply(cols, function(i) i$class, "") %in% cont.classes)
-
+    is.num <- vapply(cols,
+                     function(i) any(c("numeric", "integer") %in% i$class),
+                     TRUE)
+    idxs <- which(is.num)
     if (length(idxs) == 0) {
       msg <- paste("A histogram may only be built for continous variables;",
                    "that is, variables of class \"numeric\" or \"integer\".")
@@ -425,8 +422,7 @@ ManageVariables <- function(cols, vars, parent=NULL) {
     ids  <- vapply(cols, function(i) i$id, "")
     funs <- vapply(cols, function(i) i$fun, "")
 
-    d <- sapply(idxs, function(i) EvalFunction(funs[i], cols))
-    d <- as.data.frame(d)
+    d <- lapply(idxs, function(i) EvalFunction(funs[i], cols))
 
     var.names <- ids[idxs]
     if (idx %in% idxs)
@@ -465,7 +461,7 @@ ManageVariables <- function(cols, vars, parent=NULL) {
   # Open gui
 
   tclServiceMode(FALSE)
-  tt <- tktoplevel(padx=0, pady=0)
+  tt <- tktoplevel()
 
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
@@ -484,10 +480,12 @@ ManageVariables <- function(cols, vars, parent=NULL) {
   tkadd(menu.edit, "command", label="New\u2026", accelerator="Ctrl+n",
         command=SaveNewVar)
   tkadd(menu.edit, "command", label="Delete", command=DeleteVar)
-  tkadd(menu.edit, "separator")
-  tkadd(menu.edit, "command", label="View data",
+
+  menu.view <- tkmenu(tt, tearoff=0, relief="flat")
+  tkadd(top.menu, "cascade", label="View", menu=menu.view, underline=0)
+  tkadd(menu.view, "command", label="Selected variable",
         command=function() CallEditData("data"))
-  tkadd(menu.edit, "command", label="View data frame",
+  tkadd(menu.view, "command", label="All variables",
         command=function() CallEditData())
 
   menu.arrange <- tkmenu(tt, tearoff=0)
@@ -502,7 +500,7 @@ ManageVariables <- function(cols, vars, parent=NULL) {
         accelerator="Shift+Ctrl+]", command=function() Arrange("front"))
 
   menu.graph <- tkmenu(tt, tearoff=0)
-  tkadd(top.menu, "cascade", label="Graph", menu=menu.graph, underline=0)
+  tkadd(top.menu, "cascade", label="Plot", menu=menu.graph, underline=0)
   tkadd(menu.graph, "command", label="Histogram\u2026",
         command=CallBuildHistogram)
 
@@ -563,7 +561,7 @@ ManageVariables <- function(cols, vars, parent=NULL) {
 
   # Frame 1, listbox with variable names
 
-  frame1 <- tkframe(pw, relief="flat", padx=0, pady=0)
+  frame1 <- tkframe(pw, relief="flat")
 
   frame1.lst <- tklistbox(frame1, selectmode="browse", activestyle="none",
                 relief="flat", borderwidth=5, width=25, exportselection=FALSE,
@@ -636,7 +634,7 @@ ManageVariables <- function(cols, vars, parent=NULL) {
 
   frame3.ysc <- ttkscrollbar(frame3, orient="vertical")
 
-  frame3.txt <- tktext(frame3, bg="white", padx=2, pady=2, width=50, height=8,
+  frame3.txt <- tktext(frame3, bg="white", padx=2, pady=2, width=60, height=8,
                 undo=1, wrap="none", foreground="black", relief="flat",
                 font="TkFixedFont",
                 yscrollcommand=function(...) tkset(frame3.ysc, ...))
@@ -645,8 +643,8 @@ ManageVariables <- function(cols, vars, parent=NULL) {
 
   tkgrid(frame3.txt, frame3.ysc)
 
-  tkgrid.configure(frame3.txt, sticky="news", padx=0, pady=0)
-  tkgrid.configure(frame3.ysc, sticky="ns", padx=0, pady=0)
+  tkgrid.configure(frame3.txt, sticky="news")
+  tkgrid.configure(frame3.ysc, sticky="ns")
 
   tkgrid.columnconfigure(frame3, 0, weight=1, minsize=25)
   tkgrid.rowconfigure(frame3, 0, weight=1, minsize=25)

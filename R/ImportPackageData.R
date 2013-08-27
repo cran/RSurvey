@@ -6,6 +6,10 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
 
   # Load data set
   LoadDataset <- function() {
+    tkconfigure(tt, cursor="watch")
+    tclServiceMode(FALSE)
+    on.exit(tkconfigure(tt, cursor="arrow"))
+    on.exit(tclServiceMode(TRUE), add=TRUE)
     idx <- as.integer(tkcurselection(frame1.lst.2.1)) + 1L
     pkg.name <- pkg.names[idx]
     idx <- as.integer(tkcurselection(frame1.lst.2.4))
@@ -13,7 +17,8 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
     e <- environment(LoadDataset)
     txt <- paste0("data(", pkg.item, ", package=\"", pkg.name, "\", envir=e)")
     ds.name <- eval(parse(text=txt))
-    rtn <<- eval(parse(text=paste("(", ds.name, ")")), envir=e)
+    rtn <<- list(d=eval(parse(text=paste("(", ds.name, ")")), envir=e),
+                 src=paste(pkg.name, ds.name, sep="::"))
     tclvalue(tt.done.var) <- 1
   }
 
@@ -25,16 +30,17 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
 
   # Load package
   LoadPackage <- function(pkg.name) {
+    tkconfigure(tt, cursor="watch")
+    tclServiceMode(FALSE)
+    on.exit(tkconfigure(tt, cursor="arrow"))
+    on.exit(tclServiceMode(TRUE), add=TRUE)
     idx <- as.integer(tkcurselection(frame1.lst.2.1)) + 1L
     pkg.name <- pkg.names[idx]
     lib <- paste("package", pkg.name, sep=":")
-    if (!lib %in% search()) {
-      tkconfigure(tt, cursor="watch")
+    if (!lib %in% search())
       suppressPackageStartupMessages(require(pkg.name, quietly=TRUE,
                                              warn.conflicts=FALSE,
                                              character.only=TRUE))
-      tkconfigure(tt, cursor="arrow")
-    }
     if (lib %in% search()) {
       idx <- as.integer(tcl(frame1.box.3.1, "current"))
       if (idx == 2L) {
@@ -97,9 +103,11 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
 
   # GUI control for select package
   SelectPackage <- function() {
-    idx <- as.integer(tkcurselection(frame1.lst.2.1)) + 1L
     tkconfigure(tt, cursor="watch")
     tclServiceMode(FALSE)
+    on.exit(tkconfigure(tt, cursor="arrow"))
+    on.exit(tclServiceMode(TRUE), add=TRUE)
+    idx <- as.integer(tkcurselection(frame1.lst.2.1)) + 1L
     pkg.name <- pkg.names[idx]
     if (IsPackageLoaded(pkg.name)) {
       tkconfigure(frame1.but.4.2, state="disabled", default="disabled")
@@ -157,8 +165,6 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
       tkselection.clear(frame1.lst.2.4, 0, "end")
       tclvalue(dataset.var) <- ""
     }
-    tclServiceMode(TRUE)
-    tkconfigure(tt, cursor="arrow")
     SelectDataset()
   }
 
@@ -181,8 +187,11 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
 
   # GUI control for select package type
   SelectPackageType <- function() {
-    idx <- as.integer(tcl(frame1.box.3.1, "current"))
+    tkconfigure(tt, cursor="watch")
     tclServiceMode(FALSE)
+    on.exit(tkconfigure(tt, cursor="arrow"))
+    on.exit(tclServiceMode(TRUE), add=TRUE)
+    idx <- as.integer(tcl(frame1.box.3.1, "current"))
     if (idx == 0L) {
       pkg.names <<- all.pkgs
     } else {
@@ -197,7 +206,6 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
     for (i in seq(along=pkg.names))
       tcl("lappend", package.var, pkg.names[i])
     tkselection.set(frame1.lst.2.1, 0)
-    tclServiceMode(TRUE)
     SelectPackage()
     tkfocus(frame1.lst.2.1)
   }
@@ -248,7 +256,7 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
 
   tclServiceMode(FALSE)
 
-  tt <- tktoplevel(padx=0, pady=0)
+  tt <- tktoplevel()
 
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)

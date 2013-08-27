@@ -33,7 +33,9 @@ for shapefile support,
 [**colorspace**](http://cran.r-project.org/web/packages/colorspace/index.html "colorspace")
 for color palettes based on HCL colors,
 [**dichromat**](http://cran.r-project.org/web/packages/dichromat/index.html "dichromat")
-for color-blind safe palettes, and
+for color-blind safe palettes,
+[**rgl**](http://cran.r-project.org/web/packages/rgl/index.html "rgl")
+for 3D visualization, and
 [**tripack**](http://cran.r-project.org/web/packages/tripack/index.html "tripack")
 for auto-cropping. Note that the license for **tripack** explicitly forbids
 commercial use. If any of these recommended packages are missing, **RSurvey**
@@ -43,9 +45,9 @@ Support for displaying table data is provided by
 [tktable](http://tktable.sourceforge.net/ "tktable"),
 a spreadsheet-like [Tcl/Tk](http://www.tcl.tk/ "Tcl/Tk") widget
 (included with the Windows binary distribution of R).
-A call to `tclRequire` will indicate whether tktable is available for use:
+The following call will indicate whether tktable is available for use:
 
-    > tclRequire('Tktable')
+    > tcltk::tclRequire('Tktable', warn = TRUE)
 
 Run
 ---

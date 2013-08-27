@@ -27,9 +27,9 @@ ProcessData(d, type = "p", coerce.rows = NULL, ply = NULL,
 \item{ply}{gpc.poly; if \code{type = "p"} a polygon that defines either the
   data limits, else if \code{type = "g"} a crop region for gridded data.}
 \item{grid.res}{list; numeric components giving the grid spacing along
-  the x- and y-axis for interpolated values, see \code{\link{SetPreferences}}.}
+  the x- and y-axis for interpolated values, see \code{\link{SetInterpolation}}.}
 \item{grid.mba}{list; integer components giving the input parameters for the
-  multilevel B-splines algorithm, see \code{\link{SetPreferences}}.}
+  multilevel B-splines algorithm, see \code{\link{SetInterpolation}}.}
 }
 
 \details{
@@ -45,7 +45,6 @@ the polygon boundary are set to \code{\link{NA}}.
 If \code{type = "p"} returns a data frame with variables:
 \item{x, y}{numeric; a vector of \code{x} and \code{y} coordinates.}
 \item{z}{numeric; a vector of state variable values (optional).}
-\item{t}{POSIXct; a vector of time stamps (optional).}
 \item{vx, vy, vz}{numeric; a vector of velocity components in the \code{x},
   \code{y} and \code{z} directions, respectively (optional).}
 If \code{type = "g"} returns a list with components:

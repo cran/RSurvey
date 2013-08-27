@@ -17,6 +17,7 @@ AutocropRegion <- function(d, parent=NULL, ...) {
 
   DrawPolygon <- function() {
     tkconfigure(tt, cursor="watch")
+    on.exit(tkconfigure(tt, cursor="arrow"))
 
     max.len <- as.numeric(tclvalue(max.len.var))
     if (is.na(max.len) || max.len > default.len) {
@@ -40,7 +41,6 @@ AutocropRegion <- function(d, parent=NULL, ...) {
       old.ply <<- ply
     }
 
-    tkconfigure(tt, cursor="arrow")
     tkfocus(tt)
   }
 
@@ -63,7 +63,7 @@ AutocropRegion <- function(d, parent=NULL, ...) {
 
   ## Main program
 
-  if (!require(tripack))
+  if (!require("tripack"))
     stop()
 
   # Initialize parameters
@@ -93,7 +93,7 @@ AutocropRegion <- function(d, parent=NULL, ...) {
 
   # Open GUI
   tclServiceMode(FALSE)
-  tt <- tktoplevel(padx=0, pady=0)
+  tt <- tktoplevel()
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))

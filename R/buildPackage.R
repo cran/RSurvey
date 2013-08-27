@@ -6,9 +6,6 @@
 #     http://www.miktex.org/setup.html
 
 BuildPackage <- function() {
-
-  require(tcltk)
-
   if (.Platform$OS.type != "windows")
     stop(call.=FALSE, "This function requires a Windows platform.")
 

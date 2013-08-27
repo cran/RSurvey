@@ -9,12 +9,14 @@ A \acronym{GUI} for managing variables in the data table.
 }
 
 \usage{
-ManageVariables(cols, vars, parent = NULL)
+ManageVariables(cols, vars, query, changelog, parent = NULL)
 }
 
 \arguments{
 \item{cols}{list; see \sQuote{Value}.}
 \item{vars}{list; see \sQuote{Value}.}
+\item{query}{character; see \sQuote{Value}.}
+\item{changelog}{data.frame; see \sQuote{Value}.}
 \item{parent}{tkwin; the \acronym{GUI} parent window.}
 }
 
@@ -23,7 +25,7 @@ This \acronym{GUI} lets you:
 (1) specify the names and format of variables;
 (2) add new variables based on user defined functions,
     see \code{\link{EditFunction}};
-(3) display data in a spreadsheat, see \code{\link{EditData}}; and
+(3) display data in a spreadsheet, see \code{\link{EditData}}; and
 (4) remove and (or) reorder variables in the data table.
 }
 
@@ -42,19 +44,23 @@ to a specific variable, and contains the following components:
   for variables directly linked to data columns in \code{data.raw}.}
 \item{class}{character; the data class of the vector object.}
 \item{summary}{list; a summary of the variables descriptive statistics (see
-  \code{\link{SummarizeVariable}}).}
+  \code{\link{summary}}).}
 \item{comments}{character; user comments.}
 The \code{vars} object is a list with components:
 \item{x, y, z, vx, vy, sort.on}{integer; the index number of the corresponding
   state variable in \code{cols}. These indexes are updated to reflect
   the removal and (or) reordering of variables in \code{cols}.}
+\item{query}{character; if required, variable names are updated.}
+\item{changelog}{data.frame; if required, names in \code{variable} component are
+  updated.}
 }
 
 \author{J.C. Fisher}
 
 \examples{
-\donttest{data(project)
-ManageVariables(project$cols, project$vars)}
+\donttest{data(ex.project)
+ManageVariables(ex.project$cols, ex.project$vars, ex.project$query,
+                ex.project$changelog)}
 }
 
 \keyword{misc}

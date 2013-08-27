@@ -1,24 +1,21 @@
 # A GUI for managing and manipulating polygons; based on the rgeos package.
 
-ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
-                           parent=NULL) {
+ManagePolygons <- function(polys=NULL, poly.data=NULL, poly.crop=NULL,
+                           encoding=getOption("encoding"), parent=NULL) {
 
   ## Additional functions (subroutines)
 
   # Save polygon
   SavePolygon <- function(type) {
-    if (length(polys) > 0) {
+    if (length(polys) > 0)
       polys <- polys[vapply(polys, function(i) inherits(i, "gpc.poly"), TRUE)]
-      if (!data.poly %in% names(polys))
-        data.poly <- NULL
-      if (!crop.poly %in% names(polys))
-        crop.poly <- NULL
-      attr(polys, "data.poly") <- data.poly
-      attr(polys, "crop.poly") <- crop.poly
-      rtn <<- polys
-    } else {
-      rtn <<- list()
-    }
+    if (length(polys) == 0)
+      polys <- NULL
+    if (!is.null(poly.data) && !poly.data %in% names(polys))
+      poly.data <- NULL
+    if (!is.null(poly.crop) && !poly.crop %in% names(polys))
+      poly.crop <- NULL
+    rtn <<- list(polys=polys, poly.data=poly.data, poly.crop=poly.crop)
     if (type == "ok")
       tclvalue(tt.done.var) <- 1
   }
@@ -191,11 +188,10 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
       if (identical(new.names, old.names))
         return()
       names(polys) <<- new.names
-
-      if (!is.na(data.poly))
-        data.poly <<- new.names[which(old.names %in% data.poly)]
-      if (!is.na(crop.poly))
-        crop.poly <<- new.names[which(old.names %in% crop.poly)]
+      if (!is.null(poly.data))
+        poly.data <<- new.names[which(old.names %in% poly.data)]
+      if (!is.null(poly.crop))
+        poly.crop <<- new.names[which(old.names %in% poly.crop)]
     }
 
     for (i in seq(along=new.names)) {
@@ -307,6 +303,9 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
 
   # Import polygon
   ImportPolygon <- function() {
+    tkconfigure(tt, cursor="watch")
+    on.exit(tkconfigure(tt, cursor="arrow"))
+    
     f <- GetFile(cmd="Open", exts=c("ply"), win.title="Open Polygon File(s)",
                  multi=TRUE, parent=tt)
     if (is.null(f))
@@ -366,14 +365,6 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   if (is.null(polys))
     polys <- list()
 
-  data.poly <- attr(polys, "data.poly")
-  crop.poly <- attr(polys, "crop.poly")
-
-  if (is.null(data.poly))
-    data.poly <- NA
-  if (is.null(crop.poly))
-    crop.poly <- NA
-
   # Assign the variables linked to Tk widgets
 
   rb.var   <- tclVar("add")
@@ -392,7 +383,7 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
 
   tclServiceMode(FALSE)
 
-  tt <- tktoplevel(padx=0, pady=0)
+  tt <- tktoplevel()
 
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
@@ -589,15 +580,15 @@ ManagePolygons <- function(polys=NULL, encoding=getOption("encoding"),
   tkgrid(frame3c.lab.1)
   tkgrid.columnconfigure(frame3c, 0, weight=1, minsize=13)
 
-  tkpack(frame3a, fill="x", padx=0, pady=c(0, 5))
-  tkpack(frame3b, fill="x", padx=0, pady=c(5, 5))
+  tkpack(frame3a, fill="x", pady=c(0, 5))
+  tkpack(frame3b, fill="x", pady=c(5, 5))
   tkpack(frame3c, fill="both", expand=TRUE)
 
   # Final layout
 
   tkgrid(frame2.cvs, sticky="news")
 
-  tkgrid.configure(frame2.cvs, padx=5, pady=0)
+  tkgrid.configure(frame2.cvs, padx=5)
 
   tkgrid.rowconfigure(frame2, frame2.cvs, weight=1)
   tkgrid.columnconfigure(frame2, frame2.cvs, weight=1)
