@@ -553,7 +553,7 @@ OpenRSurvey <- function() {
 
     if (show.poly) {
       bbx <- bby <- NULL
-      bb <- get.bbox(ply)
+      bb <- rgeos::get.bbox(ply)
 
       if (!is.na(xlim[1]))
         bb$x[1] <- xlim[1]
@@ -565,7 +565,7 @@ OpenRSurvey <- function() {
         bb$y[2] <- ylim[2]
 
       xy <- cbind(x=c(bb$x, rev(bb$x)), y=c(bb$y[c(1,1)], bb$y[c(2,2)]))
-      bb <- get.bbox(intersect(ply, as(xy, "gpc.poly")))
+      bb <- rgeos::get.bbox(intersect(ply, as(xy, "gpc.poly")))
       bbx <- range(bb$x)
       bby <- range(bb$y)
       bbx <- extendrange(bbx, f=0.02)
@@ -607,7 +607,7 @@ OpenRSurvey <- function() {
       ply.new <- suppressWarnings(as(v, "gpc.poly"))
       if (!is.null(ply))
         ply.new <- intersect(ply, ply.new)
-      if (area.poly(ply.new) == 0) {
+      if (rgeos::area.poly(ply.new) == 0) {
         msg <- "The resulting polygon is invalid."
         tkmessageBox(icon="warning", message=msg, title="Polygon Discarded",
                      parent=tt)
@@ -620,7 +620,7 @@ OpenRSurvey <- function() {
         ply.list[[ply.name]] <- ply.new
 
         if (type == "p") {
-          pts <- get.pts(ply.new)
+          pts <- rgeos::get.pts(ply.new)
           logic <- rep(TRUE, nrow(dat))
           for (i in seq(along=pts)) {
               is.in <-  point.in.polygon(point.x=dat$x, point.y=dat$y,
@@ -1086,13 +1086,19 @@ OpenRSurvey <- function() {
 
   menu.help <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="Help", menu=menu.help, underline=0)
-  tkadd(menu.help, "command", label="Help",
+  tkadd(menu.help, "command", label="Introduction",
         command=function() {
           print(help("OpenRSurvey", package="RSurvey"))
         })
   tkadd(menu.help, "command", label="Functions",
         command=function() {
           help(package="RSurvey")
+        })
+  tkadd(menu.help, "command", label="Dataset",
+        command=function() {
+          src <- Data(c("import", "source"))
+          if (!is.null(src) && length(src) == 2)
+            print(help(src[1], package=src[2]))
         })
 
   tkadd(menu.help, "separator")

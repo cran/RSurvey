@@ -1,3 +1,9 @@
+Changes in Version 0.7-9
+
+  o  Packages delcared in Depends field are now in the Imports field.
+
+  o  Redesigned the GUI layout in the Format function.
+
 Changes in Version 0.7-8
 
   o  Variables of class 'Date' are now handled correctly.

@@ -1,7 +1,6 @@
-importFrom(sp, point.in.polygon)
-importFrom(MBA, mba.points)
-importFrom(rgeos, read.polyfile, write.polyfile, get.pts, get.bbox, area.poly,
-           union, setdiff, intersect)
+import(tcltk, sp)
+
+importMethodsFrom(rgeos, union, setdiff, intersect)
 importClassesFrom(rgeos, gpc.poly)
 
 export(AddAxis,
@@ -39,4 +38,5 @@ export(AddAxis,
        SetAxesLimits,
        SetConfiguration,
        SetInterpolation,
-       SetPolygonLimits)
+       SetPolygonLimits,
+       SetSortOrder)
