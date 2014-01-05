@@ -1,6 +1,6 @@
 # A GUI for reading table formatted data.
 
-ImportData <- function(parent=NULL) {
+ImportTextData <- function(parent=NULL) {
 
   ## Additional functions (subroutines)
 
@@ -100,12 +100,18 @@ ImportData <- function(parent=NULL) {
       if (!headers[2])
         nams <- rep("Unknown", n)
 
+      # Determine unique column names
+      ids <- nams
+      matched <- sapply(unique(ids), function(i) which(ids %in% i)[-1])
+      for (i in seq_along(matched))
+        ids[matched[[i]]] <- paste0(names(matched[i]), " (",
+                                    seq_along(matched[[i]]), ")")
+
       # Reset row names
       rownames(d) <- 1:nrow(d)
 
-      # Initialize variables
+      # Initialize columns list
       cols <- list()
-      ids <- NULL
 
       # Establish column types
       for (j in 1:n) {
@@ -128,28 +134,19 @@ ImportData <- function(parent=NULL) {
             }
           }
           if (is.time)
-            val <- as.POSIXct(date.time)
+            val <- as.POSIXct(date.time, tz="GMT")
           else
             val <- type.convert(val, as.is=!str.as.fact)
         }
 
         # Organize metadata
-        nam <- nams[j]
-        id <- nam
-        i <- 1L
-        hold.id <- id
-        while (id %in% ids) {
-          id <- paste0(hold.id, " (", i, ")")
-          i <- i + 1L
-        }
-        ids <- c(ids, id)
         cols[[j]] <- list()
-        cols[[j]]$id      <- id
-        cols[[j]]$name    <- nam
+        cols[[j]]$id      <- ids[j]
+        cols[[j]]$name    <- nams[j]
         cols[[j]]$format  <- if (is.null(fmt)) "" else fmt
         cols[[j]]$class   <- class(val)
         cols[[j]]$index   <- j
-        cols[[j]]$fun     <- paste0("\"", id, "\"")
+        cols[[j]]$fun     <- paste0("\"", ids[j], "\"")
         cols[[j]]$sample  <- na.omit(val)[1]
         cols[[j]]$summary <- paste(c("", capture.output(summary(val)),
                                      "", capture.output(str(val)),
@@ -252,7 +249,7 @@ ImportData <- function(parent=NULL) {
       }
 
       # Remove columns containing all NA values
-      is.all.na <- vapply(seq(along=d), function(i) all(is.na(d[, i])), TRUE)
+      is.all.na <- vapply(seq_along(d), function(i) all(is.na(d[, i])), TRUE)
       d <- d[, !is.all.na, drop=FALSE]
       return(d)
 
@@ -285,7 +282,8 @@ ImportData <- function(parent=NULL) {
 
       if (!is.null(ans)) {
         Data("import", list())
-        Data(c("import", "source"), src)
+        Data(c("import", "source"),
+             c(pathname=src, accessed=format(Sys.time())))
         Data(c("import", "fmts"), is.fmts)
         Data(c("import", "cols"), is.cols)
         Data(c("import", "str.as.fact"), is.fact)
@@ -543,7 +541,7 @@ ImportData <- function(parent=NULL) {
   else
     skip.var <- tclVar(Data(c("import", "skip")))
   if (is.null(Data(c("import", "str.as.fact"))))
-    str.as.fact.var <- tclVar(TRUE)
+    str.as.fact.var <- tclVar(FALSE)
   else
     str.as.fact.var <- tclVar(Data(c("import", "str.as.fact")))
 
@@ -560,7 +558,7 @@ ImportData <- function(parent=NULL) {
                              "+", as.integer(geo[3]) + 25))
   }
 
-  tktitle(tt) <- "Import Raw Data From Text File, URL, Or Clipboard"
+  tktitle(tt) <- "Import Data from Text File or Clipboard"
 
   # Frame 0 contains load and cancel buttons, and size grip
 
@@ -576,7 +574,7 @@ ImportData <- function(parent=NULL) {
                             command=function() tclvalue(tt.done.var) <- 1)
   frame0.but.6 <- ttkbutton(frame0, width=12, text="Help",
                             command=function() {
-                              print(help("ImportData", package="RSurvey"))
+                              print(help("ImportTextData", package="RSurvey"))
                             })
   frame0.grp.7 <- ttksizegrip(frame0)
 

@@ -75,12 +75,16 @@ EditData <- function(d, col.names=colnames(d), col.formats=NULL,
       new.vals[new.vals %in% ""] <- NA
       if (inherits(obj, "POSIXt")) {
         fmt <- gsub("%OS[[:digit:]]+", "%OS", col.formats[column])
+        if (fmt == "")
+          fmt <- "%Y-%m-%d %H:%M:%S"
         new.vals <- strptime(new.vals, format=fmt)
         if (inherits(obj, "POSIXct"))
-          new.vals <- as.POSIXct(new.vals)
+          new.vals <- as.POSIXct(new.vals, tz="GMT")
       } else if (inherits(obj, "Date")) {
         fmt <- col.formats[column]
-        new.vals <- as.Date(new.vals, format=ifelse(fmt == "", "%Y-%m-%d", fmt))
+        if (fmt == "")
+          fmt <- "%Y-%m-%d"
+        new.vals <- as.Date(new.vals, format=fmt)
       } else if (inherits(obj, "factor")) {
         levels(d[, column]) <<- unique(c(levels(d[, column]),
                                          na.omit(unique(new.vals))))
@@ -213,7 +217,7 @@ EditData <- function(d, col.names=colnames(d), col.formats=NULL,
     if (nrow(undo.stack) == 0)
       undo.stack <<- NULL
     fmt.old.vals <- FormatValues(ij[, 1], ij[, 2], is.fmt=TRUE)
-    for (i in seq(along=cells))
+    for (i in seq_along(cells))
       tkset(frame3.tbl, cells[i], fmt.old.vals[i])
     SetActiveCell()
   }
@@ -234,7 +238,7 @@ EditData <- function(d, col.names=colnames(d), col.formats=NULL,
     undo.stack <<- rbind(undo.stack, redo.stack[idxs, , drop=FALSE])
     redo.stack <<- redo.stack[-idxs, , drop=FALSE]
     fmt.new.vals <- FormatValues(ij[, 1], ij[, 2], is.fmt=TRUE)
-    for (i in seq(along=cells))
+    for (i in seq_along(cells))
       tkset(frame3.tbl, cells[i], fmt.new.vals[i])
     SetActiveCell()
   }
@@ -327,7 +331,7 @@ EditData <- function(d, col.names=colnames(d), col.formats=NULL,
     SaveEdits(new.vals, i, j)
 
     new.vals <- FormatValues(i, j, is.fmt=TRUE)
-    for (i in seq(along=cells))
+    for (i in seq_along(cells))
       tkset(frame3.tbl, cells[i], new.vals[i])
     SetActiveCell()
   }
@@ -386,7 +390,7 @@ EditData <- function(d, col.names=colnames(d), col.formats=NULL,
 
       SaveEdits(new.vals, cells)
 
-      for (idx in seq(along=cells))
+      for (idx in seq_along(cells))
         tkset(frame3.tbl, cells[idx], new.vals[idx])
       SetActiveCell()
     }
@@ -550,8 +554,11 @@ EditData <- function(d, col.names=colnames(d), col.formats=NULL,
     tkconfigure(tt, cursor="watch")
     on.exit(tkconfigure(tt, cursor="arrow"))
     SaveActiveEdits()
-    txt <- paste(c(capture.output(GetEdits()), ""), collapse="\n")
-    EditText(txt, read.only=TRUE, win.title="Changelog",
+    ow <- options()$width
+    options(width=300)
+    txt <- paste(capture.output(GetEdits()), collapse="\n")
+    options(width=ow)
+    EditText(txt, read.only=TRUE, win.title="Change log",
              is.fixed.width.font=TRUE, parent=tt)
   }
 
@@ -560,7 +567,7 @@ EditData <- function(d, col.names=colnames(d), col.formats=NULL,
     tkconfigure(tt, cursor="watch")
     on.exit(tkconfigure(tt, cursor="arrow"))
     SaveActiveEdits()
-    names(d) <- make.names(col.names, unique=TRUE)
+    names(d) <- col.names
     if (type == "str") {
       txt <- capture.output(str(d))
       win.title <- "Structure"
@@ -619,17 +626,9 @@ EditData <- function(d, col.names=colnames(d), col.formats=NULL,
 
   # Account for missing arguments
   if (is.null(col.names) || length(col.names) != n) {
-    col.names <- LETTERS[1:n]
-    if (any(is.na(col.names))) {
-      from <- seq(27, n, by=26)
-      for (i in seq(along=from)) {
-        to <- from[i] + 25
-        if (to > n)
-          to <- n
-        l <- paste0(LETTERS[i], LETTERS[1:(to - from[i] + 1L)])
-        col.names[from[i]:to] <- l
-      }
-    }
+    Fun <- function(i) paste0(LETTERS, i)
+    col.names <- c(LETTERS, as.vector(t(vapply(LETTERS, Fun, rep("", 26)))))
+    col.names <- col.names[1:n]
     colnames(d) <- col.names
   } else {
     col.names <- col.names[1:n]
@@ -752,7 +751,7 @@ EditData <- function(d, col.names=colnames(d), col.formats=NULL,
         command=function() ViewData("summary"))
   if (!read.only) {
     tkadd(menu.view, "separator")
-    tkadd(menu.view, "command", label="Changelog", command=ViewChangeLog)
+    tkadd(menu.view, "command", label="Change log", command=ViewChangeLog)
   }
 
   # Search menu

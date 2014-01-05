@@ -15,7 +15,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
       fun <- txt
       pattern <- paste0("\"", ids, "\"")
       replacement <- paste0("DATA[[", 1:length(ids), "]]")
-      for (i in seq(along=ids))
+      for (i in seq_along(ids))
         fun <- gsub(pattern[i], replacement[i], fun, fixed=TRUE)
       fun <- paste0("function(DATA) {", fun, "}")
 
@@ -72,7 +72,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
       show.ids <- ids
 
     tclvalue(variable.var) <- ""
-    for (i in seq(along=show.ids))
+    for (i in seq_along(show.ids))
       tcl("lappend", variable.var, show.ids[i])
 
     tkselection.clear(frame1.lst.2.1, 0, "end")
@@ -208,7 +208,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
     var.vals.txt <- gsub("^\\s+|\\s+$", "", var.vals.txt)
 
     tclvalue(value.var) <- ""
-    for (i in seq(along=var.vals.txt))
+    for (i in seq_along(var.vals.txt))
       tcl("lappend", value.var, var.vals.txt[i])
     tkselection.clear(frame1.lst.4.1, 0, "end")
     tkconfigure(frame1.but.5.1, state="disabled")
@@ -240,7 +240,14 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
     if ("factor" %in% var.class && is.na(suppressWarnings(as.numeric(val))))
       var.class <- "character"
     if ("POSIXt" %in% var.class) {
-      txt <- paste0("as.POSIXct(\"", val, "\", format = \"", var.fmt, "\")")
+      if (var.fmt == "")
+        var.fmt <- "%Y-%m-%d %H:%M:%S"
+      txt <- paste0("as.POSIXct(\"", val, "\", format = \"", var.fmt,
+                    "\", tz = \"GMT\")")
+    } else if ("Date" %in% var.class) {
+      if (var.fmt == "")
+        var.fmt <- "%Y-%m-%d"
+      txt <- paste0("as.Date(\"", val, "\", format = \"", var.fmt, "\")")
     } else if ("integer" %in% var.class &&
                !val %in% c("NA", "NaN", "Inf", "-Inf")) {
       txt <- paste0(val, "L")
@@ -286,7 +293,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
 
   # Class types
   classes <- NULL
-  for (i in seq(along=cols)) {
+  for (i in seq_along(cols)) {
     if (!i %in% index)
       classes <- c(classes, cols[[i]]$class)
   }
@@ -298,7 +305,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
 
   # Assign variables linked to Tk widgets
   variable.var <- tclVar()
-  for (i in seq(along=ids))
+  for (i in seq_along(ids))
     tcl("lappend", variable.var, ids[i])  # must be unique
   value.var <- tclVar()
   inverse.var <- tclVar(0)
@@ -356,7 +363,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   tkadd(menu.convert.char, "command", label="Logical",
         command=function() InsertString("as.logical(<variable>)"))
   tkadd(menu.convert.char, "command", label="POSIXct",
-        command=function() InsertString("as.POSIXct(strptime(<variable>, format = \"<format>\"))"))
+        command=function() InsertString("as.POSIXct(strptime(<variable>, format = \"<format>\", tz = \"GMT\"))"))
   tkadd(menu.convert.char, "command", label="Date",
         command=function() InsertString("as.Date(<variable>, format = \"<format>\")"))
   tkadd(menu.convert, "cascade", label="Character to", menu=menu.convert.char)
@@ -370,12 +377,12 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
 
   menu.convert.num <- tkmenu(tt, tearoff=0)
   tkadd(menu.convert.num, "command", label="POSIXct",
-        command=function() InsertString("as.POSIXct(<variable>, origin = \"1970-01-01 00:00:00.00\")"))
+        command=function() InsertString("as.POSIXct(<variable>, origin = \"1970-01-01 00:00:00.00\", tz = \"GMT\")"))
   tkadd(menu.convert, "cascade", label="Numeric to", menu=menu.convert.num)
 
   menu.convert.int <- tkmenu(tt, tearoff=0)
   tkadd(menu.convert.int, "command", label="POSIXct",
-        command=function() InsertString("as.POSIXct(<variable>, origin = \"1970-01-01 00:00:00\")"))
+        command=function() InsertString("as.POSIXct(<variable>, origin = \"1970-01-01 00:00:00\", tz = \"GMT\")"))
   tkadd(menu.convert.int, "command", label="Date",
         command=function() InsertString("as.Date(<variable>, origin = \"1899-12-30\")"))
   tkadd(menu.convert, "cascade", label="Integer to", menu=menu.convert.int)
@@ -395,6 +402,8 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   menu.convert.date <- tkmenu(tt, tearoff=0)
   tkadd(menu.convert.date, "command", label="Integer",
         command=function() InsertString("as.integer(<variable>)"))
+  tkadd(menu.convert.date, "command", label="POSIXct",
+        command=function() InsertString("as.POSIXct(<variable>, tz = \"GMT\")"))
   tkadd(menu.convert, "cascade", label="Date to", menu=menu.convert.date)
 
   menu.math <- tkmenu(tt, tearoff=0)
@@ -442,29 +451,37 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
         command=function() InsertString("cumprod(<variable>)"))
   tkadd(menu.math, "cascade", label="Cumulative", menu=menu.math.cum)
 
-  menu.summary <- tkmenu(tt, tearoff=0)
-  tkadd(top.menu, "cascade", label="Summary", menu=menu.summary, underline=0)
-  tkadd(menu.summary, "command", label="Are all values true",
-        command=function() InsertString("all(<variable>, na.rm = FALSE)"))
-  tkadd(menu.summary, "command", label="Are any values true",
-        command=function() InsertString("any(<variable>, na.rm = FALSE)"))
-  tkadd(menu.summary, "separator")
-  tkadd(menu.summary, "command", label="Sum",
+  tkadd(menu.math, "separator")
+  tkadd(menu.math, "command", label="Sum",
         command=function() InsertString("sum(<variable>, na.rm = TRUE)"))
-  tkadd(menu.summary, "command", label="Product",
+  tkadd(menu.math, "command", label="Product",
         command=function() InsertString("prod(<variable>, na.rm = TRUE)"))
-  tkadd(menu.summary, "separator")
-  tkadd(menu.summary, "command", label="Minimum",
+
+  menu.stats <- tkmenu(tt, tearoff=0)
+  tkadd(top.menu, "cascade", label="Stats", menu=menu.stats, underline=0)
+  tkadd(menu.stats, "command", label="Minimum",
         command=function() InsertString("min(<variable>, na.rm = TRUE)"))
-  tkadd(menu.summary, "command", label="Maximum",
+  tkadd(menu.stats, "command", label="Maximum",
         command=function() InsertString("max(<variable>, na.rm = TRUE)"))
-  tkadd(menu.summary, "separator")
-  tkadd(menu.summary, "command", label="Mean",
+  tkadd(menu.stats, "separator")
+  tkadd(menu.stats, "command", label="Mean",
         command=function() InsertString("mean(<variable>, na.rm = TRUE)"))
-  tkadd(menu.summary, "command", label="Median",
+  tkadd(menu.stats, "command", label="Median",
         command=function() InsertString("median(<variable>, na.rm = TRUE)"))
-  tkadd(menu.summary, "command", label="Standard deviation",
+  tkadd(menu.stats, "command", label="Standard deviation",
         command=function() InsertString("sd(<variable>, na.rm = TRUE)"))
+
+  tkadd(menu.stats, "separator")
+  tkadd(menu.stats, "command", label="Set seed",
+        command=function() InsertString("set.seed(124)"))
+  menu.stats.ran <- tkmenu(tt, tearoff=0)
+  nobs <- ifelse(is.null(value.length), "<integer>", value.length)
+  tkadd(menu.stats.ran, "command", label="Normal distribution",
+        command=function() InsertString(paste0("rnorm(n = ", nobs, ", mean = 0, sd = 1)")))
+  tkadd(menu.stats.ran, "command", label="Uniform distribution",
+        command=function() InsertString(paste0("runif(n = ", nobs, ", min = 0, max = 1)")))
+  tkadd(menu.stats, "cascade", label="Random samples from a",
+        menu=menu.stats.ran)
 
   menu.operator <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="Operator", menu=menu.operator, underline=0)
@@ -518,6 +535,11 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
   tkadd(menu.const.is, "command", label="Infinite",
         command=function() InsertString("is.infinite(<variable>)"))
   tkadd(menu.const, "cascade", label="Which elements are ", menu=menu.const.is)
+  tkadd(menu.const, "separator")
+  tkadd(menu.const, "command", label="Are all values true",
+        command=function() InsertString("all(<variable>, na.rm = FALSE)"))
+  tkadd(menu.const, "command", label="Are any values true",
+        command=function() InsertString("any(<variable>, na.rm = FALSE)"))
 
   menu.string <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="String", menu=menu.string, underline=0)
@@ -757,7 +779,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
 
   # GUI control
 
-  tkfocus(frame2.txt.2.1)
+  tkfocus(tt)
 
   tkgrab(tt)
   tkwait.variable(tt.done.var)

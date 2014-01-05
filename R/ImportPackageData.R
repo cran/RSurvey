@@ -18,7 +18,8 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
     txt <- paste0("data(", pkg.item, ", package=\"", pkg.name, "\", envir=e)")
     ds.name <- eval(parse(text=txt))
     rtn <<- list(d=eval(parse(text=paste("(", ds.name, ")")), envir=e),
-                 src=c(dataset=ds.name, package=pkg.name))
+                 src=c(dataset=ds.name, package=pkg.name,
+                       accessed=format(Sys.time())))
     tclvalue(tt.done.var) <- 1
   }
 
@@ -146,7 +147,7 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
         pkg.items <- sort(pkg.items)
       tkselection.clear(frame1.lst.2.4, 0, "end")
       tclvalue(dataset.var) <- ""
-      for (i in seq(along=pkg.items))
+      for (i in seq_along(pkg.items))
         tcl("lappend", dataset.var, pkg.items[i])
       if (length(pkg.items) > 0) {
         tkselection.set(frame1.lst.2.4, 0)
@@ -203,7 +204,7 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
     }
     tkselection.clear(frame1.lst.2.1, 0, "end")
     tclvalue(package.var) <- ""
-    for (i in seq(along=pkg.names))
+    for (i in seq_along(pkg.names))
       tcl("lappend", package.var, pkg.names[i])
     tkselection.set(frame1.lst.2.1, 0)
     SelectPackage()
@@ -229,15 +230,13 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
   all.ds <- suppressWarnings(data(package=all.pkgs)$results)
   all.pkgs <- sort(unique(all.ds[, "Package"]))
 
-  ds.list <- sapply(all.pkgs,
-                    function(i) all.ds[all.ds[, "Package"] == i,
-                                       c("Item", "Title"), drop=FALSE],
-                    simplify=FALSE)
+  Fun <- function(i) all.ds[all.ds[, "Package"] == i, c("Item", "Title"),
+                            drop=FALSE]
+  ds.list <- sapply(all.pkgs, Fun, simplify=FALSE)
 
   ds.class <- list()
 
-  pkg.type.vals <- c("Show all packages", "Loaded packages",
-                     "Unloaded packages")
+  pkg.type.vals <- paste(c("Show all", "Loaded", "Unloaded"), "packages")
   ds.class.vals <- "{}"
 
   pkg.names <- NULL
@@ -347,7 +346,7 @@ ImportPackageData <- function(classes=NULL, parent=NULL) {
   tkgrid(frame1.lab.1.1, "x", "x", frame1.lab.1.4, "x", "x", pady=c(10, 0))
   tkgrid(frame1.lst.2.1, "x", frame1.ysc.2.3, frame1.lst.2.4, "x",
          frame1.ysc.2.6)
-  tkgrid(frame1.box.3.1, "x", "x", frame1.box.3.4, "x", "x", pady=c(4, 4))
+  tkgrid(frame1.box.3.1, "x", "x", frame1.box.3.4, "x", "x", pady=4)
   tkgrid(frame1.but.4.1, frame1.but.4.2, "x", frame1.but.4.4, frame1.chk.4.5,
          "x")
 

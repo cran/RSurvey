@@ -32,11 +32,11 @@ ManageVariables <- function(cols, vars, query, changelog, parent=NULL) {
     new.id <- nam
     old.id <- cols[[idx]]$id
     old.ids <- vapply(cols, function(i) i$id, "")
-    i <- 1
+    i <- 1L
     hold.new.id <- new.id
     while (new.id %in% old.ids[-idx]) {
       new.id <- paste0(hold.new.id, " (", i, ")")
-      i <- i + 1
+      i <- i + 1L
     }
     cols[[idx]]$id <<- new.id
     tclvalue(list.var) <- tcl("lreplace", tclvalue(list.var),
@@ -199,7 +199,7 @@ ManageVariables <- function(cols, vars, query, changelog, parent=NULL) {
     if (length(vars) == 0)
       vars <<- NULL
 
-    for (i in seq(along=vars)) {
+    for (i in seq_along(vars)) {
       if (vars[[i]] > idx)
         vars[[i]][1] <<- vars[[i]] - 1
     }
@@ -236,7 +236,11 @@ ManageVariables <- function(cols, vars, query, changelog, parent=NULL) {
 
     cols[[idx]] <- list(id="", class="")
 
-    f <- EditFunction(cols, index=idx, value.length=nrow(Data("data.raw")),
+    value.length <- nrow(Data("data.raw"))
+    if (is.null(value.length) && length(cols) > 1)
+      value.length <- length(EvalFunction(cols[[1]]$fun, cols))
+
+    f <- EditFunction(cols, index=idx, value.length=value.length,
                       win.title="New Variable", parent=tt)
     if (is.null(f$fun) || f$fun == "")
       return()
@@ -350,7 +354,7 @@ ManageVariables <- function(cols, vars, query, changelog, parent=NULL) {
 
     cols <<- cols[new.idxs]
 
-    for (i in seq(along=vars)) {
+    for (i in seq_along(vars)) {
       vars[[i]][1] <<- idxs[new.idxs %in% vars[[i]][1]]
     }
 
@@ -449,7 +453,7 @@ ManageVariables <- function(cols, vars, query, changelog, parent=NULL) {
   # Assign the variables linked to Tk widgets
 
   list.var <- tclVar()
-  for (i in seq(along=ids))
+  for (i in seq_along(ids))
     tcl("lappend", list.var, ids[i])
 
   name.var  <- tclVar()
