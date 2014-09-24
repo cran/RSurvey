@@ -4,9 +4,7 @@
 
 \title{Edit Function}
 
-\description{
-A \acronym{GUI} for defining functions in the \R language.
-}
+\description{A \acronym{GUI} for defining functions in the \R language.}
 
 \usage{
 EditFunction(cols, index = NULL, fun = NULL, value.length = NULL,
@@ -33,25 +31,22 @@ pre-existing data frame or query building.
 \value{
 Returns a list with two four components:
 \code{fun}, the user defined function (when evaluated, this string must be parseable);
-\code{class}, the object class of the evaluated function;
-\code{summary}, a numeric summary; and
-\code{sample} of the object.
+\code{class}, the object class for the evaluated function;
+\code{summary}, the default summary for the evaluated function; and
+\code{sample}, the first non-missing value for the evaluated function.
 }
 
 \author{J.C. Fisher}
 
-\seealso{
-\code{\link{EvalFunction}}
-}
+\seealso{\code{\link{EvalFunction}}}
 
-\examples{
-\donttest{d <- data.frame(cbind(x = 1, y = 1:10))
+\examples{\donttest{
+d <- list(x = 1:10, y = 10:1)
 Data("data.raw", d)
 cols <- list()
 cols[[1]] <- list(id = "X", index = 1, fun = "\"X\"")
 cols[[2]] <- list(id = "Y", index = 2, fun = "\"Y\"")
-cols[[3]] <- list(id = "New Variable",
-                  fun = "\"X\" + \"Y\"")
+cols[[3]] <- list(id = "New Variable", fun = "\"X\" + \"Y\"")
 EditFunction(cols, index = 3)
 }}
 

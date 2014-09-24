@@ -4,7 +4,7 @@ GetFile <- function(cmd="Open", file=NULL, exts=NULL, initialdir=NULL,
                     initialfile=NULL, defaultextension=NULL, win.title=cmd,
                     multi=FALSE, parent=NULL) {
 
-  ## Additional functions (subroutines)
+  ## Additional functions
 
   # Determine file extension
   GetFileExt <- function(x) {
@@ -19,7 +19,7 @@ GetFile <- function(cmd="Open", file=NULL, exts=NULL, initialdir=NULL,
   # Initialize file filters
   all.filters <- list(bmp   = "Windows Bitmap",
                       bz2   = "Compressed Text",
-                      csv   = "Text Files",
+                      csv   = "Text",
                       eps   = "Encapsulated Postscript",
                       gz    = "Compressed Text",
                       pdf   = "PDF",
@@ -37,7 +37,9 @@ GetFile <- function(cmd="Open", file=NULL, exts=NULL, initialdir=NULL,
                       tiff  = "TIFF",
                       tsv   = "Text",
                       txt   = "Text",
-                      xlsx  = "Open XML Spreadsheet"
+                      xlsx  = "Open XML Spreadsheet",
+                      xz    = "Compressed Text",
+                      zip   = "Compressed Text"
                   )
 
   # Process connection and return
@@ -102,7 +104,7 @@ GetFile <- function(cmd="Open", file=NULL, exts=NULL, initialdir=NULL,
       ans <- c(ans, sub(pat, "\\2", res))
       res <- sub(pat, "\\1\\3", res)
     }
-    ans <- c(ans, strsplit(res, " ", fixed = TRUE)[[1]])
+    ans <- c(ans, strsplit(res, " ", fixed=TRUE)[[1]])
     ans <- ans[nzchar(ans)]
   } else {
     ans <- res

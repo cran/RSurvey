@@ -8,8 +8,13 @@
 Writes a series of commands for creating an \R package to a Windows batch file.
 }
 
-\usage{
-BuildPackage()
+\usage{BuildPackage(check.cran = FALSE, no.vignettes = FALSE)}
+
+\arguments{
+\item{check.cran}{logical; if \code{TRUE}, uses command-line options similar to
+  \acronym{CRAN}.}
+\item{no.vignettes}{logical; if \code{TRUE}, uses command-line options to
+  prevent build of vignettes.}
 }
 
 \details{
@@ -20,8 +25,6 @@ The user is tasked with executing the batch file (\file{.bat}).
 
 \author{J.C. Fisher}
 
-\examples{
-\dontrun{BuildPackage()}
-}
+\examples{\dontrun{BuildPackage()}}
 
 \keyword{internal}

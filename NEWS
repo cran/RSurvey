@@ -1,9 +1,29 @@
+Changes in Version 0.8-2
+
+  o  Removed 'require' for conditioning in package code, now using
+     'requireNamespace'.
+
+Changes in Version 0.8-1
+
+  o  Fixed a bug in the EditData function that resulted from not updating the
+     search index when a new cell selection was made.
+
+  o  Improved handling of time zones in variables of class 'POSIXt'.
+
+  o  Added the ProgressBar function to show the status for long-running
+     operations. The progress bar is implemented when indexing search results.
+
+  o  In the EditData function, the class of the object used to populate the
+     spreadsheet-like table has been changed from a 'data.frame' to a 'list'
+     with vector components of equal length. This change has resulted in a
+     noticeable performance boost.
+
 Changes in Version 0.8-0
 
   o  Fixed bug that converted all exported data fields to character class when
      writing Shapefiles and R data files.
 
-  o  Added ImportSpreadsheetData function, imports a worksheet from an Office
+  o  Added ImportSpreadsheet function, imports a worksheet from an Office
      Open XML Workbook file (*.xlsx).
 
   o  Show individual observations and density estimate in histogram plot.
@@ -57,19 +77,19 @@ Changes in Version 0.7-5
   o  RSurvey project files are specified using the *.RData file extension. The
      *.rda extension is reserved for R data files.
 
-  o  Functions ReadFile and WriteFile have been embedded into the ImportTextData
+  o  Functions ReadFile and WriteFile have been embedded into the ImportText
      and ExportData functions, respectively.
 
   o  Additional arguments have been added to the ExportData GUI.
 
-  o  In the ImportTextData GUI, added decimal and encoding arguments, and custom
+  o  In the ImportText GUI, added decimal and encoding arguments, and custom
      entries for separator, NA strings, and comment parameters.
 
 Changes in Version 0.7-4
 
   o  Main GUI is launched automatically when RSurvey is loaded.
 
-  o  Added ability to view single variable in the ImportTextData GUI.
+  o  Added ability to view single variable in the ImportText GUI.
 
   o  It is no longer required to have a data set loaded to open the
      DataManagement GUI.

@@ -4,7 +4,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
                          value.class=NULL, win.title="Edit Function",
                          parent=NULL) {
 
-  ## Additional functions (subroutines)
+  ## Additional functions
 
   # Save function
   SaveFunction <- function() {
@@ -14,7 +14,7 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
     } else {
       fun <- txt
       pattern <- paste0("\"", ids, "\"")
-      replacement <- paste0("DATA[[", 1:length(ids), "]]")
+      replacement <- paste0("DATA[[", seq_along(ids), "]]")
       for (i in seq_along(ids))
         fun <- gsub(pattern[i], replacement[i], fun, fixed=TRUE)
       fun <- paste0("function(DATA) {", fun, "}")
@@ -54,11 +54,8 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
         return()
       }
 
-      summary.str <- paste(c("", capture.output(summary(obj)),
-                             "", capture.output(str(obj)),
-                             ""), collapse="\n")
-      rtn <<- list(fun=txt, class=class(obj)[1], summary=summary.str,
-                   sample=na.omit(obj)[1])
+      rtn <<- list(fun=txt, class=class(obj)[1], sample=na.omit(obj)[1],
+                   summary=summary(obj))
     }
     tclvalue(tt.done.var) <- 1
   }
@@ -549,8 +546,15 @@ EditFunction <- function(cols, index=NULL, fun=NULL, value.length=NULL,
         })
   tkadd(menu.string, "command", label="Extract substring",
         command=function() {
-          InsertString(paste("substr(<variable>, start = <first element>,",
-                             "stop = <last element>)"))
+          InsertString(paste("substr(<variable>, start = 1, stop = 2)"))
+        })
+  tkadd(menu.string, "command", label="Number of characters",
+        command=function() {
+          InsertString("nchar(<variable>)")
+        })
+  tkadd(menu.string, "command", label="Which elements are non-empty strings",
+        command=function() {
+          InsertString("nzchar(<variable>)")
         })
 
   menu.tools <- tkmenu(tt, tearoff=0)

@@ -4,13 +4,9 @@
 
 \title{Manage Variables}
 
-\description{
-A \acronym{GUI} for managing variables in the data table.
-}
+\description{A \acronym{GUI} for managing variables in the data table.}
 
-\usage{
-ManageVariables(cols, vars, query, changelog, parent = NULL)
-}
+\usage{ManageVariables(cols, vars, query, changelog, parent = NULL)}
 
 \arguments{
 \item{cols}{list; see \sQuote{Value}.}
@@ -40,11 +36,11 @@ to a specific variable, and contains the following components:
 \item{fun}{character; the expression evaluated when computing the variables
   vector of values.}
 \item{index}{integer; the variables component index number in the
-  \code{data.raw} data frame, see \code{\link{ImportTextData}}. Only required
+  \code{data.raw} data frame, see \code{\link{ImportText}}. Only required
   for variables directly linked to data columns in \code{data.raw}.}
 \item{class}{character; the data class of the vector object.}
-\item{summary}{list; a summary of the variables descriptive statistics (see
-  \code{\link{summary}}).}
+\item{summary}{summaryDefault; a summary of the variables descriptive statistics
+  (see \code{\link{summary}}).}
 \item{comments}{character; user comments.}
 The \code{vars} object is a list with components:
 \item{x, y, z, vx, vy, sort.on}{integer; the index number of the corresponding
@@ -57,11 +53,10 @@ The \code{vars} object is a list with components:
 
 \author{J.C. Fisher}
 
-\examples{
-\donttest{data(ex.project)
+\examples{\donttest{
+data(ex.project)
 Data(replace.all = ex.project)
-ManageVariables(ex.project$cols, ex.project$vars, ex.project$query,
-                ex.project$changelog)}
-}
+ManageVariables(ex.project$cols, ex.project$vars, ex.project$query, ex.project$changelog)
+}}
 
 \keyword{misc}

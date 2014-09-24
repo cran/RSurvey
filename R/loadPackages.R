@@ -4,7 +4,7 @@
 
 LoadPackages <- function() {
 
-  ## Additional functions (subroutines)
+  ## Additional functions
 
   # Install missing packages from CRAN mirror
   InstallPackages <- function() {
@@ -37,7 +37,8 @@ LoadPackages <- function() {
   ## Main program
 
   # Suggested packages
-  pkgs <- c("rgdal", "tripack", "colorspace", "dichromat", "rgl")
+  txt <- readLines(system.file("DESCRIPTION", package="RSurvey"))
+  pkgs <- sub(",$", "", strsplit(txt[grep("^Suggests:", txt)], " ")[[1]][-1])
 
   # Account for missing packages
 
@@ -81,7 +82,7 @@ LoadPackages <- function() {
     txt <- paste("The following package(s) used by RSurvey are missing:\n",
                  paste(paste0("\'", missing.pkgs, "\'"), collapse=", "), "",
                  "Some features will not be available without these packages.",
-                 "Install these packages from CRAN?", sep="\n")
+                 "Should these packages be installed from CRAN?", sep="\n")
     frame1.lab.1.1 <- ttklabel(frame1, image=rlogo.var, background="white")
     frame1.lab.1.2 <- ttklabel(frame1, text=txt, justify="left",
                                background="white")

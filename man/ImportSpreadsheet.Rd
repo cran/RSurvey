@@ -1,21 +1,17 @@
-\name{ImportSpreadsheetData}
+\name{ImportSpreadsheet}
 
-\alias{ImportSpreadsheetData}
+\alias{ImportSpreadsheet}
 
-\title{Import Data from XML Spreadsheet}
+\title{Import Data from XML Spreadsheet File}
 
 \description{
 A \acronym{GUI} for loading selected data sets from an Open XML Spreadsheet
-file.
+file (*.xlsx).
 }
 
-\usage{
-ImportSpreadsheetData(parent = NULL)
-}
+\usage{ImportSpreadsheet(parent = NULL)}
 
-\arguments{
-\item{parent}{tkwin; the \acronym{GUI} parent window.}
-}
+\arguments{\item{parent}{tkwin; the \acronym{GUI} parent window.}}
 
 \value{
 Returns a list with the following components:
@@ -27,16 +23,10 @@ Returns a list with the following components:
 \author{J.C. Fisher}
 
 \references{
-This code was derived from Schaun Wheeler's
+This code was derived with permission from Schaun Wheeler's
 \href{https://gist.github.com/schaunwheeler/5825002}{xlsxToR} function.
 }
 
-\seealso{
-\code{\link{data}}
-}
-
-\examples{
-\donttest{ans <- ImportSpreadsheetData()}
-}
+\examples{\donttest{ans <- ImportSpreadsheet()}}
 
 \keyword{IO}

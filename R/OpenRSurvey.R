@@ -2,7 +2,7 @@
 
 OpenRSurvey <- function() {
 
-  ## Additional functions (subroutines)
+  ## Additional functions
 
   # Close GUI
   CloseGUI <- function() {
@@ -42,7 +42,7 @@ OpenRSurvey <- function() {
   # Save binary project file
   SaveProj <- function() {
     if (!is.null(Data("proj.file"))) {
-      if (file.access(Data("proj.file"), mode = 0) != 0)
+      if (file.access(Data("proj.file"), mode=0) != 0)
         Data("proj.file", NULL)
     }
     if (is.null(Data("proj.file"))) {
@@ -85,6 +85,7 @@ OpenRSurvey <- function() {
       SaveProj()
     }
     Data(clear.proj=TRUE)
+    gc()
     SetVars()
     return(ans)
   }
@@ -116,11 +117,11 @@ OpenRSurvey <- function() {
 
   ReadData <- function(file.type) {
     if (file.type == "txt") {
-      ImportTextData(tt)
+      ImportText(tt)
     } else {
 
       if (file.type == "xlsx") {
-        ans <- ImportSpreadsheetData(parent=tt)
+        ans <- ImportSpreadsheet(parent=tt)
         d <- ans$d
         src <- ans$src
 
@@ -141,9 +142,9 @@ OpenRSurvey <- function() {
 
       } else if (file.type == "rpackage") {
         valid.classes <- c("data.frame", "matrix")
-        ans <- ImportPackageData(valid.classes, parent=tt)
-        d <- ans$d
-        src <- ans$src
+        d <- ImportPackage(valid.classes, parent=tt)
+        src <- d$src
+        d <- d$d
       }
 
       if (is.null(d) || nrow(d) == 0 || ncol(d) == 0)
@@ -157,36 +158,52 @@ OpenRSurvey <- function() {
           return()
       }
 
-      if (inherits(d, "matrix"))
-        d <- as.data.frame(d, stringsAsFactors=FALSE)
       m <- nrow(d)
       n <- ncol(d)
 
-      nams <- names(d)
-      ids <- nams
-      matched <- sapply(unique(ids), function(i) which(ids %in% i)[-1])
+      rows <- rownames(d)
+      if (is.null(row.names))
+        rows <- seq_len(m)
+      rows.int <- as.integer(rows)
+      is.int <- is.integer(rows.int) && !anyDuplicated(rows.int)
+      row.names <- if (is.int) rows.int else rows
+
+      col.names <- colnames(d)
+
+      if (inherits(d, "matrix")) {
+        rownames(d) <- NULL
+        colnames(d) <- NULL
+        d <- split(d, rep(seq_len(ncol(d)), each=nrow(d)))
+      } else if (inherits(d, "data.frame")) {
+        d <- as.list(d)
+      }
+
+      ids <- col.names
+      matched <- lapply(unique(ids), function(i) which(ids %in% i)[-1])
+      names(matched) <- unique(ids)
       for (i in seq_along(matched))
         ids[matched[[i]]] <- paste0(names(matched[i]), " (",
                                     seq_along(matched[[i]]), ")")
-      names(d) <- paste0("V", 1:n)
+      names(d) <- paste0("V", seq_len(n))
 
       cols <- list()
-      for (i in 1:n) {
+      for (i in seq_len(n)) {
         cols[[i]] <- list()
         cols[[i]]$id      <- ids[i]
-        cols[[i]]$name    <- nams[i]
+        cols[[i]]$name    <- col.names[i]
         cols[[i]]$format  <- ""
-        cols[[i]]$class   <- class(d[, i])
+        cols[[i]]$class   <- class(d[[i]])
         cols[[i]]$index   <- i
         cols[[i]]$fun     <- paste0("\"", ids[i], "\"")
-        cols[[i]]$sample  <- na.omit(d[, i])[1]
-        cols[[i]]$summary <- paste(c("", capture.output(summary(d[, i])),
-                                     "", capture.output(str(d[, i])),
-                                     ""), collapse="\n")
+        cols[[i]]$sample  <- na.omit(d[[i]])[1]
+        cols[[i]]$summary <- summary(d[[i]])
       }
+
       Data(clear.data=TRUE)
       Data("comment", comment(d))
       Data("data.raw", d)
+      Data("data.raw", row.names, which.attr="row.names")
+      Data("data.raw", n, which.attr="nrows")
       Data("cols", cols)
       Data("import", list(source=src))
     }
@@ -217,9 +234,6 @@ OpenRSurvey <- function() {
     }
     Data("vars", vars)
   }
-
-
-
 
 
   # Toggle widget state
@@ -347,8 +361,8 @@ OpenRSurvey <- function() {
   CloseDevices <- function() {
     graphics.off()
     if (is.rgl) {
-      while (rgl.cur() != 0)
-        rgl.close()
+      while (rgl::rgl.cur() != 0)
+        rgl::rgl.close()
     }
   }
 
@@ -366,7 +380,7 @@ OpenRSurvey <- function() {
 
   # Save RGL graphic devices
   SaveRGLDevice <- function() {
-    if (!is.rgl || rgl.cur() == 0)
+    if (!is.rgl || rgl::rgl.cur() == 0)
       return()
     f <- GetFile(cmd="Save As", exts=c("png", "eps", "pdf"),
                  win.title="Save RGL Graphic As", defaultextension="png",
@@ -374,21 +388,22 @@ OpenRSurvey <- function() {
     if (is.null(f))
       return()
     if (attr(f, "extension") == "png")
-      rgl.snapshot(filename=f, fmt=attr(f, "extension"))
+      rgl::rgl.snapshot(filename=f, fmt=attr(f, "extension"))
     else
-      rgl.postscript(filename=f, fmt=attr(f, "extension"))
+      rgl::rgl.postscript(filename=f, fmt=attr(f, "extension"))
   }
 
   # Session information
   SessionInfo <- function() {
-    txt <- paste(c(capture.output(sessionInfo()), ""), collapse="\n")
+    txt <- paste(c(capture.output(print(sessionInfo(), locale=TRUE)), ""),
+                 collapse="\n")
     EditText(txt, read.only=TRUE, win.title="Session Information",
              is.fixed.width.font=FALSE, parent=tt)
   }
 
   # About package
   AboutPackage <- function() {
-    txt <- readLines(info.path, n=-1L)
+    txt <- readLines(info.path)
     pkg.version <- strsplit(txt[grep("^Version:", txt)], " ")[[1]][2]
     pkg.date <- strsplit(txt[grep("^Date:", txt)], " ")[[1]][2]
     msg <- paste0("RSurvey package ", pkg.version, " (", pkg.date, ")")
@@ -504,18 +519,6 @@ OpenRSurvey <- function() {
       idx <- idx + 1
     }
     chk
-  }
-
-  # Plot histogram
-  PlotHistogram <- function() {
-    CallProcessData()
-    tkconfigure(tt, cursor="watch")
-    on.exit(tkconfigure(tt, cursor="arrow"))
-    if (is.null(Data("data.pts")))
-      return()
-    d <- Data("data.pts")
-    d <- d[, names(d) != "sort.on"]
-    BuildHistogram(d, var.names=names(d), parent=tt)
   }
 
   # Plot point or 2d surface data
@@ -713,48 +716,78 @@ OpenRSurvey <- function() {
   }
 
   # Call edit data
-  CallEditData <- function(read.only) {
+  CallEditData <- function(read.only=TRUE, is.raw=TRUE, is.state=FALSE) {
     tkconfigure(tt, cursor="watch")
     on.exit(tkconfigure(tt, cursor="arrow"))
     if (read.only) {  # view processed data
       CallProcessData()
       if (is.null(Data("data.pts")))
         return()
+
+
+
       cols <- Data("cols")
       vars <- Data("vars")
-      nams <- names(Data("data.pts"))
-      fmts <- vapply(nams, function(i) cols[[vars[[i]]]]$format, "")
-      try(EditData(Data("data.pts"), col.formats=fmts, col.names=nams,
-                   read.only=TRUE, win.title="Processed Data", parent=tt))
+
+
+
+
+
+
+      col.names <- names(Data("data.pts"))
+      col.formats <- vapply(col.names, function(i) cols[[vars[[i]]]]$format, "")
+
+
+
+
+
+
+      EditData(Data("data.pts"), col.names=col.names, col.formats=col.formats,
+               read.only=TRUE, win.title="View Processed Data", parent=tt)
+
+
+
+
+
+
+
+
 
     } else {  # edit raw data
       if (is.null(Data("data.raw")))
         return()
+      rows <- Data("data.raw", which.attr="row.names")
       cols <- Data("cols")
       idxs <- na.omit(vapply(cols, function(i) i$index, 0L))
-      nams <- vapply(cols, function(i) i$id, "")
-      fmts <- vapply(cols, function(i) i$format, "")
+      col.names <- vapply(cols, function(i) i$id, "")[idxs]
+      col.formats <- vapply(cols, function(i) i$format, "")[idxs]
+      old.changelog <- Data("changelog")
 
-      ans <- EditData(Data("data.raw")[, idxs, drop=FALSE],
-                      col.formats=fmts[idxs], col.names=nams[idxs],
-                      read.only=FALSE, changelog=Data("changelog"),
-                      win.title="Raw Data", parent=tt)
+      ans <- EditData(Data("data.raw")[idxs], col.names=col.names,
+                      row.names=rows, col.formats=col.formats,
+                      read.only=FALSE, changelog=old.changelog,
+                      win.title="Edit Raw Data", parent=tt)
       if (is.null(ans))
         return()
 
-      Data("data.raw", ans$d)
-      Data("changelog", ans$changelog)
-      memory.usage <- gc()
+      tclServiceMode(FALSE)
+      on.exit(tclServiceMode(TRUE), add=TRUE)
 
-      for (i in seq_along(cols)) {
+      Data("data.raw",  ans$d)
+      Data("changelog", ans$changelog)
+
+      if (is.null(old.changelog))
+        new.changelog.rows <- seq_len(nrow(ans$changelog))
+      else
+        new.changelog.rows <- (nrow(old.changelog) + 1L):nrow(ans$changelog)
+      changed.cols <- unique(ans$changelog[new.changelog.rows, "variable"])
+      changed.idxs <- which(col.names %in% changed.cols)
+      for (i in changed.idxs) {
         obj <- EvalFunction(cols[[i]]$fun, cols)
-        cols[[i]]$summary <- paste(c("", capture.output(summary(obj)), "",
-                                     "", capture.output(str(obj)),
-                                     ""), collapse="\n")
+        cols[[i]]$summary <- summary(obj)
         cols[[i]]$sample <- na.omit(obj)[1]
       }
       Data("cols", cols)
-
       Data("data.pts", NULL)
       Data("data.grd", NULL)
     }
@@ -788,10 +821,10 @@ OpenRSurvey <- function() {
                          stringsAsFactors=FALSE)
 
       if (!is.null(Data("data.raw"))) {
-        rows.str <- row.names(Data("data.raw"))
-        rows.int <- as.integer(rows.str)
+        rows <- Data("data.raw", which.attr="row.names")
+        rows.int <- as.integer(rows)
         is.int <- is.integer(rows.int) && !anyDuplicated(rows.int)
-        row.names(d) <- if (is.int) rows.int else rows.str
+        rownames(d) <- if (is.int) rows.int else rows
       }
       names(d) <- var.names
 
@@ -837,12 +870,12 @@ OpenRSurvey <- function() {
   BuildQuery <- function() {
     if (is.null(Data("data.raw")))
       return()
-    n <- nrow(Data("data.raw"))
-    if (n == 0)
+    m <- Data("data.raw", which.attr="nrows")
+    if (m == 0)
       return()
     cols <- Data("cols")
     old.fun <- Data("query")
-    f <- EditFunction(cols, fun=old.fun, value.length=n, value.class="logical",
+    f <- EditFunction(cols, fun=old.fun, value.length=m, value.class="logical",
                       win.title="Filter Data Records", parent=tt)
     if (is.null(f))
       return()
@@ -896,17 +929,11 @@ OpenRSurvey <- function() {
     Data("default.dir", getwd())
 
   # Check if suggested packages are loaded
-  available.packages <- .packages(all.available=TRUE)
-  is.xml <- "XML" %in% available.packages &&
-            require("XML", warn.conflicts=FALSE, quietly=TRUE)
-  is.rgl <- "rgl" %in% available.packages &&
-            require("rgl", warn.conflicts=FALSE, quietly=TRUE)
-  is.rgdal <- "rgdal" %in% available.packages &&
-              require("rgdal", warn.conflicts=FALSE, quietly=TRUE)
-  is.tripack <- "tripack" %in% available.packages &&
-                require("tripack", warn.conflicts=FALSE, quietly=TRUE)
-  is.colorspace <- "colorspace" %in% available.packages &&
-                   require("colorspace", warn.conflicts=FALSE, quietly=TRUE)
+  is.xml <- requireNamespace("XML", quietly=TRUE)
+  is.rgl <- requireNamespace("rgl", quietly=TRUE)
+  is.rgdal <- requireNamespace("rgdal", quietly=TRUE)
+  is.tripack <- requireNamespace("tripack", quietly=TRUE)
+  is.colorspace <- requireNamespace("colorspace", quietly=TRUE)
 
   # Set options
   SetCsi()
@@ -958,10 +985,10 @@ OpenRSurvey <- function() {
   tkadd(menu.file.import, "command", label="XML spreadsheet file\u2026",
         state=ifelse(is.xml, "normal", "disabled"),
         command=function() ReadData("xlsx"))
-  tkadd(menu.file.import, "command", label="R data file\u2026",
-        command=function() ReadData("rda"))
   tkadd(menu.file.import, "command", label="R package\u2026",
         command=function() ReadData("rpackage"))
+  tkadd(menu.file.import, "command", label="R data file\u2026",
+        command=function() ReadData("rda"))
   tkadd(menu.file, "cascade", label="Import raw data from",
         menu=menu.file.import)
   menu.file.export <- tkmenu(tt, tearoff=0)
@@ -996,10 +1023,10 @@ OpenRSurvey <- function() {
 
   tkadd(menu.edit, "command", label="Manage variables\u2026",
         command=CallManageVariables)
+  tkadd(menu.edit, "command", label="Raw data editor\u2026",
+        command=function() CallEditData(read.only=FALSE))
   tkadd(menu.edit, "command", label="Comment\u2026",
         command=EditComment)
-  tkadd(menu.edit, "command", label="Raw data\u2026",
-        command=function() CallEditData(read.only=FALSE))
 
   tkadd(menu.edit, "separator")
   tkadd(menu.edit, "command", label="Filter data records\u2026",
@@ -1030,13 +1057,28 @@ OpenRSurvey <- function() {
           SetInterpolation(tt)
         })
 
+
+
+
   # View menu
+
   menu.view <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="View", menu=menu.view, underline=0)
-  tkadd(menu.view, "command", label="Processed data",
-        command=function() {
-          CallEditData(read.only=TRUE)
-        })
+  menu.view.raw <- tkmenu(tt, tearoff=0)
+  tkadd(menu.view.raw, "command", label="All variables",
+        command=function() print("notyet"), state="disabled")
+  tkadd(menu.view.raw, "command", label="State variables",
+        command=function() print("notyet"), state="disabled")
+  tkadd(menu.view, "cascade", label="Raw data for", menu=menu.view.raw)
+  menu.view.pr <- tkmenu(tt, tearoff=0)
+  tkadd(menu.view.pr, "command", label="All variables",
+        command=function() print("notyet"), state="disabled")
+  tkadd(menu.view.pr, "command", label="State variables",
+        command=function() CallEditData())
+  tkadd(menu.view, "cascade", label="Processed data for", menu=menu.view.pr)
+
+
+
 
   # Polygon menu
 
@@ -1076,9 +1118,6 @@ OpenRSurvey <- function() {
 
   menu.graph <- tkmenu(tt, tearoff=0)
   tkadd(top.menu, "cascade", label="Graph", menu=menu.graph, underline=0)
-
-  tkadd(menu.graph, "command", label="Plot histogram\u2026",
-        command=PlotHistogram)
   tkadd(menu.graph, "command", label="Plot scatterplot",
         command=function() {
           CallPlot2d(type="p")
@@ -1091,7 +1130,6 @@ OpenRSurvey <- function() {
   tkadd(menu.graph, "command", label="Plot 3D-interpolated map",
         state=ifelse(is.rgl, "normal", "disabled"),
         command=CallPlot3d)
-
   tkadd(menu.graph, "separator")
   tkadd(menu.graph, "command", label="Set axes limits\u2026",
         command=function() {
@@ -1102,7 +1140,6 @@ OpenRSurvey <- function() {
         command=function() {
           Data("lim.axes", NULL)
         })
-
   tkadd(menu.graph, "separator")
   tkadd(menu.graph, "command", label="Configuration",
         command=function() {
@@ -1116,7 +1153,6 @@ OpenRSurvey <- function() {
           if (!is.null(pal))
             Data("color.palette", pal)
         })
-
   tkadd(menu.graph, "separator")
   tkadd(menu.graph, "command", label="Close all graphic devices",
         accelerator="Ctrl+F4", command=CloseDevices)
@@ -1224,7 +1260,7 @@ OpenRSurvey <- function() {
   # Frame 1, variables
 
   frame1 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
-                          text="Set variables")
+                          text="Set state variables")
 
   frame1.lab.1.1 <- ttklabel(frame1, text="x")
   frame1.lab.2.1 <- ttklabel(frame1, text="y")
@@ -1259,7 +1295,7 @@ OpenRSurvey <- function() {
   # Frame 2, plotting buttons
 
   frame2 <- ttklabelframe(tt, relief="flat", borderwidth=5, padding=5,
-                          text="Plot variables")
+                          text="Plot state variables")
 
   frame2.but.1.1 <- ttkbutton(frame2, width=10, text="Scatter",
                               command=function() {

@@ -1,20 +1,14 @@
-\name{ImportTextData}
+\name{ImportText}
 
-\alias{ImportTextData}
+\alias{ImportText}
 
-\title{Import Text Data}
+\title{Import Data from Text File}
 
-\description{
-A \acronym{GUI} for reading table formatted data from a text file.
-}
+\description{A \acronym{GUI} for reading table formatted data from a text file.}
 
-\usage{
-ImportTextData(parent = NULL)
-}
+\usage{ImportText(parent = NULL)}
 
-\arguments{
-\item{parent}{tkwin; the \acronym{GUI} parent window.}
-}
+\arguments{\item{parent}{tkwin; the \acronym{GUI} parent window.}}
 
 \details{
 This \acronym{GUI} is a wrapper for the \code{\link{read.table}} function.
@@ -22,7 +16,9 @@ Data connections are defined as the path to the file to be opened, a
 complete \acronym{URL} (e.g. http://, ftp:// or file://), or windows clipboard.
 Files are limited to text format (e.g., \file{.tsv} \file{.csv}, or
 \file{.txt}); however, they can be compressed by
-\emph{\href{http://www.bzip.org/}{bzip2}} with additional extension \file{.bz2}.
+\href{http://www.gzip.org/}{gzip}, \href{http://www.bzip.org/}{bzip2}, or
+\href{http://tukaani.org/xz/format.html}{xz} with additional extension
+\file{.gz}, \file{.bz2}, or \file{.xz}, respectively.
 
 Conversion specification formats are the character representation of object
 types used to: identify column classes prior to reading in data,
@@ -34,8 +30,7 @@ a format string of "\%.5f" applied to the mathematical constant \emph{pi}
 results in "3.14159". Calendar date and time objects of class \code{POSIXct} are
 defined by the ISO C99 / POSIX standard, see \code{\link{strftime}};
 for example, "02/26/2010 02:05:39 PM" is represented using
-"\%d/\%m/\%Y \%I:\%M:\%S \%p". The default time zone is Coordinated Universal
-Time (UTC).
+"\%d/\%m/\%Y \%I:\%M:\%S \%p".
 
 Comments located above data records and header lines are preserved; all other
 comments are ignored. Requires the specification of a comment character.
@@ -72,18 +67,12 @@ Components of \code{import} include:
   factors.}
 }
 
-\note{
-Requires the Tcl package \href{http://tktable.sourceforge.net/}{Tktable}.
-}
+\note{Requires the Tcl package \href{http://tktable.sourceforge.net/}{Tktable}.}
 
-\seealso{
-\code{\link{read.table}}
-}
+\seealso{\code{\link{read.table}}}
 
 \author{J.C. Fisher}
 
-\examples{
-\donttest{ImportTextData()}
-}
+\examples{\donttest{ImportText()}}
 
 \keyword{IO}

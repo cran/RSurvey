@@ -4,20 +4,20 @@
 
 \title{Edit Data}
 
-\description{
-A \acronym{GUI} for viewing and editing table formatted data.
-}
+\description{A \acronym{GUI} for viewing and editing table formatted data.}
 
 \usage{
-EditData(d, col.names = colnames(d), col.formats = NULL, read.only = FALSE,
-         changelog = NULL, win.title = "Edit Data", parent = NULL)
+EditData(d, col.names = names(d), row.names = NULL, col.formats = NULL,
+         read.only = FALSE, changelog = NULL, win.title = "Data",
+         parent = NULL)
 }
 
 \arguments{
-\item{d}{data.frame; the data used to populate the table.}
+\item{d}{list, matrix, or data.frame; the data used to populate the table.}
 \item{col.names}{character; a vector of column names.}
+\item{row.names}{character; a vector of row names.}
 \item{col.formats}{character; a vector of format conversion specification
-  strings (optional), see \code{\link{sprintf}} and \code{\link{strftime}}.}
+  strings, see \code{\link{sprintf}} and \code{\link{strftime}}.}
 \item{read.only}{logical; specifies whether the table is in read only mode.}
 \item{changelog}{data.frame; history of all data table edits (see
   \sQuote{Value}).}
@@ -49,13 +49,15 @@ Requires the Tcl package
 
 \author{J.C. Fisher}
 
-\examples{
-\donttest{tcltk::tclRequire("Tktable", warn = TRUE)
+\seealso{\code{\link{BuildHistogram}}}
+
+\examples{\donttest{
+tcltk::tclRequire("Tktable", warn = TRUE)
 
 n <- 1000L
 V1 <- sample(c(1:9, NA), n, replace = TRUE)
 V2 <- sample(LETTERS, n, replace = TRUE)
-V3 <- as.POSIXct(rnorm(n, mean = 0, sd = 1e6), origin = "2010-01-01", tz = "GMT")
+V3 <- as.POSIXct(rnorm(n, mean = 0, sd = 1e6), origin = "2010-01-01")
 V4 <- sample(V1 * pi, n)
 d <- data.frame(V1, V2, V3, V4)
 col.names <- c("Integers", "Letters", "DateTime", "Numeric")
@@ -63,7 +65,7 @@ col.formats <- c("\%d", "\%s", "\%m/\%d/\%Y \%H:\%M", "")
 ans <- EditData(d, col.names, col.formats)
 str(ans)
 
-rownames(d) <- paste0(sample(LETTERS, n, replace = TRUE), 1:n)
+rownames(d) <- paste0(sample(LETTERS, n, replace = TRUE), seq_len(n))
 EditData(d, read.only = TRUE)
 
 colnames(d) <- NULL

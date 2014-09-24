@@ -2,7 +2,7 @@
 
 Autocrop <- function(mesh, max.len, max.itr=10000) {
 
-  ## Additional functions (subroutines)
+  ## Additional functions
 
   # Return outer elements with arc lengths greater than max.len
 
@@ -52,7 +52,7 @@ Autocrop <- function(mesh, max.len, max.itr=10000) {
 
   ## Main program
 
-  if (!require("tripack"))
+  if (!requireNamespace("tripack", quietly=TRUE))
     stop()
 
   elem.build <- matrix(c(2, 3, 3, 1, 1, 2), nrow=3, ncol=2, byrow=TRUE,
@@ -60,7 +60,7 @@ Autocrop <- function(mesh, max.len, max.itr=10000) {
                                      c("pt1", "pt2")))
 
   tri <- tripack::triangles(mesh)
-  tri <- cbind(elem=1:nrow(tri), tri)
+  tri <- cbind(elem=seq_len(nrow(tri)), tri)
 
   itr <- 0
   old.tri <- new.tri <- tri
