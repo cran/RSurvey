@@ -16,7 +16,7 @@ BuildPackage <- function(check.cran=FALSE, no.vignettes=FALSE) {
   build.option <- "--resave-data"
   check.option <- ""
   if (check.cran) {
-    file.name <- paste0(file.name, "-check_cran")
+    file.name <- paste0(file.name, "-cran")
     check.option <- paste(check.option, "--as-cran")
   }
   if (no.vignettes) {
@@ -44,6 +44,7 @@ BuildPackage <- function(check.cran=FALSE, no.vignettes=FALSE) {
   cmd <- append(cmd, paste0(cs, " RM -f ", pkg, "*"))
   cmd <- append(cmd, "CD /d C:/")
   cmd <- append(cmd, paste(cs, path.cmd, "REMOVE", pkg))
+  cmd <- append(cmd, paste(cs, "RMDIR /S /Q", path.tmp))
   cmd <- append(cmd, paste(cs, "CP -r", path.pkg, shQuote("C:/")))
   cmd <- append(cmd, paste(cs, "RMDIR /S /Q", path.chk))
   cmd <- append(cmd, paste(cs, "RMDIR /S /Q", path.git))
