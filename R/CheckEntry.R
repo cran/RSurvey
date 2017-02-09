@@ -1,9 +1,28 @@
-# Controls the character string content within a Tk entry widget.
+#' Control Content in Entry Widget
+#'
+#' This function enforces content control on entry widgets.
+#'
+#' @param obj.class character.
+#'   Name of object class, either \var{real}, \var{integer}, or \var{logical}
+#' @param ent.str character.
+#'   Value from entry widget
+#'
+#' @return Returns a character string that can be easily converted to the desired object class.
+#'
+#' @author J.C. Fisher, U.S. Geological Survey, Idaho Water Science Center
+#'
+#' @keywords manip
+#'
+#' @export
+#'
+#' @examples
+#' CheckEntry("numeric", "3.14ab")
+#' CheckEntry("integer", "3.")
+#'
 
 CheckEntry <- function(obj.class, ent.str="") {
 
-  if (ent.str == "")
-    return(ent.str)
+  if (ent.str == "") return(ent.str)
 
   if ("numeric" %in% obj.class) {
     accept.vals <- c(as.character(0:9), "-", "e", "E", ".", "N", "A")

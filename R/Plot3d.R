@@ -1,176 +1,146 @@
-# A three-dimensional surface plot of the processed survey data is drawn.
+#' Plot Points and Surface in 3D
+#'
+#' This function renders raster and point data in three-dimensional (\acronym{3D}) space.
+#'
+#' @param r RasterLayer.
+#'   Gridded surface data
+#' @param p SpatialPointsDataFrame.
+#'   Spatial point data
+#' @param xlim numeric.
+#'   Vector of length 2 giving the minimum and maximum values for the \emph{x}-axis.
+#' @param ylim numeric.
+#'   Vector of length 2 giving the minimum and maximum values for the \emph{y}-axis.
+#' @param zlim numeric.
+#'   Vector of length 2 giving the minimum and maximum values for the \emph{z}-axis.
+#' @param vasp numeric.
+#'   The \emph{z/x} aspect ratio for spatial axes.
+#' @param hasp numeric.
+#'   The \emph{y/x} aspect ratio for spatial axes.
+#'   Defaults to 1 (one unit on the \emph{x}-axis equals one unit on the \emph{y}-axis) when \code{r} is projected,
+#' @param cex.pts numeric.
+#'   Amount by which point symbols should be magnified relative to the default.
+#' @param n integer.
+#'   Number of contour levels desired.
+#' @param color.palette function.
+#'   Color \link{palette} to be used to assign colors in the plot.
+#' @param maxpixels integer.
+#'   Maximum number of cells to use for the plot.
+#'
+#' @details The interpolated surface is rendered using \pkg{rgl},
+#'   a \acronym{3D} visualization device system for \R based on \href{https://www.opengl.org/}{OpenGL}.
+#'   The mouse is used for interactive viewpoint navigation where the left, right, and center mouse buttons rotate the scene,
+#'   rotate the scene around the x-axis, and zooms the display, respectively.
+#'
+#' @return Used for the side-effect of a new plot generated.
+#'
+#' @author J.C. Fisher, U.S. Geological Survey, Idaho Water Science Center
+#'
+#' @seealso \code{\link{matplot}}, \code{\link{boxplot}}
+#'
+#' @keywords hplot
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'   Plot3d()
+#'   rgl::rgl.quit()
+#' }
+#'
 
-Plot3d <- function(x=NULL, y=NULL, z=NULL, px=NULL, py=NULL, pz=NULL,
-                   xlim=NULL, ylim=NULL, zlim=NULL,
-                   vasp=NA, hasp=NA, width=7, ppi=96, cex.pts=1,
-                   nlevels=20, color.palette=terrain.colors,
-                   mouse.mode=c("trackball", "zAxis", "zoom"), bg="white") {
+Plot3d <- function(r=NULL, p=NULL, xlim=NULL, ylim=NULL, zlim=NULL,
+                   vasp=NULL, hasp=NULL, cex.pts=1, n=NULL,
+                   color.palette=grDevices::terrain.colors, maxpixels=500000) {
 
-  if (!requireNamespace("rgl", quietly=TRUE))
-    stop()
+  if (!requireNamespace("rgl", quietly=TRUE)) stop()
+  is.r <- inherits(r, "RasterLayer")
+  is.p <- inherits(p, "SpatialPointsDataFrame")
 
-  # Account for missing arguments
-
-  if (is.null(z)) {
-    if (!is.null(x) && is.list(x)) {
-      z <- x$z
-      y <- x$y
-      x <- x$x
-    } else {
-      stop("No 'z' specified")
-    }
-  } else if (!is.null(x) && is.list(x)) {
-    y <- x$y
-    x <- x$x
-  }
-  if (is.null(x))
-    x <- seq(0, 1, length.out=nrow(z))
-  if (is.null(y))
-    y <- seq(0, 1, length.out=ncol(z))
-
-  if (any(diff(x) <= 0) || any(diff(y) <= 0))
-    stop("Increasing 'x' and 'y' values expected")
-  if (!is.matrix(z) || nrow(z) <= 1 || ncol(z) <= 1)
-    stop("No proper 'z' matrix specified")
-
-  show.points <- !is.null(px)
-  if (show.points) {
-    if (is.list(px)) {
-      pz <- px$z
-      py <- px$y
-      px <- px$x
-    }
-    show.points <- !(is.null(px) | is.null(py) | is.null(pz))
-  }
-
-  if (is.null(width))
-    width <- 7
-  if (is.null(cex.pts))
-    cex.pts <- 1
-
-  # Limits
-
-  if (!is.null(xlim)) {
-    if (!is.na(xlim[1])) {
-      logic <- x >= xlim[1]
-      x <- x[logic]
-      z <- z[logic,]
-      if (show.points) {
-        logic <- px >= xlim[1]
-        px <- px[logic]
-        py <- py[logic]
-        pz <- pz[logic]
-      }
-    }
-    if (!is.na(xlim[2])) {
-      logic <- x <= xlim[2]
-      x <- x[logic]
-      z <- z[logic,]
-      if (show.points) {
-        logic <- px <= xlim[2]
-        px <- px[logic]
-        py <- py[logic]
-        pz <- pz[logic]
-      }
-    }
+  if (is.r) {
+    try(p <- sp::spTransform(p, r@crs), silent=TRUE)
+    if (is.null(hasp) && !is.na(rgdal::CRSargs(raster::crs(r)))) hasp <- 1
+  } else if (is.p) {
+    if (is.null(hasp) && !is.na(rgdal::CRSargs(raster::crs(p)))) hasp <- 1
   }
 
-  if (!is.null(ylim)) {
-    if (!is.na(ylim[1])) {
-      logic <- y >= ylim[1]
-      y <- y[logic]
-      z <- z[, logic]
-      if (show.points) {
-        logic <- py >= ylim[1]
-        px <- px[logic]
-        py <- py[logic]
-        pz <- pz[logic]
-      }
-    }
-    if (!is.na(ylim[2])) {
-      logic <- y <= ylim[2]
-      y <- y[logic]
-      z <- z[, logic]
-      if (show.points) {
-        logic <- py <= ylim[2]
-        px <- px[logic]
-        py <- py[logic]
-        pz <- pz[logic]
-      }
-    }
+  # defaults
+  if (!is.numeric(xlim)) xlim <- c(NA, NA)
+  if (!is.numeric(ylim)) ylim <- c(NA, NA)
+  if (!is.numeric(zlim)) zlim <- c(NA, NA)
+  if (is.null(cex.pts)) cex.pts <- 1
+
+  # raster resolution
+  if (is.r) r <- raster::sampleRegular(r, size=maxpixels, asRaster=TRUE)
+
+  # limits
+  e <- cbind(if (is.p) as.vector(raster::extent(p)) else NULL,
+             if (is.r) as.vector(raster::extent(r)) else NULL)
+  e <- c(min(e[1, ]), max(e[2, ]), min(e[3, ]), max(e[4, ]))
+  if (!is.na(xlim[1])) e[1] <- xlim[1]
+  if (!is.na(xlim[2])) e[2] <- xlim[2]
+  if (!is.na(ylim[1])) e[3] <- ylim[1]
+  if (!is.na(ylim[2])) e[4] <- ylim[2]
+  if (is.p) p <- raster::crop(p, raster::extent(e), snap="near")
+  if (is.r) r <- raster::crop(r, raster::extent(e), snap="near")
+  zran <- range(c(if (is.p) p@data[, 1] else NULL, if (is.r) r[] else NULL), finite=TRUE)
+  if (is.na(zlim[1])) zlim[1] <- zran[1]
+  if (is.na(zlim[2])) zlim[2] <- zran[2]
+  if (is.p) {
+    is.ge <- p@data[, 1] >= zlim[1] & !is.na(p@data[, 1])
+    is.le <- p@data[, 1] <= zlim[2] & !is.na(p@data[, 1])
+    p <- p[is.ge & is.le, ]
   }
-
-  if (!is.null(zlim)) {
-    if (!is.na(zlim[1])) {
-      z[z < zlim[1]] <- NA
-      if (show.points) {
-        logic <- pz >= zlim[1]
-        px <- px[logic]
-        py <- py[logic]
-        pz <- pz[logic]
-      }
-    }
-    if (!is.na(zlim[2])) {
-      z[z > zlim[2]] <- NA
-      if (show.points) {
-        logic <- pz <= zlim[2]
-        px <- px[logic]
-        py <- py[logic]
-        pz <- pz[logic]
-      }
-    }
-  } else {
-    zlim <- range(z, na.rm=TRUE)
+  if (is.r) {
+    r[r[] < zlim[1] | r[] > zlim[2]] <- NA
+    r <- raster::trim(r)
   }
-  if (is.na(zlim[1]))
-    zlim[1] <- min(z, na.rm=TRUE)
-  if (is.na(zlim[2]))
-    zlim[2] <- max(z, na.rm=TRUE)
+  xran <- range(c(if (is.p) sp::bbox(p)[1, ] else NULL,
+                  if (is.r) sp::bbox(r)[1, ] else NULL))
+  yran <- range(c(if (is.p) sp::bbox(p)[2, ] else NULL,
+                  if (is.r) sp::bbox(r)[2, ] else NULL))
+  if (is.na(xlim[1])) xlim[1] <- xran[1]
+  if (is.na(xlim[2])) xlim[2] <- xran[2]
+  if (is.na(ylim[1])) ylim[1] <- yran[1]
+  if (is.na(ylim[2])) ylim[2] <- yran[2]
 
-  # Scale
+  # scale
+  yscale <- if (is.null(hasp)) diff(xlim) / diff(ylim) else hasp
+  zscale <- if (is.null(vasp)) (diff(xlim) * 0.25) / diff(zlim) else vasp
 
-  yscale <- zscale <- 1
-
-  if (!is.null(hasp) && !is.na(hasp))
-    yscale <- hasp
+  # device
+  if (rgl::rgl.cur() == 0)
+    rgl::open3d()
   else
-    yscale <- (diff(range(x, na.rm=TRUE)) / diff(range(y, na.rm=TRUE)))
+    rgl::clear3d()
 
-  if (!is.null(vasp) && !is.na(vasp)) {
-    zscale <- vasp
-  } else {
-    maxdiff <- max(diff(range(x, na.rm=TRUE)),
-                   diff(range(y, na.rm=TRUE))) * 0.15
-    zscale <- (maxdiff / diff(range(z, na.rm=TRUE)))
+  # grid
+  if (is.r) {
+    x <- raster::xFromCol(r, 1:ncol(r))
+    y <- raster::yFromRow(r, nrow(r):1) * yscale
+    z <- t((raster::getValues(r, format="matrix"))[nrow(r):1, ]) * zscale
+    zran <- range(r[], finite=TRUE)
+    if (is.null(n) || n > 200L)
+      breaks <- seq(zlim[1], zlim[2], length.out=200L)
+    else
+      breaks <- pretty(zlim, n=n)
+    n <- length(breaks) - 1L
+    interval <- findInterval(z, breaks * zscale, all.inside=TRUE)
+    cols <- color.palette(n)[interval]
+    rgl::persp3d(x, y, z, xlab="", ylab="", zlab="", xlim=xlim, ylim=ylim * yscale,
+                 zlim=zlim * zscale, aspect=FALSE, color=cols, axes=FALSE)
   }
 
-  y <- y * yscale
-  z <- z * zscale
-
-  if (show.points) {
-    py <- py * yscale
-    pz <- pz * zscale
+  # points
+  if (is.p) {
+    x <- sp::coordinates(p)[, 1]
+    y <- sp::coordinates(p)[, 2] * yscale
+    z <- p@data[, 1] * zscale
+    size <- 3 * cex.pts
+    rgl::plot3d(x=x, y=y, z=z, xlab="", ylab="", zlab="", col="black", size=size,
+                add=is.r, aspect=FALSE, xlim=xlim, ylim=ylim * yscale,
+                zlim=zlim * zscale, axes=FALSE)
   }
 
-  # Color
-  n <- length(pretty(zlim, nlevels)) - 1
-  zran <- range(z, na.rm=TRUE)
-  cols <- color.palette(n)[((z - zran[1]) / (zran[2] - zran[1])) * (n - 1) + 1]
-
-  # Open RGL device
-  rgl::open3d()
-
-  # Size of plot window
-  win.dim <- ppi + width * ppi
-  win.rect <- c(ppi, ppi, win.dim, win.dim * 0.75)
-
-  rgl::par3d(windowRect=win.rect, mouseMode=mouse.mode)
-
-  # Add terrain surface shape
-  rgl::bg3d(color=bg)
-  rgl::surface3d(x, y, z, color=cols, back="fill")
-  rgl::view3d(theta=0, phi=-55, fov=60, zoom=0.6)
-
-  if (show.points)
-    rgl::points3d(x=px, y=py, z=pz, size=cex.pts * 3, point_antialias=TRUE)
+  rgl::box3d()
+  rgl::title3d(xlab="x", ylab="y", zlab="z", line=0.1)
 }

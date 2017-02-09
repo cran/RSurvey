@@ -1,45 +1,77 @@
-RSurvey
-=======
+# RSurvey
 
-This [R](http://www.r-project.org/ "R") package is a processing program for spatially distributed data.
-[**RSurvey**](http://cran.r-project.org/web/packages/RSurvey/index.html "RSurvey") features graphing, data management, query building, and polygon clipping tools.
-A graphical user interface (GUI) is provided and requires R operate as an SDI application, using multiple top-level windows for the console, graphics, and pager.
-The set of standards used for coding **RSurvey** is documented in [Google's R Style Guide](http://google-styleguide.googlecode.com/svn/trunk/Rguide.xml "Google's R Style Guide").
-Immediate goals for software development include:
+[![Travis-CI Build Status](https://travis-ci.org/jfisher-usgs/RSurvey.svg?branch=master)](https://travis-ci.org/jfisher-usgs/RSurvey)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/RSurvey)](https://CRAN.R-project.org/package=RSurvey)
 
-* adding the ability to manipulate geospatial data;
-* revising management of graphic devices; and
-* creating a GUI for geostatistical modeling.
+## Overview
 
-Install
--------
+The [R](https://www.r-project.org/) package **RSurvey** is a geographic information system (GIS) graphical user interface (GUI)
+that provides data viewing, management, and analysis tools.
 
-If R is not already installed on your computer, download and install the latest binary distribution from [CRAN](http://cran.r-project.org/ "The Comprehensive R Archive Network").
-Windows users should set R to operate as an SDI application during installation by choosing to customize the start-up options and specifying the SDI interface (not the default).
+## Install
 
-Open an R session and install **RSurvey** and its dependent packages from CRAN using the following commands:
+If R is not already installed on your computer, download and install the latest binary distribution from
+the Comprehensive R Archive Network ([CRAN](https://cran.r-project.org/)).
+Windows users should set R to operate as a single document interface (SDI) application during installation
+by choosing to customize the start-up options and specifying the SDI interface (not the default).
 
-    repo <- "http://cran.us.r-project.org"
-    update.packages(ask = FALSE, repos = repo)
-    install.packages("RSurvey", repos = repo, dependencies = TRUE, type = "both")
+If your operating system is OS X, download and install [XQuartz](https://www.xquartz.org/), and reboot your computer.
 
-In addition to the required packages, **RSurvey** uses functions in a number of suggested packages.
-If any of these packages are missing, **RSurvey** will offer to install them when it first starts up.
-Note that the license for the suggested **tripack** package explicitly forbids commercial use.
+**RSurvey** uses the [Tk](http://www.tkdocs.com/) toolkit for GUI rendering,
+access to Tk is provided by the **tcltk** package.
+To check if Tk is available, startup an R session and type the following at the command prompt
 
-Support for displaying table data is provided by [tktable](http://tktable.sourceforge.net/ "tktable"), a spreadsheet-like [Tcl/Tk](http://www.tcl.tk/ "Tcl/Tk") widget (typically included with the binary distribution of R).
-The following command will indicate whether tktable is available for use:
+```r
+capabilities("tcltk")
+```
 
-    print(inherits(tcltk::tclRequire("Tktable", warn = FALSE), "tclObj"))
+Support for viewing and editing table data is provided by [Tktable](http://tktable.sourceforge.net/),
+a spreadsheet-like Tk widget (typically included with the binary distribution of R).
+To check if Tktable is available, use the command
 
-Run
----
+```r
+inherits(tcltk::tclRequire("Tktable", FALSE), "tclObj")
+```
 
-Load **RSurvey** in the current R session to activate the main GUI:
+To install the stable version of **RSurvey** from CRAN use the command
 
-    library(RSurvey)
+```r
+install.packages("RSurvey")
+```
 
-Example data sets are provided in the following directory:
+Or use **devtools** to install the development version from GitHub.
 
-    system.file("extdata", package = "RSurvey")
+```r
+devtools::install_github("jfisher-usgs/RSurvey")
+```
 
+In addition to its required packages, **RSurvey** can make use of the functionality in its suggested packages.
+If any of the suggested packages are missing, you will be prompted to install them when it first starts up.
+
+## Run
+
+Load **RSurvey** in the current R session and launch its main GUI using the command
+
+```r
+library(RSurvey)
+```
+
+## Bugs
+
+Please consider reporting bugs and asking questions on the
+[Issues page](https://github.com/jfisher-usgs/RSurvey/issues).
+
+## Disclaimer
+
+This software is in the public domain because it contains materials that originally came from the USGS,
+an agency of the United States Department of Interior.
+For more information, see the
+[official USGS copyright policy](https://www2.usgs.gov/visual-id/credit_usgs.html "official USGS copyright policy").
+
+Although this software program has been used by the USGS, no warranty, expressed or implied,
+is made by the USGS or the U.S. Government as to the accuracy and functioning of the program and related program material nor shall the fact of distribution constitute any such warranty,
+and no responsibility is assumed by the USGS in connection therewith.
+
+This software is provided "AS IS."
+
+[![CC0](https://i.creativecommons.org/p/zero/1.0/88x31.png)](https://creativecommons.org/publicdomain/zero/1.0/)

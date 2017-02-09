@@ -1,276 +1,296 @@
-# A GUI for specifying window geometry and universal plotting parameters.
+#' GUI: Window and Plotting Parameters
+#'
+#' A graphical user interface (\acronym{GUI}) for specifying universal plotting parameters.
+#'
+#' @param parent tkwin.
+#'   \acronym{GUI} parent window
+#'
+#' @return Queries and sets the following components of \code{\link{Data}}:
+#'   \item{cex.pts}{amount by which point symbols should be magnified relative to the default value, \code{1.0}.
+#'     For example, \code{cex.pts = 0.5} reduces the point symbol to half of its default size.}
+#'   \item{nlevels}{approximate number of contour levels desired.}
+#'   \item{asp.yx, asp.zx}{the \code{y/x} and \code{z/x} aspect ratios, respectively.}
+#'   \item{legend.loc}{position of the points legend in the main plot region:
+#'     \var{bottomleft}, \var{topleft}, \var{topright}, or \var{bottomright} to denote legend location.}
+#'   \item{scale.loc}{position of the scale bar in the main plot region:
+#'     \var{bottomleft}, \var{topleft}, \var{topright}, or \var{bottomright} to denote scale location.}
+#'   \item{arrow.loc}{Position of the north arrow in the main plot region:
+#'     \var{bottomleft}, \var{topleft}, \var{topright}, or \var{bottomright} to denote arrow location.}
+#'   \item{useRaster}{if true, a bitmap raster is used to plot the gridded data instead of using polygons.}
+#'   \item{draw.key}{if true, a color key should be drawn for the gridded data.}
+#'   \item{dms.tick}{if true and the gridded data is projected,
+#'     the axes tickmarks are specified in degrees, minutes, and decimal seconds (DMS).}
+#'   \item{contour.lines}{if true, contour lines will be plotted on the \acronym{2D} interpolated surface.}
+#'   \item{make.intervals}{if true, represent point values within intervals.
+#'     See \code{\link{findInterval}} function for details.
+#'     Unused if \code{quantile.breaks} is true.}
+#'   \item{proportional}{indicates whether proportional circle symbols should be used to represent the point data.}
+#'   \item{quantile.breaks}{if true, breaks in the point data are set to the sample quantiles.}
+#'   \item{bg.lines}{if true, grids and graticules are drawn.}
+#'
+#' @note Re-importing data does not affect values specified in this \acronym{GUI}.
+#'
+#' @author J.C. Fisher, U.S. Geological Survey, Idaho Water Science Center
+#'
+#' @keywords misc
+#'
+#' @import tcltk
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'   SetConfiguration()
+#' }
+#'
 
 SetConfiguration <- function(parent=NULL) {
 
-  ## Additional functions
 
+  # update parameters
   UpdatePar <- function() {
-    val <- as.numeric(tclvalue(width.var))
-    Data("width", if (is.na(val)) NULL else val)
-
-    val <- as.integer(tclvalue(nlevels.var))
-    Data("nlevels", if (is.na(val)) NULL else val)
-
     val <- as.numeric(tclvalue(cex.pts.var))
     Data("cex.pts", if (is.na(val)) NULL else val)
-
+    val <- as.integer(tclvalue(nlevels.var))
+    Data("nlevels", if (is.na(val)) NULL else val)
     val <- as.numeric(tclvalue(asp.yx.var))
     Data("asp.yx", if (is.na(val)) NULL else val)
-
     val <- as.numeric(tclvalue(asp.zx.var))
     Data("asp.zx", if (is.na(val)) NULL else val)
+    val <- as.character(tclvalue(legend.loc.var))
+    Data("legend.loc", if (val == "") NULL else val)
+    val <- as.character(tclvalue(scale.loc.var))
+    Data("scale.loc", if (val == "") NULL else val)
+    val <- as.character(tclvalue(arrow.loc.var))
+    Data("arrow.loc", if (val == "") NULL else val)
 
-    val <- as.numeric(tclvalue(vmax.var))
-    Data("vmax", if (is.na(val)) NULL else val)
+    Data("useRaster",       as.integer(tclvalue(useRaster.var)))
+    Data("draw.key",        as.integer(tclvalue(draw.key.var)))
+    Data("dms.tick",        as.integer(tclvalue(dms.tick.var)))
+    Data("contour.lines",   as.integer(tclvalue(contour.lines.var)))
+    Data("make.intervals",  as.integer(tclvalue(make.intervals.var)))
+    Data("proportional",    as.integer(tclvalue(proportional.var)))
+    Data("quantile.breaks", as.integer(tclvalue(quantile.breaks.var)))
+    Data("bg.lines",        as.integer(tclvalue(bg.lines.var)))
 
-    val <- as.numeric(tclvalue(vxby.var))
-    Data("vxby", if (is.na(val)) NULL else val)
-
-    val <- as.numeric(tclvalue(vyby.var))
-    Data("vyby", if (is.na(val)) NULL else val)
-
-    Data("rkey", as.integer(tclvalue(rkey.var)))
-    Data("img.contour", as.integer(tclvalue(img.contour.var)))
-    Data("show.lines", as.integer(tclvalue(show.lines.var)))
-    Data("show.points", as.integer(tclvalue(show.points.var)))
-    Data("show.poly", as.integer(tclvalue(show.poly.var)))
-    Data("vuni", as.integer(tclvalue(vuni.var)))
-    Data("show.2.axes", as.integer(tclvalue(show.2.axes.var)))
-    Data("minor.ticks", as.integer(tclvalue(minor.ticks.var)))
-    Data("ticks.inside", as.integer(tclvalue(ticks.inside.var)))
-    Data("rm.pnt.line", as.integer(tclvalue(rm.pnt.line.var)))
+    lim <- as.integer(c(tclvalue(width.var), tclvalue(height.var)))
+    if (any(is.na(lim))) {
+        msg <- "All graphic dimension fields are required."
+        tkmessageBox(icon="error", message=msg, title="Error", type="ok", parent=tt)
+        return()
+      }
+    Data("max.dev.dim", lim)
 
     tclvalue(tt.done.var) <- 1
   }
 
-  ## Main program
 
-  # Assign variables linked to Tk widgets
+ # toggle widget state
+  ToggleState <- function() {
+    tclServiceMode(FALSE)
+    on.exit(tclServiceMode(TRUE))
+    dev.dim <- as.character(tclvalue(dev.dim.var))
+    if (dev.dim == "single column") {
+      lim <- c(21L, 56L)
+    } else if (dev.dim == "double column") {
+      lim <- c(43L, 56L)
+    } else if (dev.dim == "sidetitle") {
+      lim <- c(56L, 43L)
+    } else {
+      lim <- c(tclvalue(width.var), tclvalue(height.var))
+    }
+    tclvalue(width.var)  <- lim[1]
+    tclvalue(height.var) <- lim[2]
+    s <- ifelse(dev.dim == "custom\u2026", "normal", "readonly")
+    tkconfigure(f1.ent.09.2, state=s)
+    tkconfigure(f1.ent.10.2, state=s)
+  }
 
-  width.var        <- tclVar()
-  nlevels.var      <- tclVar()
-  cex.pts.var      <- tclVar()
-  asp.yx.var       <- tclVar()
-  asp.zx.var       <- tclVar()
-  vmax.var         <- tclVar()
-  vxby.var         <- tclVar()
-  vyby.var         <- tclVar()
-  rkey.var         <- tclVar()
-  show.poly.var    <- tclVar()
-  img.contour.var  <- tclVar()
-  show.lines.var   <- tclVar()
-  show.points.var  <- tclVar()
-  vuni.var         <- tclVar()
-  show.2.axes.var  <- tclVar()
-  minor.ticks.var  <- tclVar()
-  ticks.inside.var <- tclVar()
-  rm.pnt.line.var  <- tclVar()
 
-  if (!is.null(Data("width")))
-    tclvalue(width.var) <- Data("width")
-  if (!is.null(Data("nlevels")))
-    tclvalue(nlevels.var) <- Data("nlevels")
-  if (!is.null(Data("cex.pts")))
-    tclvalue(cex.pts.var) <- Data("cex.pts")
-  if (!is.null(Data("asp.yx")))
-    tclvalue(asp.yx.var) <- Data("asp.yx")
-  if (!is.null(Data("asp.zx")))
-    tclvalue(asp.zx.var) <- Data("asp.zx")
-  if (!is.null(Data("vmax")))
-    tclvalue(vmax.var) <- Data("vmax")
-  if (!is.null(Data("vxby")))
-    tclvalue(vxby.var) <- Data("vxby")
-  if (!is.null(Data("vyby")))
-    tclvalue(vyby.var) <- Data("vyby")
-  if (!is.null(Data("rkey")))
-    tclvalue(rkey.var) <- Data("rkey")
-  if (!is.null(Data("show.poly")))
-    tclvalue(show.poly.var) <- Data("show.poly")
-  if (!is.null(Data("img.contour")))
-    tclvalue(img.contour.var) <- Data("img.contour")
-  if (!is.null(Data("show.lines")))
-    tclvalue(show.lines.var) <- Data("show.lines")
-  if (!is.null(Data("show.points")))
-    tclvalue(show.points.var) <- Data("show.points")
-  if (!is.null(Data("vuni")))
-    tclvalue(vuni.var) <- Data("vuni")
-  if (!is.null(Data("show.2.axes")))
-    tclvalue(show.2.axes.var) <- Data("show.2.axes")
-  if (!is.null(Data("minor.ticks")))
-    tclvalue(minor.ticks.var) <- Data("minor.ticks")
-  if (!is.null(Data("ticks.inside")))
-    tclvalue(ticks.inside.var) <- Data("ticks.inside")
-  if (!is.null(Data("rm.pnt.line")))
-    tclvalue(rm.pnt.line.var) <- Data("rm.pnt.line")
+  # assign variables linked to tk widgets
+  cex.pts.var         <- tclVar()
+  nlevels.var         <- tclVar()
+  asp.yx.var          <- tclVar()
+  asp.zx.var          <- tclVar()
+  legend.loc.var      <- tclVar()
+  scale.loc.var       <- tclVar()
+  arrow.loc.var       <- tclVar()
+
+  useRaster.var       <- tclVar()
+  draw.key.var        <- tclVar()
+  dms.tick.var        <- tclVar()
+  contour.lines.var   <- tclVar()
+  make.intervals.var  <- tclVar()
+  proportional.var    <- tclVar()
+  quantile.breaks.var <- tclVar()
+  bg.lines.var        <- tclVar()
+
+  if (!is.null(Data("cex.pts")))         tclvalue(cex.pts.var)         <- Data("cex.pts")
+  if (!is.null(Data("nlevels")))         tclvalue(nlevels.var)         <- Data("nlevels")
+  if (!is.null(Data("asp.yx")))          tclvalue(asp.yx.var)          <- Data("asp.yx")
+  if (!is.null(Data("asp.zx")))          tclvalue(asp.zx.var)          <- Data("asp.zx")
+  if (!is.null(Data("legend.loc")))      tclvalue(legend.loc.var)      <- Data("legend.loc")
+  if (!is.null(Data("scale.loc")))       tclvalue(scale.loc.var)       <- Data("scale.loc")
+  if (!is.null(Data("arrow.loc")))       tclvalue(arrow.loc.var)       <- Data("arrow.loc")
+
+  if (!is.null(Data("useRaster")))       tclvalue(useRaster.var)       <- Data("useRaster")
+  if (!is.null(Data("draw.key")))        tclvalue(draw.key.var)        <- Data("draw.key")
+  if (!is.null(Data("dms.tick")))        tclvalue(dms.tick.var)        <- Data("dms.tick")
+  if (!is.null(Data("contour.lines")))   tclvalue(contour.lines.var)   <- Data("contour.lines")
+  if (!is.null(Data("make.intervals")))  tclvalue(make.intervals.var)  <- Data("make.intervals")
+  if (!is.null(Data("proportional")))    tclvalue(proportional.var)    <- Data("proportional")
+  if (!is.null(Data("quantile.breaks"))) tclvalue(quantile.breaks.var) <- Data("quantile.breaks")
+  if (!is.null(Data("bg.lines")))        tclvalue(bg.lines.var)        <- Data("bg.lines")
+
+  lim <- Data("max.dev.dim")
+  width.var  <- tclVar(as.integer(lim[1]))
+  height.var <- tclVar(as.integer(lim[2]))
+  if (identical(lim, c(21L, 56L))) {
+    dev.dim <- "single column"
+  } else if (identical(lim, c(43L, 56L))) {
+    dev.dim <- "double column"
+  } else if (identical(lim, c(56L, 43L))) {
+    dev.dim <- "sidetitle"
+  } else {
+    dev.dim <- "custom\u2026"
+  }
+  dev.dim.var <- tclVar(dev.dim)
 
   tt.done.var <- tclVar(0)
 
-  # Open GUI
-
+  # open gui
   tclServiceMode(FALSE)
   tt <- tktoplevel()
   if (!is.null(parent)) {
     tkwm.transient(tt, parent)
     geo <- unlist(strsplit(as.character(tkwm.geometry(parent)), "\\+"))
-    tkwm.geometry(tt, paste0("+", as.integer(geo[2]) + 25,
-                             "+", as.integer(geo[3]) + 25))
+    geo <- as.integer(geo[2:3]) + 25
+    tkwm.geometry(tt, sprintf("+%s+%s", geo[1], geo[2]))
   }
   tktitle(tt) <- "Configuration"
-
   tkwm.resizable(tt, 1, 0)
 
-  # Frame 0 contains ok and cancel buttons
+  # frame 0
+  f0 <- ttkframe(tt, relief="flat")
+  f0.but.2 <- ttkbutton(f0, width=12, text="OK", command=UpdatePar)
+  f0.but.3 <- ttkbutton(f0, width=12, text="Cancel",
+                        command=function() tclvalue(tt.done.var) <- 1)
+  f0.but.4 <- ttkbutton(f0, width=12, text="Help",
+                        command=function() {
+                          print(utils::help("SetConfiguration", package="RSurvey"))
+                        })
+  tkgrid("x", f0.but.2, f0.but.3, f0.but.4, sticky="se", pady=10, padx=c(4, 0))
+  tkgrid.columnconfigure(f0, 0, weight=1)
+  tkgrid.configure(f0.but.4, padx=c(4, 10))
+  tkpack(f0, fill="x", side="bottom", anchor="e")
 
-  frame0 <- ttkframe(tt, relief="flat")
-  frame0.but.2 <- ttkbutton(frame0, width=12, text="OK", command=UpdatePar)
-  frame0.but.3 <- ttkbutton(frame0, width=12, text="Cancel",
-                            command=function() tclvalue(tt.done.var) <- 1)
-  frame0.but.4 <- ttkbutton(frame0, width=12, text="Help",
-                            command=function() {
-                              print(help("SetConfiguration", package="RSurvey"))
-                            })
-  tkgrid("x", frame0.but.2, frame0.but.3, frame0.but.4,
-         sticky="se", pady=10, padx=c(4, 0))
-  tkgrid.columnconfigure(frame0, 0, weight=1)
-  tkgrid.configure(frame0.but.4, padx=c(4, 10))
-  tkpack(frame0, fill="x", side="bottom", anchor="e")
+  # frame 1
+  f1 <- ttkframe(tt, relief="flat", borderwidth=0, padding=10)
 
-  # Paned window
+  f1.lab.01.1 <- ttklabel(f1, text="Scaling for point symbols")
+  f1.lab.02.1 <- ttklabel(f1, text="Approx. number of contours")
+  f1.lab.03.1 <- ttklabel(f1, text="Horizontal aspect ratio")
+  f1.lab.04.1 <- ttklabel(f1, text="Vertical aspect ratio")
+  f1.lab.05.1 <- ttklabel(f1, text="Point legend position")
+  f1.lab.06.1 <- ttklabel(f1, text="Scale bar position")
+  f1.lab.07.1 <- ttklabel(f1, text="North arrow position")
+  f1.lab.08.1 <- ttklabel(f1, text="Max. dimensions for saved graphics")
+  f1.lab.09.1 <- ttklabel(f1, text="Width of graphics in picas")
+  f1.lab.10.1 <- ttklabel(f1, text="Height of graphics in picas")
 
-  pw <- ttkpanedwindow(tt, orient="horizontal")
+  f1.ent.01.2 <- ttkentry(f1, width=15, textvariable=cex.pts.var)
+  f1.ent.02.2 <- ttkentry(f1, width=15, textvariable=nlevels.var)
+  f1.ent.03.2 <- ttkentry(f1, width=15, textvariable=asp.yx.var)
+  f1.ent.04.2 <- ttkentry(f1, width=15, textvariable=asp.zx.var)
+  f1.ent.09.2 <- ttkentry(f1, width=15, textvariable=width.var)
+  f1.ent.10.2 <- ttkentry(f1, width=15, textvariable=height.var)
 
-  # Frame 1 contains parameters
+  loc.vals <- c("", "bottomleft", "topleft", "topright", "bottomright")
+  dim.vals <- c("double column", "single column", "sidetitle", "custom\u2026")
+  f1.box.05.2 <- ttkcombobox(f1, width=15, state="readonly", values=loc.vals,
+                             textvariable=legend.loc.var)
+  f1.box.06.2 <- ttkcombobox(f1, width=15, state="readonly", values=loc.vals,
+                             textvariable=scale.loc.var)
+  f1.box.07.2 <- ttkcombobox(f1, width=15, state="readonly", values=loc.vals,
+                             textvariable=arrow.loc.var)
+  f1.box.08.2 <- ttkcombobox(f1, width=15, state="readonly", values=dim.vals,
+                             textvariable=dev.dim.var)
 
-  frame1 <- ttkframe(pw, relief="flat", borderwidth=0, padding=10)
+  f1.chk.01.3 <- ttkcheckbutton(f1, text="Use bitmap raster image",
+                                variable=useRaster.var)
+  f1.chk.02.3 <- ttkcheckbutton(f1, text="Add color key for gridded data",
+                                variable=draw.key.var)
+  f1.chk.03.3 <- ttkcheckbutton(f1, text="Show axes tickmarks in DMS",
+                                variable=dms.tick.var)
+  f1.chk.04.3 <- ttkcheckbutton(f1, text="Add contour lines",
+                                variable=contour.lines.var)
+  f1.chk.05.3 <- ttkcheckbutton(f1, text="Apply data binning",
+                                variable=make.intervals.var)
+  f1.chk.06.3 <- ttkcheckbutton(f1, text="Show proportional point symbols",
+                                variable=proportional.var)
+  f1.chk.07.3 <- ttkcheckbutton(f1, text="Use quantile break points",
+                                variable=quantile.breaks.var)
+  f1.chk.08.3 <- ttkcheckbutton(f1, text="Add grids and graticules",
+                                variable=bg.lines.var)
 
-  txt <- "Width of plotting window canvas, in inches"
-  frame1.lab.1.1 <- ttklabel(frame1, text=txt)
-  txt <- "Approximate number of contour levels"
-  frame1.lab.2.1 <- ttklabel(frame1, text=txt)
-  txt <- "Scaling for point symbols"
-  frame1.lab.3.1 <- ttklabel(frame1, text=txt)
-  txt <- "Horizontal aspect ratio"
-  frame1.lab.4.1 <- ttklabel(frame1, text=txt)
-  txt <- "Vertical aspect ratio"
-  frame1.lab.5.1 <- ttklabel(frame1, text=txt)
-  txt <- "Maximum arrow length, in inches"
-  frame1.lab.6.1 <- ttklabel(frame1, text=txt)
-  txt <- "Increment for sequence of arrows in x direction"
-  frame1.lab.7.1 <- ttklabel(frame1, text=txt)
-  txt <- "Increment for sequence of arrows in y direction"
-  frame1.lab.8.1 <- ttklabel(frame1, text=txt)
+  tkgrid(f1.lab.01.1, f1.ent.01.2, f1.chk.01.3, pady=c(15, 4))
+  tkgrid(f1.lab.02.1, f1.ent.02.2, f1.chk.02.3, pady=c(0, 4))
+  tkgrid(f1.lab.03.1, f1.ent.03.2, f1.chk.03.3, pady=c(0, 4))
+  tkgrid(f1.lab.04.1, f1.ent.04.2, f1.chk.04.3, pady=c(0, 4))
+  tkgrid(f1.lab.05.1, f1.box.05.2, f1.chk.05.3, pady=c(0, 4))
+  tkgrid(f1.lab.06.1, f1.box.06.2, f1.chk.06.3, pady=c(0, 4))
+  tkgrid(f1.lab.07.1, f1.box.07.2, f1.chk.07.3, pady=c(0, 4))
+  tkgrid(f1.lab.08.1, f1.box.08.2, f1.chk.08.3, pady=c(0, 4))
+  tkgrid(f1.lab.09.1, f1.ent.09.2, "x", pady=c(0, 4))
+  tkgrid(f1.lab.10.1, f1.ent.10.2, "x", pady=c(0, 4))
 
-  frame1.ent.1.2 <- ttkentry(frame1, width=8, textvariable=width.var)
-  frame1.ent.2.2 <- ttkentry(frame1, width=8, textvariable=nlevels.var)
-  frame1.ent.3.2 <- ttkentry(frame1, width=8, textvariable=cex.pts.var)
-  frame1.ent.4.2 <- ttkentry(frame1, width=8, textvariable=asp.yx.var)
-  frame1.ent.5.2 <- ttkentry(frame1, width=8, textvariable=asp.zx.var)
-  frame1.ent.6.2 <- ttkentry(frame1, width=8, textvariable=vmax.var)
-  frame1.ent.7.2 <- ttkentry(frame1, width=8, textvariable=vxby.var)
-  frame1.ent.8.2 <- ttkentry(frame1, width=8, textvariable=vyby.var)
-
-  tkgrid(frame1.lab.1.1, frame1.ent.1.2, pady=c(15, 4))
-  tkgrid(frame1.lab.2.1, frame1.ent.2.2, pady=c(0, 4))
-  tkgrid(frame1.lab.3.1, frame1.ent.3.2, pady=c(0, 4))
-  tkgrid(frame1.lab.4.1, frame1.ent.4.2, pady=c(0, 4))
-  tkgrid(frame1.lab.5.1, frame1.ent.5.2, pady=c(0, 4))
-  tkgrid(frame1.lab.6.1, frame1.ent.6.2, pady=c(0, 4))
-  tkgrid(frame1.lab.7.1, frame1.ent.7.2, pady=c(0, 4))
-  tkgrid(frame1.lab.8.1, frame1.ent.8.2)
-
-  tkgrid.configure(frame1.lab.1.1, frame1.lab.2.1, frame1.lab.3.1,
-                   frame1.lab.4.1, frame1.lab.5.1, frame1.lab.6.1,
-                   frame1.lab.7.1, frame1.lab.8.1,
+  tkgrid.configure(f1.lab.01.1, f1.lab.02.1, f1.lab.03.1, f1.lab.04.1,
+                   f1.lab.05.1, f1.lab.06.1, f1.lab.07.1, f1.lab.08.1,
+                   f1.lab.09.1, f1.lab.10.1, sticky="w")
+  tkgrid.configure(f1.ent.01.2, f1.ent.02.2, f1.ent.03.2, f1.ent.04.2,
+                   f1.box.05.2, f1.box.06.2, f1.box.07.2, f1.box.08.2,
+                   f1.ent.09.2, f1.ent.10.2, sticky="we", padx=c(2, 15))
+  tkgrid.configure(f1.chk.01.3, f1.chk.02.3, f1.chk.03.3, f1.chk.04.3,
+                   f1.chk.05.3, f1.chk.06.3, f1.chk.07.3, f1.chk.08.3,
                    sticky="w")
-  tkgrid.configure(frame1.ent.1.2, frame1.ent.2.2, frame1.ent.3.2,
-                   frame1.ent.4.2, frame1.ent.5.2, frame1.ent.6.2,
-                   frame1.ent.7.2, frame1.ent.8.2, padx=c(2, 15),
-                   sticky="we")
 
-  tkgrid.columnconfigure(frame1, 1, weight=1, minsize=6)
+  tkgrid.columnconfigure(f1, 1, weight=1, minsize=6)
+  tkpack(f1, fill="x", expand=TRUE)
 
-  # Frame 2 contains plot features
-
-  frame2 <- ttkframe(pw, relief="flat", borderwidth=0, padding=10)
-
-  txt <- "Reverse legend"
-  frame2.chk.01.1 <- ttkcheckbutton(frame2, text=txt, variable=rkey.var)
-  txt <- "Show polygons"
-  frame2.chk.02.1 <- ttkcheckbutton(frame2, text=txt, variable=show.poly.var)
-  txt <- "Use image contour"
-  frame2.chk.03.1 <- ttkcheckbutton(frame2, text=txt, variable=img.contour.var)
-  txt <- "Show contour lines"
-  frame2.chk.04.1 <- ttkcheckbutton(frame2, text=txt, variable=show.lines.var)
-  txt <- "Show points on maps"
-  frame2.chk.05.1 <- ttkcheckbutton(frame2, text=txt, variable=show.points.var)
-  txt <- "Use uniform arrow lengths"
-  frame2.chk.06.1 <- ttkcheckbutton(frame2, text=txt, variable=vuni.var)
-
-  txt <- "Show tickmarks on second axis"
-  frame2.chk.07.1 <- ttkcheckbutton(frame2, text=txt, variable=show.2.axes.var)
-  txt <- "Add minor tickmarks"
-  frame2.chk.08.1 <- ttkcheckbutton(frame2, text=txt, variable=minor.ticks.var)
-  txt <- "Place tickmarks inside plot region"
-  frame2.chk.09.1 <- ttkcheckbutton(frame2, text=txt, variable=ticks.inside.var)
-  txt <- "Remove point symbol boundary line"
-  frame2.chk.10.1 <- ttkcheckbutton(frame2, text=txt, variable=rm.pnt.line.var)
-
-  tkgrid(frame2.chk.01.1, sticky="w", pady=c(0, 2))
-  tkgrid(frame2.chk.02.1, sticky="w", pady=c(0, 2))
-  tkgrid(frame2.chk.03.1, sticky="w", pady=c(0, 2))
-  tkgrid(frame2.chk.04.1, sticky="w", pady=c(0, 2))
-  tkgrid(frame2.chk.05.1, sticky="w", pady=c(0, 2))
-  tkgrid(frame2.chk.06.1, sticky="w", pady=c(0, 2))
-  tkgrid(frame2.chk.07.1, sticky="w", pady=c(0, 2))
-  tkgrid(frame2.chk.08.1, sticky="w", pady=c(0, 2))
-  tkgrid(frame2.chk.09.1, sticky="w", pady=c(0, 2))
-  tkgrid(frame2.chk.10.1, sticky="w")
-
-  # Final layout
-  tkgrid(frame1, frame2, sticky="nswe")
-  tkgrid.columnconfigure(pw, 0, weight=2)
-  tkpack(pw, fill="x", expand=TRUE)
-
-  # Bind events
-
+  # bind events
   tclServiceMode(TRUE)
 
   tkbind(tt, "<Destroy>", function() tclvalue(tt.done.var) <- 1)
 
-  tkbind(frame1.ent.1.2, "<KeyRelease>",
-         function() {
-           tclvalue(width.var) <- CheckEntry("numeric", tclvalue(width.var))
-         })
-  tkbind(frame1.ent.2.2, "<KeyRelease>",
+  tkbind(f1.ent.01.2, "<KeyRelease>",
          function() {
            tclvalue(nlevels.var) <- CheckEntry("integer", tclvalue(nlevels.var))
          })
-  tkbind(frame1.ent.3.2, "<KeyRelease>",
+  tkbind(f1.ent.02.2, "<KeyRelease>",
          function() {
            tclvalue(cex.pts.var) <- CheckEntry("numeric", tclvalue(cex.pts.var))
          })
-  tkbind(frame1.ent.4.2, "<KeyRelease>",
+  tkbind(f1.ent.03.2, "<KeyRelease>",
          function() {
            tclvalue(asp.yx.var) <- CheckEntry("numeric", tclvalue(asp.yx.var))
          })
-  tkbind(frame1.ent.5.2, "<KeyRelease>",
+  tkbind(f1.ent.04.2, "<KeyRelease>",
          function() {
            tclvalue(asp.zx.var) <- CheckEntry("numeric", tclvalue(asp.zx.var))
          })
-  tkbind(frame1.ent.6.2, "<KeyRelease>",
+  tkbind(f1.ent.09.2, "<KeyRelease>",
          function() {
-           tclvalue(vmax.var) <- CheckEntry("numeric", tclvalue(vmax.var))
+           tclvalue(width.var) <- CheckEntry("numeric", tclvalue(width.var))
          })
-  tkbind(frame1.ent.7.2, "<KeyRelease>",
+  tkbind(f1.ent.10.2, "<KeyRelease>",
          function() {
-           tclvalue(vxby.var) <- CheckEntry("integer", tclvalue(vxby.var))
-         })
-  tkbind(frame1.ent.8.2, "<KeyRelease>",
-         function() {
-           tclvalue(vyby.var) <- CheckEntry("integer", tclvalue(vyby.var))
+           tclvalue(height.var) <- CheckEntry("numeric", tclvalue(height.var))
          })
 
-  # GUI control
+  tkbind(f1.box.08.2, "<<ComboboxSelected>>", ToggleState)
+
+  # gui control
+  ToggleState()
 
   tkfocus(tt)
   tkgrab(tt)
@@ -280,4 +300,6 @@ SetConfiguration <- function(parent=NULL) {
   tkgrab.release(tt)
   tkdestroy(tt)
   tclServiceMode(TRUE)
+
+  invisible()
 }
