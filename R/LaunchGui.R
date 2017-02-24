@@ -775,7 +775,13 @@ LaunchGui <- function() {
 
       # convert to spatial points
       sp::coordinates(d) <- ~ x + y
-      sp::proj4string(d) <- Data("crs")
+      ans <- try(sp::proj4string(d) <- Data("crs"), silent=TRUE)
+      if (inherits(ans, "try-error")) {
+        msg <- "Failed to set Coordinate Reference System."
+        tkmessageBox(icon="error", message=msg, detail=ans,
+                     title="Error", type="ok", parent=tt)
+        sp::proj4string(d) <- sp::CRS(as.character(NA))
+      }
 
       # points in polygon
       if (!is.null(Data("poly.data"))) {
@@ -841,15 +847,15 @@ LaunchGui <- function() {
         n <- 2
       ans <- try(MBA::mba.points(xyz=cbind(x, y, z)[!is.na(z), ],
                                  xy.est=sp::coordinates(r),
-                                 n=n, m=m, h=11, verbose=FALSE)$xyz.est[, "z"])
-     if (inherits(ans, "try-error")) {
-       tkmessageBox(icon="error", message="Interpolation failed.", detail=ans,
-                    title="Error", type="ok", parent=tt)
-       r <- NULL
-     } else {
-       r[] <- ans
-     }
-     names(r) <- "z"
+                                 n=n, m=m, h=11, verbose=FALSE)$xyz.est[, "z"], silent=TRUE)
+      if (inherits(ans, "try-error")) {
+        tkmessageBox(icon="error", message="Interpolation failed.", detail=ans,
+                     title="Error", type="ok", parent=tt)
+        r <- NULL
+      } else {
+        r[] <- ans
+      }
+      names(r) <- "z"
 
       Data("data.grd", r)
     }
@@ -927,8 +933,9 @@ LaunchGui <- function() {
     ProcessData()
     crs.new <- sp::CRS("+init=epsg:4326")
     map <- leaflet::leaflet()
+    map <- leaflet::addProviderTiles(map, "OpenStreetMap.Mapnik")
     opt <- leaflet::WMSTileOptions(format="image/png", transparent=TRUE)
-    base.groups <- c("Open Street Map", "The National Map")
+    base.groups <- c("Open Street Map", "National Map")
     map <- leaflet::addTiles(map, group=base.groups[1])
     url <- "https://basemap.nationalmap.gov/arcgis/services/USGSTopo/MapServer/WmsServer?"
     txt <-  "USGS <a href='https://nationalmap.gov/'>The National Map</a>"
@@ -1048,31 +1055,31 @@ LaunchGui <- function() {
         command=SaveProjAs)
   tkadd(menu.file, "separator")
   menu.file.import <- tkmenu(tt, tearoff=0)
-  tkadd(menu.file.import, "command", label="Shapefile\u2026",
-        command=function() ReadData("shp"))
   tkadd(menu.file.import, "command", label="Text file or clipboard\u2026",
         command=function() ReadData("txt"))
   tkadd(menu.file.import, "command", label="XML-spreadsheet file\u2026",
         state=ifelse(is.pkg.xml, "normal", "disabled"),
         command=function() ReadData("xlsx"))
+  tkadd(menu.file.import, "command", label="Shapefile\u2026",
+        command=function() ReadData("shp"))
   tkadd(menu.file.import, "command", label="R-package dataset\u2026",
         command=function() ReadData("rpackage"))
   tkadd(menu.file.import, "command", label="R-data file\u2026",
         command=function() ReadData("rda"))
   tkadd(menu.file, "cascade", label="Import point data from", menu=menu.file.import)
   menu.file.export.pnt <- tkmenu(tt, tearoff=0)
-  tkadd(menu.file.export.pnt, "command", label="Shapefile\u2026",
-        command=function() WriteData("shp"))
   tkadd(menu.file.export.pnt, "command", label="Text file\u2026",
         command=function() WriteData("txt"))
+  tkadd(menu.file.export.pnt, "command", label="Shapefile\u2026",
+        command=function() WriteData("shp"))
   tkadd(menu.file.export.pnt, "command", label="R-data file\u2026",
         command=function() WriteData("rda"))
   tkadd(menu.file, "cascade", label="Export point data as", menu=menu.file.export.pnt)
   menu.file.export.grd <- tkmenu(tt, tearoff=0)
-  tkadd(menu.file.export.grd, "command", label="GeoTIFF\u2026",
-        command=function() WriteRaster("tif"))
   tkadd(menu.file.export.grd, "command", label="Text file\u2026",
         command=function() WriteRaster("txt"))
+  tkadd(menu.file.export.grd, "command", label="GeoTIFF\u2026",
+        command=function() WriteRaster("tif"))
   tkadd(menu.file.export.grd, "command", label="R-data file\u2026",
         command=function() WriteRaster("rda"))
   tkadd(menu.file, "cascade", label="Export interpolated grid data as", menu=menu.file.export.grd)
@@ -1105,7 +1112,7 @@ LaunchGui <- function() {
         })
   tkadd(menu.edit, "separator")
   tkadd(menu.edit, "command", label="Manage variables\u2026", command=CallManageVariables)
-  tkadd(menu.edit, "command", label="Data editor\u2026",
+  tkadd(menu.edit, "command", label="Edit unprocessed data\u2026",
         command=function() CallEditData(read.only=FALSE))
   tkadd(menu.edit, "command", label="Comment\u2026", command=EditComment)
   tkadd(menu.edit, "separator")
@@ -1187,7 +1194,7 @@ LaunchGui <- function() {
   tkadd(menu.plot, "command", label="Zoom in",  accelerator="Ctrl++", command=function() ViewZoom("+"))
   tkadd(menu.plot, "command", label="Zoom out", accelerator="Ctrl+-", command=function() ViewZoom("-"))
   menu.plot.axes <- tkmenu(tt, tearoff=0)
-  tkadd(menu.plot.axes, "command", label="Zoom in at point\u2026",
+  tkadd(menu.plot.axes, "command", label="Zoom in on point\u2026",
         command=function() ViewZoom("+", id="point"))
   tkadd(menu.plot.axes, "command", label="Define bounding box\u2026",
         command=function() ViewZoom("+", id="bbox"))
@@ -1231,7 +1238,7 @@ LaunchGui <- function() {
   tkadd(menu.help.rep, "command", label="CRAN",
         command=function() utils::browseURL("https://CRAN.R-project.org/package=RSurvey"))
   tkadd(menu.help.rep, "command", label="GitHub",
-        command=function() utils::browseURL("https://github.com/jfisher-usgs/RSurvey"))
+        command=function() utils::browseURL("https://github.com/USGS-R/RSurvey"))
   tkadd(menu.help, "cascade", label="Repository on  ", menu=menu.help.rep)
 
   tkadd(menu.help, "separator")
@@ -1343,17 +1350,20 @@ LaunchGui <- function() {
   # bind events
   tclServiceMode(TRUE)
 
-  tkbind(tt, "<Destroy>",                    CloseGUI)
-  tkbind(tt, "<Control-KeyRelease-n>",       ClearObjs)
-  tkbind(tt, "<Control-KeyRelease-o>",       OpenProj)
-  tkbind(tt, "<Control-KeyRelease-s>",       SaveProj)
-  tkbind(tt, "<Control-Shift-KeyRelease-S>", SaveProjAs)
-  tkbind(tt, "<Control-KeyRelease-r>",       SaveRDevice)
-  tkbind(tt, "<Control-KeyRelease-F3>",      Open2d)
-  tkbind(tt, "<Control-KeyRelease-F4>",      CloseDevices)
-  tkbind(tt, "<Control-KeyRelease-plus>",    function() ViewZoom("+"))
-  tkbind(tt, "<Control-KeyRelease-minus>",   function() ViewZoom("-"))
-  tkbind(tt, "<Control-KeyRelease-0>",       function() ViewZoom("0"))
+  tkbind(tt, "<Destroy>",                      CloseGUI)
+  tkbind(tt, "<Control-KeyPress-n>",           ClearObjs)
+  tkbind(tt, "<Control-KeyPress-o>",           OpenProj)
+  tkbind(tt, "<Control-KeyPress-s>",           SaveProj)
+  tkbind(tt, "<Control-Shift-KeyPress-S>",     SaveProjAs)
+  tkbind(tt, "<Control-KeyPress-r>",           SaveRDevice)
+  tkbind(tt, "<Control-KeyPress-F3>",          Open2d)
+  tkbind(tt, "<Control-KeyPress-F4>",          CloseDevices)
+  tkbind(tt, "<Control-KeyPress-plus>",        function() ViewZoom("+"))
+  tkbind(tt, "<Control-KeyPress-KP_Add>",      function() ViewZoom("+"))
+  tkbind(tt, "<Control-KeyPress-minus>",       function() ViewZoom("-"))
+  tkbind(tt, "<Control-KeyPress-KP_Subtract>", function() ViewZoom("-"))
+  tkbind(tt, "<Control-KeyPress-0>",           function() ViewZoom("0"))
+  tkbind(tt, "<Control-KeyPress-KP_0>",        function() ViewZoom("0"))
 
   tkbind(f1.box.1.2, "<<ComboboxSelected>>", RefreshVars)
   tkbind(f1.box.2.2, "<<ComboboxSelected>>", RefreshVars)

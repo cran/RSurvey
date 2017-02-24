@@ -436,18 +436,18 @@ ManagePolygons <- function(polys=NULL, poly.data=NULL, poly.crop=NULL,
   menu.file <- tkmenu(tt, tearoff=0, relief="flat")
   tkadd(top.menu, "cascade", label="File", menu=menu.file, underline=0)
   menu.file.import <- tkmenu(tt, tearoff=0)
-  tkadd(menu.file.import, "command", label="Shapefile\u2026",
-        command=function() ImportPolygon("shp"))
   tkadd(menu.file.import, "command", label="Text file\u2026",
         command=function() ImportPolygon("txt"))
+  tkadd(menu.file.import, "command", label="Shapefile\u2026",
+        command=function() ImportPolygon("shp"))
   tkadd(menu.file.import, "command", label="R-data file\u2026",
         command=function() ImportPolygon("rda"))
   tkadd(menu.file, "cascade", label="Import from", menu=menu.file.import)
   menu.file.export <- tkmenu(tt, tearoff=0)
-  tkadd(menu.file.export, "command", label="Shapefile\u2026",
-        command=function() ExportPolygon("shp"))
   tkadd(menu.file.export, "command", label="Text file\u2026",
         command=function() ExportPolygon("txt"))
+  tkadd(menu.file.export, "command", label="Shapefile\u2026",
+        command=function() ExportPolygon("shp"))
   tkadd(menu.file.export, "command", label="R-data file\u2026",
         command=function() ExportPolygon("rda"))
   tkadd(menu.file, "cascade", label="Export as", menu=menu.file.export)
@@ -635,17 +635,17 @@ ManagePolygons <- function(polys=NULL, poly.data=NULL, poly.crop=NULL,
   tkbind(f2.cvs, "<Leave>", MouseLeave)
   tkbind(f2.cvs, "<Configure>", ScaleCanvas)
 
-  tkbind(tt, "<Control-a>", function() SelectPolygon("all"))
-  tkbind(tt, "<Control-Shift-A>", function() SelectPolygon("none"))
+  tkbind(tt, "<Control-KeyPress-a>", function() SelectPolygon("all"))
+  tkbind(tt, "<Control-Shift-KeyPress-A>", function() SelectPolygon("none"))
 
-  tkbind(tt, "<Control-]>", function() ArrangePolygon("forward"))
-  tkbind(tt, "<Control-Shift-}>", function() ArrangePolygon("front"))
-  tkbind(tt, "<Control-[>", function() ArrangePolygon("backward"))
-  tkbind(tt, "<Control-Shift-{>", function() ArrangePolygon("back"))
+  tkbind(tt, "<Control-KeyPress-bracketright>", function() ArrangePolygon("forward"))
+  tkbind(tt, "<Control-Shift-KeyPress-braceright>", function() ArrangePolygon("front"))
+  tkbind(tt, "<Control-KeyPress-bracketleft>", function() ArrangePolygon("backward"))
+  tkbind(tt, "<Control-Shift-KeyPress-braceleft>", function() ArrangePolygon("back"))
 
   tkbind(tt, "<BackSpace>", ClearPolygon)
   tkbind(tt, "<Delete>", ClearPolygon)
-  tkbind(tt, "<Control-r>", RenamePolygon)
+  tkbind(tt, "<Control-KeyPress-r>", RenamePolygon)
 
   tkbind(f1.lst, "<<ListboxSelect>>", RefreshPolygons)
 

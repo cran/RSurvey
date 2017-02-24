@@ -1,3 +1,13 @@
+# RSurvey 0.9.1
+
+- Replace R copy/paste commands with those in Tcl/Tk.
+
+- Move package repository to [USGS-R/RSurvey](https://github.com/USGS-R/RSurvey) on GitHub.
+
+- Account for coordinate reference system not being applicable for spatial data.
+
+- Use valid Tk-key-binding names, prevents errors on Linux OS.
+
 # RSurvey 0.9.0
 
 - Complete redesign of the graphical user interface and plotting routines.

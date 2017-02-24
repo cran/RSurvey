@@ -453,7 +453,10 @@ ImportText <- function(parent=NULL) {
   # paste clipboard
   PasteData <- function() {
     tkselection.set(f4.tbl, "origin")
-    cb <- try(scan(file="clipboard", what="character", sep="\n", quiet=TRUE), silent=TRUE)
+    txt <- as.character(tclvalue(.Tcl("selection get -selection CLIPBOARD")))
+    if (length(txt) == 0) return()
+    args <- list(text=txt, what="character", sep="\n", quiet=TRUE)
+    cb <- try(do.call(scan, args), silent=TRUE)
     cb <<- if (inherits(cb, "try-error")) NULL else cb
     if (is.null(cb)) return()
     tclvalue(source.var) <- ""
@@ -654,8 +657,8 @@ ImportText <- function(parent=NULL) {
   f3.lab.2.6 <- ttklabel(f3, text="Skip lines")
   f3.lab.3.1 <- ttklabel(f3, text="Comment")
   f3.lab.3.4 <- ttklabel(f3, text="Encoding")
-  txt <- paste("Comments located above data records and header lines",
-               "will be preserved (files only); all other comments are ignored.")
+  txt <- paste("Comments located above data records and header lines will be preserved;",
+               "all other comments are ignored.")
   f3.lab.4.1 <- ttklabel(f3, text=txt, foreground="#A40802")
 
   f3.box.1.2 <- ttkcombobox(f3, width=17, state="readonly", value=sep1)
