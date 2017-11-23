@@ -1,3 +1,11 @@
+# RSurvey 0.9.2
+
+- Change USGS package status from 'Research' to 'Orphan'.
+
+- Stop including variables of class factor in histogram plots.
+
+- Fix bug resulting in error when viewing data for coordinate variables with sort order set.
+
 # RSurvey 0.9.1
 
 - Replace R copy/paste commands with those in Tcl/Tk.

@@ -443,10 +443,13 @@ LaunchGui <- function() {
 
   # about package
   AboutPackage <- function() {
-    lib <- ifelse("package:RSurvey" %in% search(), system.file(package="RSurvey"), getwd())
+    if ("RSurvey" %in% utils::installed.packages(.libPaths(), noCache=TRUE)[, "Package"])
+      lib <- system.file(package="RSurvey")
+    else
+      lib <- getwd()
     ver <- read.dcf(file.path(lib, "DESCRIPTION"), "Version")
-    yr  <- sub("-.*", "", read.dcf(file.path(lib, "DESCRIPTION"), "Packaged"))
-    msg <- sprintf("RSurvey package version %s (%s)", ver, yr)
+    ymd <- strsplit(read.dcf(file.path(lib, "DESCRIPTION"), "Packaged"), " ")[[1]][1]
+    msg <- sprintf("RSurvey package version %s (%s)", ver, ymd)
     tkmessageBox(icon="info", message=msg, title="Information", type="ok", parent=tt)
   }
 
@@ -666,7 +669,7 @@ LaunchGui <- function() {
       if (is.null(Data("data.pts"))) return()
     }
 
-    vars <- Data("vars")
+    vars <- Data("vars")[names(Data("vars")) %in% c("x", "y", "z")]
     cols <- Data("cols")
     rows <- Data("rows")
 
@@ -751,7 +754,7 @@ LaunchGui <- function() {
       # account for missing z variable
       if (!"z" %in% var.names) d$z <- rep(as.numeric(NA), nrow(d))
 
-      # filter records
+      # query records
       query <- Data("query")
       if (!is.null(query)) {
         is.filter <- EvalFunction(query, cols)
@@ -770,16 +773,15 @@ LaunchGui <- function() {
       }
 
       # remove non-finite spatial coordinate values
-      is.coord <- is.finite(d[, "x"]) & is.finite(d[, "y"])
-      d <- d[is.coord, , drop=FALSE]
+      d <- d[is.finite(d[, "x"]) & is.finite(d[, "y"]), , drop=FALSE]
 
       # convert to spatial points
       sp::coordinates(d) <- ~ x + y
       ans <- try(sp::proj4string(d) <- Data("crs"), silent=TRUE)
       if (inherits(ans, "try-error")) {
         msg <- "Failed to set Coordinate Reference System."
-        tkmessageBox(icon="error", message=msg, detail=ans,
-                     title="Error", type="ok", parent=tt)
+        tkmessageBox(icon="error", message=msg, detail=ans, title="Error",
+                     type="ok", parent=tt)
         sp::proj4string(d) <- sp::CRS(as.character(NA))
       }
 
@@ -789,20 +791,25 @@ LaunchGui <- function() {
         if (!is.null(p)) d <- d[!is.na(sp::over(d, p)), , drop=FALSE]
       }
 
-      if (nrow(d) > 0) {
-        Data("data.pts", d)
-        Data("data.grd", NULL)
-      } else {
-        msg <- "Range excludes all data points."
+      if (nrow(d) == 0) {
+        msg <- "All points were excluded during processing."
         tkmessageBox(icon="error", message=msg, title="Error", type="ok", parent=tt)
+        return()
       }
+      Data("data.pts", d)
+      Data("data.grd", NULL)
     }
 
     # grid
     if (!is.null(Data("data.pts")) && is.null(Data("data.grd"))) {
       if (!"z" %in% var.names) return()
+      if (nrow(Data("data.pts")) < 2) {
+        msg <- "Insufficient number of data records to perform interpolation."
+        tkmessageBox(icon="error", message=msg, title="Error", type="ok", parent=tt)
+        return()
+      }
       if (all(is.na(Data("data.pts")$z))) {
-        msg <- "Missing values for coordinate-variable 'z'."
+        msg <- "Can't interpolate because all values are missing for coordinate-variable 'z'."
         tkmessageBox(icon="error", message=msg, title="Error", type="ok", parent=tt)
         return()
       }
@@ -845,8 +852,7 @@ LaunchGui <- function() {
         m <- 2
       else
         n <- 2
-      ans <- try(MBA::mba.points(xyz=cbind(x, y, z)[!is.na(z), ],
-                                 xy.est=sp::coordinates(r),
+      ans <- try(MBA::mba.points(xyz=cbind(x, y, z)[!is.na(z), ], xy.est=sp::coordinates(r),
                                  n=n, m=m, h=11, verbose=FALSE)$xyz.est[, "z"], silent=TRUE)
       if (inherits(ans, "try-error")) {
         tkmessageBox(icon="error", message="Interpolation failed.", detail=ans,
@@ -935,10 +941,10 @@ LaunchGui <- function() {
     map <- leaflet::leaflet()
     map <- leaflet::addProviderTiles(map, "OpenStreetMap.Mapnik")
     opt <- leaflet::WMSTileOptions(format="image/png", transparent=TRUE)
-    base.groups <- c("Open Street Map", "National Map")
+    base.groups <- c("Open Street Map", "USGS Topo")
     map <- leaflet::addTiles(map, group=base.groups[1])
     url <- "https://basemap.nationalmap.gov/arcgis/services/USGSTopo/MapServer/WmsServer?"
-    txt <-  "USGS <a href='https://nationalmap.gov/'>The National Map</a>"
+    txt <- "USGS <a href='https://nationalmap.gov/'>The National Map</a>"
     map <- leaflet::addWMSTiles(map, url, options=opt, layers="0",
                                 attribution=txt, group=base.groups[2])
     overlay.groups <- NULL
@@ -988,7 +994,7 @@ LaunchGui <- function() {
       grDevices::dev.new(width=7, height=7)
     } else {
       cin <- graphics::par("din")
-      # TODO(JCF): read xpos and ypos from current dev and pass to dev.new
+      # TODO(jfisher-usgs): read xpos and ypos from current dev and pass to dev.new
       grDevices::dev.new(width=cin[1], height=cin[2])
     }
   }
@@ -1263,7 +1269,7 @@ LaunchGui <- function() {
   f0 <- ttkframe(tt, relief="flat", borderwidth=2)
   tkpack(f0, side="top", fill="x")
 
-  if ("package:RSurvey" %in% search())
+  if ("RSurvey" %in% utils::installed.packages(.libPaths(), noCache=TRUE)[, "Package"])
     img.path <- system.file("images", package="RSurvey")
   else
     img.path <- file.path(getwd(), "inst", "images")
